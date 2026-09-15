@@ -33,7 +33,6 @@ public class NewsService
             .Take(20)
             .ToList();
 
-        // Google ニュース側のアイコン等は使わず、記事ページの画像だけを採用する。
         foreach (var item in items)
         {
             item.ImageUrl = await TryGetArticleImageUrlAsync(item.SourceUrl, cancellationToken);
@@ -80,7 +79,6 @@ public class NewsService
             if (!response.IsSuccessStatusCode) return string.Empty;
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
-
             var imageUrl = FindMetaContent(html, "property", "og:image")
                 ?? FindMetaContent(html, "name", "twitter:image")
                 ?? FindMetaContent(html, "property", "og:image:url");
@@ -114,7 +112,14 @@ public class NewsService
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;
 
         var host = uri.Host.ToLowerInvariant();
-        return host != "news.google.com" && !host.EndsWith(".google.com", StringComparison.OrdinalIgnoreCase);
+        var path = uri.AbsolutePath.ToLowerInvariant();
+        var value = uri.AbsoluteUri.ToLowerInvariant();
+
+        if (host == "news.google.com" || host.EndsWith(".google.com", StringComparison.OrdinalIgnoreCase)) return false;
+        if (host.Contains("googleusercontent") || host.Contains("gstatic")) return false;
+        if (path.Contains("favicon") || path.Contains("logo") || path.Contains("icon") || value.Contains("favicon") || value.Contains("logo")) return false;
+
+        return true;
     }
 
     private static string CleanDescription(string html)
