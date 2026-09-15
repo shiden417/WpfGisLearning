@@ -109,7 +109,9 @@
                                     <TextBlock Text="{Binding RecommendedMenu, TargetNullValue=おすすめ未登録}" FontSize="12" Foreground="#FF6F5B53" Margin="0,5,0,0" TextWrapping="Wrap" />
                                     <TextBlock Text="{Binding Price, StringFormat=¥{0:N0}}" FontSize="15" FontWeight="Bold" Foreground="#FFB83D2E" Margin="0,8,0,0" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Style="{StaticResource FavoriteButton}" Command="{Binding DataContext.ToggleSelectedFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                <Button Grid.Column="1" Style="{StaticResource FavoriteButton}"
+                                        Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -119,7 +121,7 @@
 
         <Border Grid.Row="4" Background="White" BorderBrush="#FFE9DED8" BorderThickness="0,1,0,0" Padding="10,8">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Style="{StaticResource ActionButton}" Content="お気に入り切替" Command="{Binding ToggleSelectedFavoriteCommand}" />
+                <Button Style="{StaticResource ActionButton}" Content="お気に入り切替" Command="{Binding ToggleFavoriteCommand}" CommandParameter="{Binding SelectedShop}" />
                 <Button Style="{StaticResource ActionButton}" Content="詳細を見る" Command="{Binding OpenSelectedShopCommand}" />
                 <Button Style="{StaticResource ActionButton}" Content="編集" Command="{Binding EditSelectedShopCommand}" Background="#FFF28C28" Foreground="White" BorderThickness="0" />
                 <Button Style="{StaticResource ActionButton}" Content="削除" Command="{Binding DeleteSelectedShopCommand}" Background="#FF8D3B32" Foreground="White" BorderThickness="0" />
