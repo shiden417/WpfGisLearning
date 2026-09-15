@@ -20,15 +20,11 @@ public partial class MainWindow : Window
     private Mapsui.Map? _map;
     private MemoryLayer? _shopLayer;
     private MemoryLayer? _currentLocationLayer;
-    private double _minLon = double.MaxValue;
-    private double _maxLon = double.MinValue;
-    private double _minLat = double.MaxValue;
-    private double _maxLat = double.MinValue;
+    private double _minLon = double.MaxValue, _maxLon = double.MinValue, _minLat = double.MaxValue, _maxLat = double.MinValue;
     private bool _hasValidCoords;
     private bool _initialMapPositionSet;
     private bool _initialLocationRequested;
     private int? _selectedShopId;
-
     private readonly ShopListViewModel _shopListViewModel;
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
@@ -50,10 +46,9 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_initialLocationRequested)
-            return;
+        if (_initialLocationRequested) return;
         _initialLocationRequested = true;
-        await TryShowCurrentLocationAsync(showMessageOnFailure: false);
+        await TryShowCurrentLocationAsync(false);
     }
 
     private void InitializeMap()
@@ -95,9 +90,7 @@ public partial class MainWindow : Window
         if (_initialMapPositionSet || _map is null || !_hasValidCoords || MapControl.ActualWidth <= 0 || MapControl.ActualHeight <= 0) return;
         try
         {
-            var centerLon = (_minLon + _maxLon) / 2.0;
-            var centerLat = (_minLat + _maxLat) / 2.0;
-            var center = SphericalMercator.FromLonLat(centerLon, centerLat).ToMPoint();
+            var center = SphericalMercator.FromLonLat((_minLon + _maxLon) / 2, (_minLat + _maxLat) / 2).ToMPoint();
             double resolution;
             if (_minLon == _maxLon && _minLat == _maxLat)
                 resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
@@ -128,8 +121,7 @@ public partial class MainWindow : Window
         try
         {
             var pos = e.GetPosition(MapControl);
-            var screenPos = new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y);
-            var mapInfo = MapControl.GetMapInfo(screenPos, MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
+            var mapInfo = MapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y), MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
             if (mapInfo?.Layer?.Name != "Shops" || mapInfo.Feature is null) return;
             if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId)) _shopListViewModel.SelectShopById(shopId);
         }
@@ -138,8 +130,8 @@ public partial class MainWindow : Window
 
     private static IFeature CreateShopFeature(Shop shop, bool selected)
     {
-        var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
-        var feature = new PointFeature(mapPoint);
+        var point = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
+        var feature = new PointFeature(point);
         feature["Name"] = shop.Name; feature["Address"] = shop.Address; feature["Id"] = shop.Id;
         feature.Styles.Add(ImageStyles.CreatePinStyle(Mapsui.Styles.Color.FromString(selected ? "#C56B4D" : "#343A40"), Mapsui.Styles.Color.FromString("#343A40"), selected ? 1.4 : 1.15));
         return feature;
@@ -149,26 +141,19 @@ public partial class MainWindow : Window
 
     private void ShowInfoCard(Shop shop)
     {
-        InfoCardName.Text = shop.Name;
-        InfoCardType.Text = shop.RamenType;
-        InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
-        InfoCardPrice.Text = $"¥{shop.Price:N0}";
-        InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
+        InfoCardName.Text = shop.Name; InfoCardType.Text = shop.RamenType; InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
+        InfoCardPrice.Text = $"¥{shop.Price:N0}"; InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
         InfoCardBorder.Visibility = Visibility.Visible;
         var transform = (TranslateTransform)InfoCardBorder.RenderTransform;
-        transform.X = 18; transform.Y = 18;
-        InfoCardBorder.Opacity = 0;
+        transform.X = 18; transform.Y = 18; InfoCardBorder.Opacity = 0;
         var storyboard = new Storyboard();
-        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
-        Storyboard.SetTarget(opacity, InfoCardBorder); Storyboard.SetTargetProperty(opacity, new PropertyPath(UIElement.OpacityProperty));
-        var slideX = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220));
-        Storyboard.SetTarget(slideX, transform); Storyboard.SetTargetProperty(slideX, new PropertyPath(TranslateTransform.XProperty));
-        var slideY = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220));
-        Storyboard.SetTarget(slideY, transform); Storyboard.SetTargetProperty(slideY, new PropertyPath(TranslateTransform.YProperty));
+        var opacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)); Storyboard.SetTarget(opacity, InfoCardBorder); Storyboard.SetTargetProperty(opacity, new PropertyPath(UIElement.OpacityProperty));
+        var slideX = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220)); Storyboard.SetTarget(slideX, transform); Storyboard.SetTargetProperty(slideX, new PropertyPath(TranslateTransform.XProperty));
+        var slideY = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220)); Storyboard.SetTarget(slideY, transform); Storyboard.SetTargetProperty(slideY, new PropertyPath(TranslateTransform.YProperty));
         storyboard.Children.Add(opacity); storyboard.Children.Add(slideX); storyboard.Children.Add(slideY); storyboard.Begin();
     }
 
-    private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) => await TryShowCurrentLocationAsync(showMessageOnFailure: true);
+    private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) => await TryShowCurrentLocationAsync(true);
 
     private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure)
     {
@@ -200,7 +185,13 @@ public partial class MainWindow : Window
         if (_map is null) return;
         var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(ImageStyles.CreatePinStyle(Mapsui.Styles.Color.FromString("#C56B4D"), Mapsui.Styles.Color.FromString("#343A40"), 1.25));
+        feature.Styles.Add(new SymbolStyle
+        {
+            SymbolType = SymbolType.Ellipse,
+            SymbolScale = 1.15,
+            Fill = new Brush(Mapsui.Styles.Color.FromString("#4A90E2")),
+            Outline = new Pen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3)
+        });
         _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" };
         _currentLocationLayer.Features = new[] { feature };
         if (!_map.Layers.Contains(_currentLocationLayer)) _map.Layers.Add(_currentLocationLayer);
@@ -223,14 +214,12 @@ public partial class MainWindow : Window
 
     private static ImageSource CreateRameniaIcon()
     {
-        const int size = 64;
-        var visual = new System.Windows.Media.DrawingVisual();
+        const int size = 64; var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
-            var formattedText = new System.Windows.Media.FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new System.Windows.Media.Typeface(new System.Windows.Media.FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 48, System.Windows.Media.Brushes.Black, 1.0);
+            var formattedText = new FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 48, Brushes.Black, 1.0);
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
-        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
-        bitmap.Render(visual); bitmap.Freeze(); return bitmap;
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32); bitmap.Render(visual); bitmap.Freeze(); return bitmap;
     }
 }
