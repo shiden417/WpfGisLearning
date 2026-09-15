@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace WpfGisLearning.Models;
 
@@ -16,8 +17,11 @@ public partial class Shop : ObservableObject
     public double Rating { get; set; }
     public List<ShopPhoto> Photos { get; set; } = [];
 
-    [ObservableProperty]
-    private bool isFavorite;
+    [JsonIgnore]
+    public string MainPhotoPath { get; set; } = string.Empty;
 
     public ShopPhoto? MainPhoto => Photos.OrderByDescending(x => x.IsMain).ThenBy(x => x.SortOrder).FirstOrDefault();
+
+    [ObservableProperty]
+    private bool isFavorite;
 }
