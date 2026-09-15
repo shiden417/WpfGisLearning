@@ -12,6 +12,13 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
             <Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1" ScaleY="1" /></Setter.Value></Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                    <Setter Property="Background" Value="#FFF1F5EF" />
+                    <Setter Property="BorderBrush" Value="#FF93A58F" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="ShopListItem" TargetType="ListBoxItem">
@@ -22,9 +29,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <ContentPresenter />
-                    </ControlTemplate>
+                    <ControlTemplate TargetType="ListBoxItem"><ContentPresenter /></ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
@@ -37,19 +42,12 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="4" />
             <Setter Property="Cursor" Value="Hand" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Content" Value="★" /></DataTrigger>
-            </Style.Triggers>
+            <Style.Triggers><DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Content" Value="★" /></DataTrigger></Style.Triggers>
         </Style>
     </UserControl.Resources>
 
     <Grid Background="#FFF5F3EE">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="8,8,8,12">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
@@ -102,24 +100,19 @@
                      MouseDoubleClick="ShopList_MouseDoubleClick">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Shop}">
-                        <Border Style="{StaticResource ShopCard}
-                                 ">
+                        <Border Style="{StaticResource ShopCard}">
                             <Border.Triggers>
                                 <EventTrigger RoutedEvent="Mouse.MouseEnter">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.012" Duration="0:0:0.12" />
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.012" Duration="0:0:0.12" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
+                                    <BeginStoryboard><Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.012" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.012" Duration="0:0:0.12" />
+                                    </Storyboard></BeginStoryboard>
                                 </EventTrigger>
                                 <EventTrigger RoutedEvent="Mouse.MouseLeave">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.12" />
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.12" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
+                                    <BeginStoryboard><Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.12" />
+                                    </Storyboard></BeginStoryboard>
                                 </EventTrigger>
                             </Border.Triggers>
                             <Grid>
