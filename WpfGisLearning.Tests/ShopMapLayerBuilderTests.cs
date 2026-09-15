@@ -72,15 +72,18 @@ public class ShopMapLayerBuilderTests
         };
 
         var result = ShopMapLayerBuilder.Build(shops, selectedShopId: null);
-        var points = result.Layer.Features.OfType<PointFeature>().Select(feature => feature.Point).ToList();
+        var markerOffsets = result.Layer.Features
+            .SelectMany(feature => feature.Styles.OfType<ImageStyle>())
+            .Select(style => (style.Offset.X, style.Offset.Y))
+            .ToList();
         var labels = result.Layer.Features
             .SelectMany(feature => feature.Styles.OfType<LabelStyle>())
             .Select(style => style.Text)
             .OrderBy(text => text)
             .ToList();
 
-        Assert.HasCount(3, points);
-        Assert.HasCount(3, points.DistinctBy(point => (point.X, point.Y)));
+        Assert.HasCount(3, markerOffsets);
+        Assert.HasCount(3, markerOffsets.Distinct().ToList());
         CollectionAssert.AreEqual(new[] { "1/3", "2/3", "3/3" }, labels);
     }
 }
