@@ -2,7 +2,6 @@ using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
-using Mapsui.Styles;
 using Mapsui.Tiling;
 using System.IO;
 using System.Windows;
@@ -39,13 +38,18 @@ public partial class DetailView : System.Windows.Controls.UserControl
         _map.Layers.Add(OpenStreetMap.CreateTileLayer());
         DetailMap.Map = _map;
 
-        if (viewModel.Shop is null || !IsValidCoordinate(viewModel.Shop.Latitude, viewModel.Shop.Longitude)) return;
+        if (viewModel.Shop is null || !MapCoordinateValidator.IsValid(viewModel.Shop.Latitude, viewModel.Shop.Longitude)) return;
 
         var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateDetailShopMarker());
+        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
 
-        _map.Layers.Add(new MemoryLayer { Name = "Shop", Features = new[] { feature } });
+        _map.Layers.Add(new MemoryLayer
+        {
+            Name = "Shop",
+            Style = null,
+            Features = new[] { feature }
+        });
         _map.Navigator.CenterOnAndZoomTo(point, 500);
     }
 
@@ -89,6 +93,4 @@ public partial class DetailView : System.Windows.Controls.UserControl
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Window.GetWindow(this)?.Close();
-
-    private static bool IsValidCoordinate(double lat, double lon) => !double.IsNaN(lat) && !double.IsNaN(lon) && !double.IsInfinity(lat) && !double.IsInfinity(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 && !(lat == 0 && lon == 0);
 }
