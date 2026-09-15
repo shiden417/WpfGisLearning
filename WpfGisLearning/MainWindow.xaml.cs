@@ -126,9 +126,8 @@ public partial class MainWindow : Window
         RebuildShopLayer();
         if (shop is null || _map is null || !IsValidCoordinate(shop.Latitude, shop.Longitude))
             return;
-        var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
-        var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
-        _map.Navigator.CenterOnAndZoomTo(mapPoint, resolution);
+
+        // 店舗選択ではズームを変更しない。現在の地図の表示範囲をそのまま維持する。
         ShowInfoCard(shop);
     }
 
@@ -155,8 +154,8 @@ public partial class MainWindow : Window
         feature["Address"] = shop.Address;
         feature["Id"] = shop.Id;
         feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString(selected ? "#6F8A6A" : "#596B58"),
-            Mapsui.Styles.Color.FromString("#596B58"),
+            Mapsui.Styles.Color.FromString(selected ? "#C56B4D" : "#343A40"),
+            Mapsui.Styles.Color.FromString("#343A40"),
             selected ? 1.35 : 1.15));
         return feature;
     }
@@ -173,12 +172,6 @@ public partial class MainWindow : Window
         InfoCardPrice.Text = $"¥{shop.Price:N0}";
         InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
         InfoCardBorder.Visibility = Visibility.Visible;
-    }
-
-    private void NewShopButton_Click(object sender, RoutedEventArgs e)
-    {
-        _navigationService.NavigateToShopEdit();
-        RefreshShopData();
     }
 
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e)
@@ -202,8 +195,7 @@ public partial class MainWindow : Window
             _shopListViewModel.SetNearbyLocation(latitude, longitude);
             ShowCurrentLocation(latitude, longitude);
             var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
-            var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
-            _map.Navigator.CenterOnAndZoomTo(point, resolution);
+            _map.Navigator.CenterOn(point);
         }
         catch (Exception ex)
         {
@@ -219,8 +211,8 @@ public partial class MainWindow : Window
         var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
         var feature = new PointFeature(point);
         feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString("#4A90E2"),
-            Mapsui.Styles.Color.FromString("#4A90E2"),
+            Mapsui.Styles.Color.FromString("#3E7CB1"),
+            Mapsui.Styles.Color.FromString("#3E7CB1"),
             1.0));
 
         _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" };
