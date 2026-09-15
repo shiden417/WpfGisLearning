@@ -68,38 +68,30 @@
                         </Button>
                     </Grid>
                     <Border Grid.Row="1" Margin="0,20,0,0" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="12">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="300" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Border Grid.Row="0" CornerRadius="10" ClipToBounds="True" Background="#FFEDE8E2">
-                                <Grid>
-                                    <Image Stretch="UniformToFill" Source="{Binding PhotoPaths[0]}" MouseLeftButtonUp="Photo_Click" Tag="{Binding PhotoPaths[0]}" />
-                                    <Border Background="#FFE9E3DC" Visibility="{Binding PhotoPaths.Count, Converter={StaticResource PhotoCountVisibilityConverter}, ConverterParameter=EmptyOnly}" IsHitTestVisible="False">
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <TextBlock Text="🍜" FontSize="72" HorizontalAlignment="Center" />
-                                            <TextBlock Text="No Image" FontSize="18" FontWeight="SemiBold" Foreground="#FF77716B" HorizontalAlignment="Center" Margin="0,6,0,0" />
-                                            <TextBlock Text="写真は登録されていません" FontSize="12" Foreground="#FF99928A" HorizontalAlignment="Center" Margin="0,3,0,0" />
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,12,0,0">
-                                <ItemsControl ItemsSource="{Binding PhotoPaths}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Width="100" Height="72" Margin="0,0,8,0" CornerRadius="7" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding PhotoPaths}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="150" Height="110" Margin="0,0,10,0" CornerRadius="8" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1" Background="#FFEDE8E2">
+                                            <Grid>
                                                 <Image Stretch="UniformToFill" Source="{Binding}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
+                                                <Border Background="#FFE9E3DC" Visibility="{Binding PhotoPaths.Count, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource PhotoCountVisibilityConverter}, ConverterParameter=EmptyOnly}" IsHitTestVisible="False">
+                                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="🍜" FontSize="40" HorizontalAlignment="Center" />
+                                                        <TextBlock Text="No Image" FontSize="12" FontWeight="SemiBold" Foreground="#FF77716B" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Border>
                     <Grid Grid.Row="2" Margin="0,20,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
