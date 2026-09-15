@@ -8,14 +8,12 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
         <Border Grid.Row="0" Background="#FF9F3D2E" Padding="24,18">
             <StackPanel>
                 <TextBlock Text="🍜 Ramenia" Foreground="White" FontSize="15" FontWeight="SemiBold" />
                 <TextBlock Text="{Binding ScreenTitle}" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,4,0,0" />
             </StackPanel>
         </Border>
-
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid Margin="24">
                 <Grid.ColumnDefinitions>
@@ -23,35 +21,27 @@
                     <ColumnDefinition Width="20" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
                 <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="22" BorderBrush="#FFE8D8CF" BorderThickness="1">
                     <StackPanel>
                         <TextBlock Text="店舗情報" FontSize="18" FontWeight="Bold" Foreground="#FF332925" />
-
                         <TextBlock Text="店舗名" Margin="0,18,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="価格" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ShopPrice, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="ラーメンの種類" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <ComboBox ItemsSource="{Binding RamenTypes}" SelectedItem="{Binding RamenType}" Height="36" Padding="8,4" />
-
+                        <TextBlock Text="タグ" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" ToolTip="例：駅近, 人気, 濃厚" />
                         <TextBlock Text="おすすめメニュー" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding RecommendedMenu, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="営業時間" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding OpeningHours, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="定休日" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ClosedDay, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="評価" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding Rating, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-
                         <TextBlock Text="住所" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="60" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
-
                         <TextBlock Text="位置" Margin="0,16,0,5" Foreground="#FF765E55" />
                         <Border Background="#FFFFF5EE" CornerRadius="10" Padding="12">
                             <StackPanel>
@@ -62,13 +52,11 @@
                         </Border>
                     </StackPanel>
                 </Border>
-
                 <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="10" BorderBrush="#FFE8D8CF" BorderThickness="1">
                     <mapsui:MapControl x:Name="EditMapControl" />
                 </Border>
             </Grid>
         </ScrollViewer>
-
         <Border Grid.Row="2" Background="White" BorderBrush="#FFE8D8CF" BorderThickness="0,1,0,0" Padding="18">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="キャンセル" Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,8,0" />
