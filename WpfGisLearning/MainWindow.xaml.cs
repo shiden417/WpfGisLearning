@@ -8,12 +8,11 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
-using WpfBrush = System.Windows.Media.Brush;
-using WpfPen = System.Windows.Media.Pen;
 
 namespace WpfGisLearning;
 
@@ -191,8 +190,8 @@ public partial class MainWindow : Window
         {
             SymbolType = SymbolType.Ellipse,
             SymbolScale = 1.15,
-            Fill = new WpfBrush(Mapsui.Styles.Color.FromString("#4A90E2")),
-            Outline = new WpfPen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3)
+            Fill = new Mapsui.Styles.Brush(Mapsui.Styles.Color.FromString("#4A90E2")),
+            Outline = new Mapsui.Styles.Pen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3)
         });
         _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" };
         _currentLocationLayer.Features = new[] { feature };
