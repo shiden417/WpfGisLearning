@@ -9,23 +9,19 @@ namespace WpfGisLearning.Services;
 public class NewsService
 {
     private const string FeedBaseUrl = "https://news.google.com/rss/search";
-    private static readonly HttpClient HttpClient = new()
-    {
-        Timeout = TimeSpan.FromSeconds(10)
-    };
+    private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
 
     public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(DateTime date, CancellationToken cancellationToken = default)
     {
-        var nextDate = date.Date.AddDays(1);
-        var query = $"ラーメン after:{date:yyyy-MM-dd} before:{nextDate:yyyy-MM-dd}";
+        var start = new DateTimeOffset(date.Date, TimeSpan.FromHours(9));
+        var end = start.AddDays(1);
+        var query = $"ラーメン after:{start:yyyy-MM-dd} before:{end:yyyy-MM-dd}";
         var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
         request.Headers.UserAgent.ParseAdd("Ramenia/1.0");
-
         using var response = await HttpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
-
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
 
@@ -46,7 +42,6 @@ public class NewsService
         var publishedText = item.Element("pubDate")?.Value?.Trim();
         var description = item.Element("description")?.Value ?? string.Empty;
         var source = item.Element("source")?.Value?.Trim();
-
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link)) return null;
         if (!DateTimeOffset.TryParse(publishedText, out var publishedAt)) return null;
 
@@ -56,15 +51,11 @@ public class NewsService
 
         return new NewsItem
         {
-            Id = link,
-            Title = cleanTitle,
-            Summary = CleanDescription(description),
-            Category = DetectCategory(cleanTitle),
-            Region = DetectRegion(cleanTitle),
+            Id = link, Title = cleanTitle, Summary = CleanDescription(description),
+            Category = DetectCategory(cleanTitle), Region = DetectRegion(cleanTitle),
             PublishedAt = publishedAt.LocalDateTime,
             SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
-            SourceUrl = link,
-            IsFeatured = false
+            SourceUrl = link
         };
     }
 
