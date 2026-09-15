@@ -54,12 +54,41 @@ public class NewsService
 
         return new NewsItem
         {
-            Id = link, Title = cleanTitle, Summary = CleanDescription(description),
-            Category = DetectCategory(cleanTitle), Region = DetectRegion(cleanTitle),
+            Id = link,
+            Title = cleanTitle,
+            Summary = CleanDescription(description),
+            Category = DetectCategory(cleanTitle),
+            Region = DetectRegion(cleanTitle),
             PublishedAt = localPublishedAt.DateTime,
+            ImageUrl = ExtractImageUrl(item, description),
             SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
             SourceUrl = link
         };
+    }
+
+    private static string ExtractImageUrl(XElement item, string description)
+    {
+        // RSS に media:content / media:thumbnail / enclosure があれば優先して利用する。
+        var mediaImage = item.Elements()
+            .Where(x => x.Name.LocalName is "content" or "thumbnail")
+            .Select(x => x.Attribute("url")?.Value?.Trim())
+            .FirstOrDefault(x => IsImageUrl(x));
+
+        if (IsImageUrl(mediaImage)) return mediaImage!;
+
+        var enclosureImage = item.Element("enclosure")?.Attribute("url")?.Value?.Trim();
+        if (IsImageUrl(enclosureImage)) return enclosureImage!;
+
+        // フィードによっては description 内の <img src="..."> に画像が入る。
+        var match = Regex.Match(description, @"<img[^>]+src=[\"'](?<url>[^\"']+)[\"']", RegexOptions.IgnoreCase);
+        var descriptionImage = match.Success ? WebUtility.HtmlDecode(match.Groups["url"].Value.Trim()) : string.Empty;
+        return IsImageUrl(descriptionImage) ? descriptionImage : string.Empty;
+    }
+
+    private static bool IsImageUrl(string? url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
     private static string CleanDescription(string html)
