@@ -69,7 +69,7 @@ public partial class MainWindow : Window
         var features = new List<IFeature>(); _minLon = double.MaxValue; _maxLon = double.MinValue; _minLat = double.MaxValue; _maxLat = double.MinValue; _hasValidCoords = false;
         foreach (var shop in _shopService.GetShops())
         {
-            if (!IsValidCoordinate(shop.Latitude, shop.Longitude)) continue;
+            if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude)) continue;
             _hasValidCoords = true; _minLon = Math.Min(_minLon, shop.Longitude); _maxLon = Math.Max(_maxLon, shop.Longitude); _minLat = Math.Min(_minLat, shop.Latitude); _maxLat = Math.Max(_maxLat, shop.Latitude); features.Add(CreateShopFeature(shop, shop.Id == _selectedShopId));
         }
         _shopLayer = new MemoryLayer { Name = "Shops", Features = features }; var oldLayer = _map.Layers.FirstOrDefault(layer => layer.Name == "Shops"); if (oldLayer is not null) _map.Layers.Remove(oldLayer); _map.Layers.Add(_shopLayer); MapControl.Refresh();
@@ -90,7 +90,7 @@ public partial class MainWindow : Window
     }
 
     private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e) => RebuildShopLayer();
-    private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop) { _selectedShopId = shop?.Id; RebuildShopLayer(); if (shop is null || _map is null || !IsValidCoordinate(shop.Latitude, shop.Longitude)) return; ShowInfoCard(shop); }
+    private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop) { _selectedShopId = shop?.Id; RebuildShopLayer(); if (shop is null || _map is null || !MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude)) return; ShowInfoCard(shop); }
 
     private void MapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
     {
@@ -102,8 +102,6 @@ public partial class MainWindow : Window
     {
         var point = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint(); var feature = new PointFeature(point); feature["Name"] = shop.Name; feature["Address"] = shop.Address; feature["Id"] = shop.Id; feature.Styles.Add(ImageStyles.CreatePinStyle(Mapsui.Styles.Color.FromString(selected ? "#C56B4D" : "#343A40"), Mapsui.Styles.Color.FromString("#343A40"), selected ? 1.4 : 1.15)); return feature;
     }
-
-    private static bool IsValidCoordinate(double lat, double lon) => !double.IsNaN(lat) && !double.IsNaN(lon) && !double.IsInfinity(lat) && !double.IsInfinity(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 && !(lat == 0 && lon == 0);
 
     private void ShowInfoCard(Shop shop)
     {
@@ -118,7 +116,7 @@ public partial class MainWindow : Window
         {
             var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync(); if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed) { if (showMessageOnFailure) MessageBox.Show("現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); return; }
             var position = await new Windows.Devices.Geolocation.Geolocator { DesiredAccuracyInMeters = 50 }.GetGeopositionAsync(); var latitude = position.Coordinate.Point.Position.Latitude; var longitude = position.Coordinate.Point.Position.Longitude;
-            if (_map is null || !IsValidCoordinate(latitude, longitude)) return; if (filterNearby) _shopListViewModel.SetNearbyLocation(latitude, longitude); ShowCurrentLocation(latitude, longitude); _map.Navigator.CenterOn(SphericalMercator.FromLonLat(longitude, latitude).ToMPoint());
+            if (_map is null || !MapCoordinateValidator.IsValid(latitude, longitude)) return; if (filterNearby) _shopListViewModel.SetNearbyLocation(latitude, longitude); ShowCurrentLocation(latitude, longitude); _map.Navigator.CenterOn(SphericalMercator.FromLonLat(longitude, latitude).ToMPoint());
         }
         catch (Exception ex) { MapStatusText.Text = $"現在地を取得できませんでした。\n{ex.Message}"; MapStatusText.Visibility = Visibility.Visible; if (showMessageOnFailure) MessageBox.Show($"現在地を取得できませんでした。\n{ex.Message}", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); }
     }
