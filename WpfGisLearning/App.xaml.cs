@@ -29,6 +29,7 @@ public partial class App : Application
         services.AddTransient<Views.DetailPage>();
         services.AddTransient<NewsView>();
         services.AddTransient<NewsViewModel>();
+        services.AddSingleton<NewsService>();
         services.AddSingleton<IShopService, ShopService>();
         services.AddSingleton<IPhotoService, PhotoService>();
         _serviceProvider = services.BuildServiceProvider();
