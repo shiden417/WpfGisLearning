@@ -4,45 +4,30 @@ using System.Windows.Input;
 using WpfGisLearning.Models;
 using WpfGisLearning.ViewModels;
 
-namespace WpfGisLearning.Views
+namespace WpfGisLearning.Views;
+
+public partial class ShopListView : UserControl
 {
-    public partial class ShopListView : UserControl
+    public ShopListView(ShopListViewModel viewModel)
     {
-        public ShopListView(ShopListViewModel viewModel)
-        {
-            InitializeComponent();
-            DataContext = viewModel;
-        }
+        InitializeComponent();
+        DataContext = viewModel;
+    }
 
-        private void ShopListItem_PreviewMouseDoubleClick(
-            object sender,
-            MouseButtonEventArgs e)
-        {
-            if (sender is not ListBoxItem item)
-            {
-                return;
-            }
+    private void ShopListItem_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not ShopListViewModel viewModel)
+            return;
 
-            if (item.DataContext is not Shop shop)
-            {
-                return;
-            }
+        var item = ItemsControl.ContainerFromElement(
+            (ItemsControl)sender,
+            e.OriginalSource as DependencyObject) as ListBoxItem;
 
-            var viewModel = DataContext as ShopListViewModel;
+        if (item?.DataContext is not Shop shop)
+            return;
 
-            if (viewModel is null)
-            {
-                return;
-            }
-
-            viewModel.SelectedShop = shop;
-
-            if (viewModel.OpenSelectedShopCommand.CanExecute(null))
-            {
-                viewModel.OpenSelectedShopCommand.Execute(null);
-            }
-
-            e.Handled = true;
-        }
+        viewModel.SelectedShop = shop;
+        viewModel.OpenSelectedShopCommand.Execute(null);
+        e.Handled = true;
     }
 }
