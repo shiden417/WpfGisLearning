@@ -19,6 +19,8 @@ public partial class ShopListViewModel : ObservableObject
 
     public ObservableCollection<Shop> Shops { get; } = new();
     public ICollectionView ShopsView { get; }
+    public int FilteredShopCount => ShopsView.Cast<Shop>().Count();
+
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
     private double? _nearbyLatitude;
@@ -51,15 +53,21 @@ public partial class ShopListViewModel : ObservableObject
         ShopsView.Filter = FilterShop;
     }
 
-    partial void OnSearchKeywordChanged(string value) => ShopsView.Refresh();
-    partial void OnSelectedRamenTypeChanged(string value) => ShopsView.Refresh();
-    partial void OnSelectedPriceFilterChanged(string value) => ShopsView.Refresh();
-    partial void OnSelectedNearbyRadiusChanged(string value) => ShopsView.Refresh();
-    partial void OnFavoriteOnlyChanged(bool value) => ShopsView.Refresh();
-    partial void OnNearbyOnlyChanged(bool value) => ShopsView.Refresh();
+    partial void OnSearchKeywordChanged(string value) => RefreshFilteredShops();
+    partial void OnSelectedRamenTypeChanged(string value) => RefreshFilteredShops();
+    partial void OnSelectedPriceFilterChanged(string value) => RefreshFilteredShops();
+    partial void OnSelectedNearbyRadiusChanged(string value) => RefreshFilteredShops();
+    partial void OnFavoriteOnlyChanged(bool value) => RefreshFilteredShops();
+    partial void OnNearbyOnlyChanged(bool value) => RefreshFilteredShops();
     partial void OnSortByNameChanged(bool value) => ApplySort();
     partial void OnSortByPriceChanged(bool value) => ApplySort();
     partial void OnSortByRatingChanged(bool value) => ApplySort();
+
+    private void RefreshFilteredShops()
+    {
+        ShopsView.Refresh();
+        OnPropertyChanged(nameof(FilteredShopCount));
+    }
 
     private void ApplySort()
     {
@@ -70,7 +78,8 @@ public partial class ShopListViewModel : ObservableObject
             ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
         if (SortByName)
             ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending));
-        ShopsView.Refresh();
+
+        RefreshFilteredShops();
     }
 
     private bool FilterShop(object item)
@@ -188,7 +197,7 @@ public partial class ShopListViewModel : ObservableObject
             return;
 
         _shopService.ToggleFavorite(shop.Id);
-        ShopsView.Refresh();
+        RefreshFilteredShops();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -230,7 +239,7 @@ public partial class ShopListViewModel : ObservableObject
         _nearbyLatitude = latitude;
         _nearbyLongitude = longitude;
         NearbyOnly = true;
-        ShopsView.Refresh();
+        RefreshFilteredShops();
     }
 
     public void SelectShopById(int shopId)
@@ -246,7 +255,6 @@ public partial class ShopListViewModel : ObservableObject
     {
         ReloadShops();
         ApplySort();
-        ShopsView.Refresh();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 }
