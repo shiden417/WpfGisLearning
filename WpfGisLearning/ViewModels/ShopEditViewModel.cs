@@ -33,8 +33,14 @@ public partial class ShopEditViewModel : ObservableObject
         ShopId = shopId;
         _isEdit = shopId.HasValue;
         OnPropertyChanged(nameof(ScreenTitle));
+
         if (!shopId.HasValue)
+        {
+            // 新規登録は日本全体を見渡せる初期地図の中央付近にマーカーを置く。
+            ShopLatitude = 36.0;
+            ShopLongitude = 138.0;
             return;
+        }
 
         var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value);
         if (shop is null)
