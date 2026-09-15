@@ -17,46 +17,32 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
 
     public ICollectionView ShopsView { get; }
 
-    public ShopListViewModel(
-        IShopService shopService,
-        INavigationService navigationService)
+    public ShopListViewModel(IShopService shopService, INavigationService navigationService)
     {
         _shopService = shopService;
         _navigationService = navigationService;
 
-        foreach (var s in _shopService.GetShops())
+        foreach (var shop in _shopService.GetShops())
         {
-            Shops.Add(s);
+            Shops.Add(shop);
         }
 
         ShopsView = CollectionViewSource.GetDefaultView(Shops);
+        ShopsView.Filter = FilterShop;
     }
 
     private readonly Dictionary<string, List<string>> _errors = new();
 
     public bool HasErrors => _errors.Any();
-
     public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
-
     public event EventHandler? LocationSelectionRequested;
-
     public event EventHandler<Shop>? ShopAdded;
-
     public event EventHandler<Shop?>? SelectedShopChanged;
 
     public System.Collections.IEnumerable? GetErrors(string? propertyName)
     {
-        if (string.IsNullOrEmpty(propertyName))
-        {
-            return null;
-        }
-
-        if (_errors.TryGetValue(propertyName, out var list))
-        {
-            return list;
-        }
-
-        return null;
+        if (string.IsNullOrEmpty(propertyName)) return null;
+        return _errors.TryGetValue(propertyName, out var list) ? list : null;
     }
 
     private void AddError(string propertyName, string error)
@@ -70,9 +56,7 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         if (!list.Contains(error))
         {
             list.Add(error);
-            ErrorsChanged?.Invoke(
-                this,
-                new DataErrorsChangedEventArgs(propertyName));
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
         }
     }
 
@@ -80,9 +64,7 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     {
         if (_errors.Remove(propertyName))
         {
-            ErrorsChanged?.Invoke(
-                this,
-                new DataErrorsChangedEventArgs(propertyName));
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
         }
     }
 
@@ -90,7 +72,7 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     private string newShopName = string.Empty;
 
     [ObservableProperty]
-    private decimal newShopPrice = 0m;
+    private decimal newShopPrice;
 
     [ObservableProperty]
     private double? newShopLatitude;
@@ -98,44 +80,37 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     [ObservableProperty]
     private double? newShopLongitude;
 
-    partial void OnNewShopNameChanged(string value)
-    {
-        ValidateNewShopName();
-    }
+    [ObservableProperty]
+    private string searchKeyword = string.Empty;
 
-    partial void OnNewShopPriceChanged(decimal value)
-    {
-        ValidateNewShopPrice();
-    }
+    partial void OnSearchKeywordChanged(string value) => ShopsView.Refresh();
+    partial void OnNewShopNameChanged(string value) => ValidateNewShopName();
+    partial void OnNewShopPriceChanged(decimal value) => ValidateNewShopPrice();
+    partial void OnNewShopLatitudeChanged(double? value) => ValidateNewShopLocation();
+    partial void OnNewShopLongitudeChanged(double? value) => ValidateNewShopLocation();
 
-    partial void OnNewShopLatitudeChanged(double? value)
+    private bool FilterShop(object item)
     {
-        ValidateNewShopLocation();
-    }
+        if (item is not Shop shop) return false;
+        if (string.IsNullOrWhiteSpace(SearchKeyword)) return true;
 
-    partial void OnNewShopLongitudeChanged(double? value)
-    {
-        ValidateNewShopLocation();
+        var keyword = SearchKeyword.Trim();
+        return shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+            || shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase);
     }
 
     private void ValidateNewShopName()
     {
         ClearErrors(nameof(NewShopName));
-
         if (string.IsNullOrWhiteSpace(NewShopName))
-        {
             AddError(nameof(NewShopName), "店舗名は必須です。");
-        }
     }
 
     private void ValidateNewShopPrice()
     {
         ClearErrors(nameof(NewShopPrice));
-
         if (NewShopPrice <= 0m)
-        {
             AddError(nameof(NewShopPrice), "価格は0より大きい値を入力してください。");
-        }
     }
 
     private void ValidateNewShopLocation()
@@ -150,21 +125,14 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         if (NewShopLatitude is < -90 or > 90)
-        {
             AddError(nameof(NewShopLatitude), "緯度が不正です。");
-        }
 
         if (NewShopLongitude is < -180 or > 180)
-        {
             AddError(nameof(NewShopLongitude), "経度が不正です。");
-        }
     }
 
     [RelayCommand]
-    private void SelectLocation()
-    {
-        LocationSelectionRequested?.Invoke(this, EventArgs.Empty);
-    }
+    private void SelectLocation() => LocationSelectionRequested?.Invoke(this, EventArgs.Empty);
 
     public void SetNewShopLocation(double latitude, double longitude)
     {
@@ -179,24 +147,19 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         ValidateNewShopPrice();
         ValidateNewShopLocation();
 
-        if (HasErrors || !NewShopLatitude.HasValue || !NewShopLongitude.HasValue)
-        {
-            return;
-        }
+        if (HasErrors || !NewShopLatitude.HasValue || !NewShopLongitude.HasValue) return;
 
-        var nextId = Shops.Any()
-            ? Shops.Max(s => s.Id) + 1
-            : 1;
-
+        var nextId = Shops.Any() ? Shops.Max(s => s.Id) + 1 : 1;
         var shop = new Shop
         {
             Id = nextId,
-            Name = NewShopName,
+            Name = NewShopName.Trim(),
             Price = NewShopPrice,
             Latitude = NewShopLatitude.Value,
             Longitude = NewShopLongitude.Value
         };
 
+        _shopService.AddShop(shop);
         Shops.Add(shop);
         ShopAdded?.Invoke(this, shop);
 
@@ -210,58 +173,36 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     [ObservableProperty]
     private Shop? selectedShop;
 
-    partial void OnSelectedShopChanged(Shop? value)
-    {
-        SelectedShopChanged?.Invoke(this, value);
-    }
+    partial void OnSelectedShopChanged(Shop? value) => SelectedShopChanged?.Invoke(this, value);
 
-    // 地図など外部のUIから店舗を選択するための入口
     public void SelectShopById(int shopId)
     {
         var shop = Shops.FirstOrDefault(s => s.Id == shopId);
-
-        if (shop is not null)
-        {
-            SelectedShop = shop;
-        }
+        if (shop is not null) SelectedShop = shop;
     }
 
     [RelayCommand]
     private void OpenSelectedShop()
     {
-        if (SelectedShop is null)
-        {
-            return;
-        }
-
-        _navigationService.NavigateToDetail(SelectedShop.Id);
+        if (SelectedShop is not null) _navigationService.NavigateToDetail(SelectedShop.Id);
     }
 
     [RelayCommand]
-    private void SortPriceAsc()
-    {
-        if (ShopsView == null)
-        {
-            return;
-        }
-
-        ShopsView.SortDescriptions.Clear();
-        ShopsView.SortDescriptions.Add(
-            new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
-        ShopsView.Refresh();
-    }
+    private void SortPriceAsc() => ApplySort(nameof(Shop.Price), ListSortDirection.Ascending);
 
     [RelayCommand]
-    private void SortPriceDesc()
-    {
-        if (ShopsView == null)
-        {
-            return;
-        }
+    private void SortPriceDesc() => ApplySort(nameof(Shop.Price), ListSortDirection.Descending);
 
+    [RelayCommand]
+    private void SortNameAsc() => ApplySort(nameof(Shop.Name), ListSortDirection.Ascending);
+
+    [RelayCommand]
+    private void SortNameDesc() => ApplySort(nameof(Shop.Name), ListSortDirection.Descending);
+
+    private void ApplySort(string propertyName, ListSortDirection direction)
+    {
         ShopsView.SortDescriptions.Clear();
-        ShopsView.SortDescriptions.Add(
-            new SortDescription(nameof(Shop.Price), ListSortDirection.Descending));
+        ShopsView.SortDescriptions.Add(new SortDescription(propertyName, direction));
         ShopsView.Refresh();
     }
 }
