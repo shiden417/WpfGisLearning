@@ -79,7 +79,6 @@ public partial class MainWindow : Window
         MainArea.Visibility = Visibility.Collapsed;
         NewsContent.Content = _newsView;
         NewsContent.Visibility = Visibility.Visible;
-        HeaderSubtitle.Text = "ラーメンの最新情報";
     }
 
     private void ShopMapButton_Click(object sender, RoutedEventArgs e) => ShowShopMap();
@@ -91,7 +90,6 @@ public partial class MainWindow : Window
         NewsContent.Visibility = Visibility.Collapsed;
         NewsContent.Content = null;
         MainArea.Visibility = Visibility.Visible;
-        HeaderSubtitle.Text = "お気に入りのラーメン店を地図から探そう";
     }
 
     private void InitializeMap()
