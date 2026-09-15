@@ -4,7 +4,7 @@
              xmlns:models="clr-namespace:WpfGisLearning.Models">
     <UserControl.Resources>
         <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Padding" Value="14,8" />
+            <Setter Property="Padding" Value="12,7" />
             <Setter Property="Margin" Value="0,0,6,0" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -18,10 +18,26 @@
             <Setter Property="BorderBrush" Value="#FFE9DED8" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
+
+        <Style x:Key="FavoriteButton" TargetType="Button">
+            <Setter Property="Content" Value="☆" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="Foreground" Value="#FFB83D2E" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                    <Setter Property="Content" Value="★" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FFF9F4EF" Margin="0">
+    <Grid Background="#FFF9F4EF">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -35,49 +51,44 @@
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="店舗を探す" FontSize="24" FontWeight="Bold" Foreground="#FF332925" />
-                <TextBlock Text="名前や住所からラーメン店を検索できます" FontSize="12" Foreground="#FF8A7568" Margin="0,4,0,0" />
+                <TextBlock Text="名前・住所・種類からラーメン店を検索できます" FontSize="12" Foreground="#FF8A7568" Margin="0,4,0,0" />
             </StackPanel>
             <Button Grid.Column="1" Content="＋ 店舗を登録" Command="{Binding NewShopCommand}" Background="#FFB83D2E" Foreground="White" BorderThickness="0" Padding="16,10" FontWeight="Bold" />
         </Grid>
 
-        <Border Grid.Row="1" Background="White" CornerRadius="14" Padding="12" Margin="8,0,8,14" BorderBrush="#FFE9DED8" BorderThickness="1">
+        <Border Grid.Row="1" Background="White" CornerRadius="14" Padding="12" Margin="8,0,8,8" BorderBrush="#FFE9DED8" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="170" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="130" />
                 </Grid.ColumnDefinitions>
-
                 <Grid Grid.Column="0">
                     <TextBlock Text="🔍" FontSize="16" VerticalAlignment="Center" Margin="4,0,8,0" />
-                    <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36"
-                             Padding="30,6,8,6"
-                             BorderThickness="0"
-                             Background="#FFF7F2EE"
-                             VerticalContentAlignment="Center" />
+                    <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="36" Padding="30,6,8,6" BorderThickness="0" Background="#FFF7F2EE" VerticalContentAlignment="Center" />
                 </Grid>
-
-                <ComboBox Grid.Column="1"
-                          ItemsSource="{Binding SortOptions}"
-                          SelectedItem="{Binding SelectedSort, Mode=TwoWay}"
-                          Height="36"
-                          Margin="10,0,0,0"
-                          Padding="8,4" />
-
-                <Button Grid.Column="2"
-                        Content="クリア"
-                        Command="{Binding ClearSearchCommand}"
-                        Padding="10,7"
-                        Margin="8,0,0,0" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort, Mode=TwoWay}" Height="36" Margin="10,0,0,0" Padding="8,4" />
+                <Button Grid.Column="2" Content="条件をクリア" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" />
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="8,0">
-            <ListBox ItemsSource="{Binding ShopsView}"
-                     SelectedItem="{Binding SelectedShop, Mode=TwoWay}"
-                     Background="Transparent"
-                     BorderThickness="0">
+        <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="10" Margin="8,0,8,10" BorderBrush="#FFE9DED8" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Height="34" Padding="8,4" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Height="34" Margin="8,0,0,0" Padding="8,4" />
+                <CheckBox Grid.Column="2" Content="お気に入りのみ" IsChecked="{Binding FavoriteOnly}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                <TextBlock Grid.Column="3" Text="種類 / 価格" Foreground="#FF8A7568" VerticalAlignment="Center" Margin="12,0,4,0" />
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="8,0">
+            <ListBox ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Shop}">
                         <Border Style="{StaticResource ShopCard}">
@@ -88,10 +99,17 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
                                     <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="Bold" Foreground="#FF332925" />
-                                    <TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="#FF7D6B63" Margin="0,6,0,0" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                        <Border Background="#FFFFF0E6" CornerRadius="6" Padding="7,3">
+                                            <TextBlock Text="{Binding RamenType}" FontSize="11" Foreground="#FF9F3D2E" FontWeight="SemiBold" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Rating, StringFormat=★ {0:F1}}" FontSize="12" Foreground="#FFB83D2E" Margin="8,3,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="#FF7D6B63" Margin="0,7,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding RecommendedMenu, TargetNullValue=おすすめ未登録}" FontSize="12" Foreground="#FF6F5B53" Margin="0,5,0,0" TextWrapping="Wrap" />
                                     <TextBlock Text="{Binding Price, StringFormat=¥{0:N0}}" FontSize="15" FontWeight="Bold" Foreground="#FFB83D2E" Margin="0,8,0,0" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="1" Text="🍜" FontSize="24" VerticalAlignment="Center" Margin="12,0,4,0" />
+                                <Button Grid.Column="1" Style="{StaticResource FavoriteButton}" Command="{Binding DataContext.ToggleSelectedFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -99,10 +117,12 @@
             </ListBox>
         </ScrollViewer>
 
-        <Border Grid.Row="3" Background="White" BorderBrush="#FFE9DED8" BorderThickness="0,1,0,0" Padding="10,8">
+        <Border Grid.Row="4" Background="White" BorderBrush="#FFE9DED8" BorderThickness="0,1,0,0" Padding="10,8">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource ActionButton}" Content="お気に入り切替" Command="{Binding ToggleSelectedFavoriteCommand}" />
                 <Button Style="{StaticResource ActionButton}" Content="詳細を見る" Command="{Binding OpenSelectedShopCommand}" />
                 <Button Style="{StaticResource ActionButton}" Content="編集" Command="{Binding EditSelectedShopCommand}" Background="#FFF28C28" Foreground="White" BorderThickness="0" />
+                <Button Style="{StaticResource ActionButton}" Content="削除" Command="{Binding DeleteSelectedShopCommand}" Background="#FF8D3B32" Foreground="White" BorderThickness="0" />
             </StackPanel>
         </Border>
     </Grid>
