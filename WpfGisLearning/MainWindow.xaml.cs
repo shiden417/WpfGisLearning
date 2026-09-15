@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using WpfGisLearning.Models;
+using WpfGisLearning.Services;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
 
@@ -17,23 +18,24 @@ public partial class MainWindow : Window
 {
     private Mapsui.Map? _map;
     private MemoryLayer? _shopLayer;
-    private bool _isSelectingLocation;
-
     private double _minLon = double.MaxValue;
     private double _maxLon = double.MinValue;
     private double _minLat = double.MaxValue;
     private double _maxLat = double.MinValue;
-
     private bool _hasValidCoords;
     private bool _initialMapPositionSet;
+    private int? _selectedShopId;
 
     private readonly ShopListViewModel _shopListViewModel;
+    private readonly IShopService _shopService;
+    private readonly INavigationService _navigationService;
 
     public MainWindow(
         MainViewModel viewModel,
-        Views.ShopListView shopListView,
+        ShopListView shopListView,
         MessageView messageView,
-        Services.IShopService shopService)
+        IShopService shopService,
+        INavigationService navigationService)
     {
         InitializeComponent();
 
@@ -42,84 +44,216 @@ public partial class MainWindow : Window
 
         MainContent.Content = shopListView;
 
-        _shopListViewModel =
-            (ShopListViewModel)shopListView.DataContext;
+        _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
+        _shopService = shopService;
+        _navigationService = navigationService;
 
-        _shopListViewModel.SelectedShopChanged +=
-            ShopListViewModel_SelectedShopChanged;
-        _shopListViewModel.LocationSelectionRequested +=
-            ShopListViewModel_LocationSelectionRequested;
-        _shopListViewModel.ShopAdded +=
-            ShopListViewModel_ShopAdded;
+        _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
+        _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
 
-        CommandBindings.Add(
-            new CommandBinding(
-                AppCommands.SaveCommand,
-                OnSaveExecuted,
-                OnSaveCanExecute));
+        InitializeMap();
+    }
 
+    private void InitializeMap()
+    {
         try
         {
-            var map = new Mapsui.Map();
-            _map = map;
+            _map = new Mapsui.Map();
+            _map.Layers.Add(OpenStreetMap.CreateTileLayer());
+            MapControl.Map = _map;
+            RebuildShopLayer();
 
-            map.Layers.Add(OpenStreetMap.CreateTileLayer());
-
-            var features = new List<IFeature>();
-
-            foreach (var shop in shopService.GetShops())
-            {
-                try
-                {
-                    var lat = shop.Latitude;
-                    var lon = shop.Longitude;
-
-                    if (!IsValidCoordinate(lat, lon))
-                    {
-                        continue;
-                    }
-
-                    var mapPoint = SphericalMercator
-                        .FromLonLat(lon, lat)
-                        .ToMPoint();
-
-                    _hasValidCoords = true;
-
-                    if (lon < _minLon) _minLon = lon;
-                    if (lon > _maxLon) _maxLon = lon;
-                    if (lat < _minLat) _minLat = lat;
-                    if (lat > _maxLat) _maxLat = lat;
-
-                    features.Add(CreateShopFeature(shop));
-                }
-                catch
-                {
-                    // 個々の店舗で問題が発生しても処理を継続
-                }
-            }
-
-            _shopLayer = new MemoryLayer
-            {
-                Name = "Shops",
-                Features = features
-            };
-
-            map.Layers.Add(_shopLayer);
-            MapControl.Map = map;
-
-            MapControl.MouseLeftButtonUp +=
-                MapControl_MouseLeftButtonUp;
-
-            MapControl.Loaded +=
-                MapControl_Loaded;
+            MapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp;
+            MapControl.Loaded += MapControl_Loaded;
         }
         catch
         {
-            // 地図初期化失敗でもアプリの起動を妨げない
+            // 地図初期化に失敗しても一覧画面は利用できるようにする
         }
     }
 
-    private ImageSource CreateRameniaIcon()
+    private void RebuildShopLayer()
+    {
+        if (_map is null)
+            return;
+
+        var features = new List<IFeature>();
+        _minLon = double.MaxValue;
+        _maxLon = double.MinValue;
+        _minLat = double.MaxValue;
+        _maxLat = double.MinValue;
+        _hasValidCoords = false;
+
+        foreach (var shop in _shopService.GetShops())
+        {
+            if (!IsValidCoordinate(shop.Latitude, shop.Longitude))
+                continue;
+
+            _hasValidCoords = true;
+            _minLon = Math.Min(_minLon, shop.Longitude);
+            _maxLon = Math.Max(_maxLon, shop.Longitude);
+            _minLat = Math.Min(_minLat, shop.Latitude);
+            _maxLat = Math.Max(_maxLat, shop.Latitude);
+            features.Add(CreateShopFeature(shop));
+        }
+
+        _shopLayer = new MemoryLayer
+        {
+            Name = "Shops",
+            Features = features
+        };
+
+        var oldLayer = _map.Layers.FirstOrDefault(layer => layer.Name == "Shops");
+        if (oldLayer is not null)
+            _map.Layers.Remove(oldLayer);
+
+        _map.Layers.Add(_shopLayer);
+        MapControl.Refresh();
+    }
+
+    private void MapControl_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_initialMapPositionSet || _map is null || !_hasValidCoords)
+            return;
+
+        if (MapControl.ActualWidth <= 0 || MapControl.ActualHeight <= 0)
+            return;
+
+        try
+        {
+            var centerLon = (_minLon + _maxLon) / 2.0;
+            var centerLat = (_minLat + _maxLat) / 2.0;
+            var center = SphericalMercator.FromLonLat(centerLon, centerLat).ToMPoint();
+
+            double resolution;
+            if (_minLon == _maxLon && _minLat == _maxLat)
+            {
+                resolution = _map.Navigator.Resolutions.Count > 12
+                    ? _map.Navigator.Resolutions[12]
+                    : _map.Navigator.Resolutions[^1];
+            }
+            else
+            {
+                var minMap = SphericalMercator.FromLonLat(_minLon, _minLat).ToMPoint();
+                var maxMap = SphericalMercator.FromLonLat(_maxLon, _maxLat).ToMPoint();
+                var width = Math.Abs(maxMap.X - minMap.X);
+                var height = Math.Abs(maxMap.Y - minMap.Y);
+                resolution = Math.Max(width / MapControl.ActualWidth, height / MapControl.ActualHeight) * 1.2;
+            }
+
+            _map.Navigator.CenterOnAndZoomTo(center, resolution);
+            _initialMapPositionSet = true;
+        }
+        catch
+        {
+            // 初期位置調整に失敗しても起動を妨げない
+        }
+    }
+
+    private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e)
+    {
+        RebuildShopLayer();
+    }
+
+    private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop)
+    {
+        if (shop is null || _map is null || !IsValidCoordinate(shop.Latitude, shop.Longitude))
+            return;
+
+        _selectedShopId = shop.Id;
+        var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
+        var resolution = _map.Navigator.Resolutions.Count > 12
+            ? _map.Navigator.Resolutions[12]
+            : _map.Navigator.Resolutions[^1];
+
+        _map.Navigator.CenterOnAndZoomTo(mapPoint, resolution);
+        ShowInfoCard(shop);
+    }
+
+    private void MapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
+    {
+        try
+        {
+            var pos = e.GetPosition(MapControl);
+            var screenPos = new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y);
+            var mapInfo = MapControl.GetMapInfo(screenPos, MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
+
+            if (mapInfo?.Layer?.Name != "Shops" || mapInfo.Feature is null)
+                return;
+
+            if (mapInfo.Feature["Id"] is not null &&
+                int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId))
+            {
+                _shopListViewModel.SelectShopById(shopId);
+            }
+        }
+        catch
+        {
+            // マーカークリックで例外が発生してもアプリを停止しない
+        }
+    }
+
+    private static IFeature CreateShopFeature(Shop shop)
+    {
+        var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
+        var feature = new PointFeature(mapPoint);
+
+        feature["Name"] = shop.Name;
+        feature["Address"] = shop.Address;
+        feature["Id"] = shop.Id;
+
+        feature.Styles.Add(
+            ImageStyles.CreatePinStyle(
+                Mapsui.Styles.Color.FromString("#B83D2E"),
+                Mapsui.Styles.Color.White,
+                1.15));
+
+        return feature;
+    }
+
+    private static bool IsValidCoordinate(double lat, double lon)
+    {
+        return !double.IsNaN(lat) && !double.IsNaN(lon) &&
+               !double.IsInfinity(lat) && !double.IsInfinity(lon) &&
+               lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 &&
+               !(lat == 0 && lon == 0);
+    }
+
+    private void ShowInfoCard(Shop shop)
+    {
+        InfoCardName.Text = shop.Name;
+        InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
+        InfoCardPrice.Text = $"¥{shop.Price:N0}";
+        InfoCardBorder.Visibility = Visibility.Visible;
+    }
+
+    private void NewShopButton_Click(object sender, RoutedEventArgs e)
+    {
+        _navigationService.NavigateToShopEdit();
+        _shopListViewModel.RefreshFromService();
+    }
+
+    private void InfoCardDetail_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedShopId.HasValue)
+            _navigationService.NavigateToDetail(_selectedShopId.Value);
+    }
+
+    private void InfoCardEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_selectedShopId.HasValue)
+            return;
+
+        _navigationService.NavigateToShopEdit(_selectedShopId.Value);
+        _shopListViewModel.RefreshFromService();
+    }
+
+    private void InfoCardClose_Click(object sender, RoutedEventArgs e)
+    {
+        InfoCardBorder.Visibility = Visibility.Collapsed;
+    }
+
+    private static ImageSource CreateRameniaIcon()
     {
         const int size = 64;
         var visual = new System.Windows.Media.DrawingVisual();
@@ -139,276 +273,13 @@ public partial class MainWindow : Window
                 System.Windows.Media.Brushes.Black,
                 1.0);
 
-            var x = (size - formattedText.Width) / 2;
-            var y = (size - formattedText.Height) / 2;
-
-            context.DrawText(formattedText, new Point(x, y));
+            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
-            size,
-            size,
-            96,
-            96,
-            System.Windows.Media.PixelFormats.Pbgra32);
-
+            size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
         return bitmap;
-    }
-
-    private void MapControl_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (_initialMapPositionSet || _map is null || !_hasValidCoords)
-            return;
-
-        if (MapControl.ActualWidth <= 0 || MapControl.ActualHeight <= 0)
-            return;
-
-        try
-        {
-            var centerLon = (_minLon + _maxLon) / 2.0;
-            var centerLat = (_minLat + _maxLat) / 2.0;
-
-            var center = SphericalMercator
-                .FromLonLat(centerLon, centerLat)
-                .ToMPoint();
-
-            double resolution;
-
-            if (_minLon == _maxLon && _minLat == _maxLat)
-            {
-                resolution = _map.Navigator.Resolutions.Count > 12
-                    ? _map.Navigator.Resolutions[12]
-                    : _map.Navigator.Resolutions[^1];
-            }
-            else
-            {
-                var minMap = SphericalMercator
-                    .FromLonLat(_minLon, _minLat)
-                    .ToMPoint();
-
-                var maxMap = SphericalMercator
-                    .FromLonLat(_maxLon, _maxLat)
-                    .ToMPoint();
-
-                var width = Math.Abs(maxMap.X - minMap.X);
-                var height = Math.Abs(maxMap.Y - minMap.Y);
-                var resX = width / MapControl.ActualWidth;
-                var resY = height / MapControl.ActualHeight;
-
-                resolution = Math.Max(resX, resY) * 1.2;
-
-                if (resolution <= 0 ||
-                    double.IsNaN(resolution) ||
-                    double.IsInfinity(resolution))
-                {
-                    resolution = _map.Navigator.Resolutions.Count > 12
-                        ? _map.Navigator.Resolutions[12]
-                        : _map.Navigator.Resolutions[^1];
-                }
-            }
-
-            _map.Navigator.CenterOnAndZoomTo(center, resolution);
-            _initialMapPositionSet = true;
-        }
-        catch
-        {
-            // 初期表示調整に失敗しても起動を妨げない
-        }
-    }
-
-    private void ShopListViewModel_SelectedShopChanged(
-        object? sender,
-        Shop? shop)
-    {
-        if (shop is null || _map is null)
-            return;
-
-        try
-        {
-            var lat = shop.Latitude;
-            var lon = shop.Longitude;
-
-            if (!IsValidCoordinate(lat, lon))
-                return;
-
-            var mapPoint = SphericalMercator
-                .FromLonLat(lon, lat)
-                .ToMPoint();
-
-            var resolution = _map.Navigator.Resolutions.Count > 12
-                ? _map.Navigator.Resolutions[12]
-                : _map.Navigator.Resolutions[^1];
-
-            _map.Navigator.CenterOnAndZoomTo(mapPoint, resolution);
-            ShowInfoCard(shop);
-        }
-        catch
-        {
-            // 店舗選択時の地図移動に失敗しても動作を妨げない
-        }
-    }
-
-    private void ShopListViewModel_LocationSelectionRequested(
-        object? sender,
-        EventArgs e)
-    {
-        _isSelectingLocation = true;
-    }
-
-    private void ShopListViewModel_ShopAdded(
-        object? sender,
-        Shop shop)
-    {
-        AddShopFeatureToMap(shop);
-        _isSelectingLocation = false;
-    }
-
-    private void MapControl_MouseLeftButtonUp(
-        object? sender,
-        MouseButtonEventArgs e)
-    {
-        try
-        {
-            var pos = e.GetPosition(MapControl);
-            var screenPos = new Mapsui.Manipulations.ScreenPosition(
-                (int)pos.X,
-                (int)pos.Y);
-
-            if (_isSelectingLocation && _map is not null)
-            {
-                var worldPosition = _map.Navigator.Viewport
-                    .ScreenToWorld(screenPos);
-
-                var lonLat = SphericalMercator.ToLonLat(worldPosition);
-                var lon = lonLat.X;
-                var lat = lonLat.Y;
-
-                if (IsValidCoordinate(lat, lon))
-                {
-                    _shopListViewModel.SetNewShopLocation(lat, lon);
-                    _isSelectingLocation = false;
-                }
-
-                return;
-            }
-
-            var mapInfo = MapControl.GetMapInfo(
-                screenPos,
-                MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
-
-            if (mapInfo?.Layer?.Name != "Shops" ||
-                mapInfo.Feature is null)
-            {
-                return;
-            }
-
-            var feature = mapInfo.Feature;
-
-            if (feature["Id"] is not null &&
-                int.TryParse(feature["Id"]?.ToString(), out var shopId))
-            {
-                _shopListViewModel.SelectShopById(shopId);
-            }
-        }
-        catch
-        {
-            // クリック処理で例外が発生しても無視
-        }
-    }
-
-    private void AddShopFeatureToMap(Shop shop)
-    {
-        if (_shopLayer is null || !IsValidCoordinate(shop.Latitude, shop.Longitude))
-            return;
-
-        try
-        {
-            _shopLayer.Features = _shopLayer.Features
-                .Concat(new[] { CreateShopFeature(shop) })
-                .ToList();
-
-            MapControl.Refresh();
-        }
-        catch
-        {
-            // 店舗追加後の地図更新に失敗しても登録自体は維持
-        }
-    }
-
-    private static IFeature CreateShopFeature(Shop shop)
-    {
-        var mapPoint = SphericalMercator
-            .FromLonLat(shop.Longitude, shop.Latitude)
-            .ToMPoint();
-
-        var feature = new PointFeature(mapPoint);
-
-        feature["Name"] = shop.Name;
-        feature["Address"] = shop.Address;
-        feature["Id"] = shop.Id;
-
-        feature.Styles.Add(
-            new Mapsui.Styles.SymbolStyle
-            {
-                SymbolType = SymbolType.Ellipse,
-                Fill = new Mapsui.Styles.Brush(
-                    Mapsui.Styles.Color.FromString("#B4552B")),
-                Outline = new Mapsui.Styles.Pen(
-                    Mapsui.Styles.Color.White,
-                    2),
-                SymbolScale = 1.5
-            });
-
-        return feature;
-    }
-
-    private static bool IsValidCoordinate(double lat, double lon)
-    {
-        return !double.IsNaN(lat) &&
-               !double.IsNaN(lon) &&
-               !double.IsInfinity(lat) &&
-               !double.IsInfinity(lon) &&
-               lat >= -90 && lat <= 90 &&
-               lon >= -180 && lon <= 180 &&
-               !(lat == 0 && lon == 0);
-    }
-
-    private void ShowInfoCard(Shop shop)
-    {
-        InfoCardName.Text = shop.Name;
-        InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address)
-            ? "住所未登録"
-            : shop.Address;
-        InfoCardPrice.Text = $"¥{shop.Price:N0}";
-        InfoCardLatitude.Text = shop.Latitude.ToString("F6");
-        InfoCardLongitude.Text = shop.Longitude.ToString("F6");
-        InfoCardBorder.Visibility = Visibility.Visible;
-    }
-
-    private void OnSaveCanExecute(
-        object sender,
-        CanExecuteRoutedEventArgs e)
-    {
-        e.CanExecute = true;
-    }
-
-    private void OnSaveExecuted(
-        object sender,
-        ExecutedRoutedEventArgs e)
-    {
-        MessageBox.Show(
-            "保存しました",
-            "Save",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
-    }
-
-    private void InfoCardClose_Click(
-        object sender,
-        RoutedEventArgs e)
-    {
-        InfoCardBorder.Visibility = Visibility.Collapsed;
     }
 }
