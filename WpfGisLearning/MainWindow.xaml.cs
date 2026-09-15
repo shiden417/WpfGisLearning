@@ -45,7 +45,6 @@ public partial class MainWindow : Window
     public MainWindow(
         MainViewModel viewModel,
         ShopListView shopListView,
-        MessageView messageView,
         IShopService shopService,
         INavigationService navigationService,
         ICurrentLocationService currentLocationService,
