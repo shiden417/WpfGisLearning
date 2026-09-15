@@ -19,7 +19,6 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     private const double JapanOverviewLongitude = 138.0;
     private const double JapanOverviewLatitude = 36.0;
     private const long JapanOverviewResolution = 6000;
-    private const double LocationMarkerScale = 1.15;
     private const long ZoomAmount = 500;
 
     private readonly ShopEditViewModel _viewModel;
@@ -222,10 +221,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             .FromLonLat(longitude, latitude)
             .ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString("#C56B4D"),
-            Mapsui.Styles.Color.FromString("#343A40"),
-            LocationMarkerScale));
+        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: true));
 
         if (_locationLayer is not null)
         {
