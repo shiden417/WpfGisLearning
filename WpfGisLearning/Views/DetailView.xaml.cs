@@ -14,12 +14,14 @@ public partial class DetailView : System.Windows.Controls.UserControl
 {
     private readonly DetailViewModel _viewModel;
     private readonly INavigationService _navigationService;
+    private readonly IShopService _shopService;
 
-    public DetailView(DetailViewModel viewModel, INavigationService navigationService)
+    public DetailView(DetailViewModel viewModel, INavigationService navigationService, IShopService shopService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _navigationService = navigationService;
+        _shopService = shopService;
         DataContext = viewModel;
         InitializeMap(viewModel);
     }
@@ -33,16 +35,12 @@ public partial class DetailView : System.Windows.Controls.UserControl
         if (viewModel.Shop is null || !IsValidCoordinate(viewModel.Shop.Latitude, viewModel.Shop.Longitude))
             return;
 
-        var point = SphericalMercator
-            .FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude)
-            .ToMPoint();
-
+        var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(
-            ImageStyles.CreatePinStyle(
-                Mapsui.Styles.Color.FromString("#B83D2E"),
-                Mapsui.Styles.Color.White,
-                1.15));
+        feature.Styles.Add(ImageStyles.CreatePinStyle(
+            Mapsui.Styles.Color.FromString("#B83D2E"),
+            Mapsui.Styles.Color.White,
+            1.15));
 
         map.Layers.Add(new MemoryLayer
         {
@@ -59,6 +57,24 @@ public partial class DetailView : System.Windows.Controls.UserControl
             return;
 
         _navigationService.NavigateToShopEdit(_viewModel.Shop.Id);
+        Window.GetWindow(this)?.Close();
+    }
+
+    private void DeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Shop is null)
+            return;
+
+        var result = MessageBox.Show(
+            $"「{_viewModel.Shop.Name}」を削除しますか？",
+            "店舗削除の確認",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        _shopService.DeleteShop(_viewModel.Shop.Id);
         Window.GetWindow(this)?.Close();
     }
 
