@@ -51,6 +51,7 @@ public static class ShopMapLayerBuilder
         var layer = new MemoryLayer
         {
             Name = LayerName,
+            Style = null,
             Features = features
         };
 
