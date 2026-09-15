@@ -2,8 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows.Data;
 using System.Windows;
+using System.Windows.Data;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
@@ -142,12 +142,13 @@ public partial class ShopListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleSelectedFavorite()
+    private void ToggleFavorite(Shop? shop)
     {
-        if (SelectedShop is null)
+        shop ??= SelectedShop;
+        if (shop is null)
             return;
 
-        _shopService.ToggleFavorite(SelectedShop.Id);
+        _shopService.ToggleFavorite(shop.Id);
         ShopsView.Refresh();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
