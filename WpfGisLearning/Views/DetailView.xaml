@@ -67,7 +67,7 @@
                             </Button.Style>
                         </Button>
                     </Grid>
-                    <Border Grid.Row="1" Margin="0,20,0,0" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="12">
+                    <Border Grid.Row="1" Margin="0,20,0,0" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="12" Visibility="{Binding PhotoPaths.Count, Converter={StaticResource PhotoCountVisibilityConverter}}">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                             <ItemsControl ItemsSource="{Binding PhotoPaths}">
                                 <ItemsControl.ItemsPanel>
@@ -78,15 +78,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Width="150" Height="110" Margin="0,0,10,0" CornerRadius="8" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1" Background="#FFEDE8E2">
-                                            <Grid>
-                                                <Image Stretch="UniformToFill" Source="{Binding}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
-                                                <Border Background="#FFE9E3DC" Visibility="{Binding PhotoPaths.Count, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource PhotoCountVisibilityConverter}, ConverterParameter=EmptyOnly}" IsHitTestVisible="False">
-                                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <TextBlock Text="🍜" FontSize="40" HorizontalAlignment="Center" />
-                                                        <TextBlock Text="No Image" FontSize="12" FontWeight="SemiBold" Foreground="#FF77716B" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                                                    </StackPanel>
-                                                </Border>
-                                            </Grid>
+                                            <Image Stretch="UniformToFill" Source="{Binding}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
