@@ -34,10 +34,9 @@ public partial class ShopListViewModel : ObservableObject
     ];
 
     public event EventHandler<Shop?>? SelectedShopChanged;
+    public event EventHandler? ShopsChanged;
 
-    public ShopListViewModel(
-        IShopService shopService,
-        INavigationService navigationService)
+    public ShopListViewModel(IShopService shopService, INavigationService navigationService)
     {
         _shopService = shopService;
         _navigationService = navigationService;
@@ -47,10 +46,7 @@ public partial class ShopListViewModel : ObservableObject
         ShopsView.Filter = FilterShop;
     }
 
-    partial void OnSearchKeywordChanged(string value)
-    {
-        ShopsView.Refresh();
-    }
+    partial void OnSearchKeywordChanged(string value) => ShopsView.Refresh();
 
     partial void OnSelectedSortChanged(string value)
     {
@@ -89,9 +85,7 @@ public partial class ShopListViewModel : ObservableObject
     {
         Shops.Clear();
         foreach (var shop in _shopService.GetShops())
-        {
             Shops.Add(shop);
-        }
     }
 
     [RelayCommand]
@@ -119,10 +113,7 @@ public partial class ShopListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ClearSearch()
-    {
-        SearchKeyword = string.Empty;
-    }
+    private void ClearSearch() => SearchKeyword = string.Empty;
 
     public void SelectShopById(int shopId)
     {
@@ -131,14 +122,12 @@ public partial class ShopListViewModel : ObservableObject
             SelectedShop = shop;
     }
 
-    partial void OnSelectedShopChanged(Shop? value)
-    {
-        SelectedShopChanged?.Invoke(this, value);
-    }
+    partial void OnSelectedShopChanged(Shop? value) => SelectedShopChanged?.Invoke(this, value);
 
     public void RefreshFromService()
     {
         ReloadShops();
         ShopsView.Refresh();
+        ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 }
