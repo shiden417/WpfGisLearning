@@ -53,7 +53,7 @@ public partial class ShopEditViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
         if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
         if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
-        if (ShopLatitude is not double latitude || ShopLongitude is not double longitude || !IsValidCoordinate(latitude, longitude)) LocationError = "有効な緯度・経度を地図上で指定してください。";
+        if (!TryGetValidLocation(out var latitude, out var longitude)) LocationError = "有効な緯度・経度を地図上で指定してください。";
         if (!string.IsNullOrEmpty(ShopNameError) || !string.IsNullOrEmpty(ShopPriceError) || !string.IsNullOrEmpty(RatingError) || !string.IsNullOrEmpty(LocationError)) return;
 
         var existing = ShopId.HasValue ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value) : null;
@@ -69,6 +69,22 @@ public partial class ShopEditViewModel : ObservableObject
         }
         catch (Exception ex) { ErrorMessage = $"店舗を保存できませんでした。\n{ex.Message}"; }
     }
+
+    private bool TryGetValidLocation(out double latitude, out double longitude)
+    {
+        latitude = 0;
+        longitude = 0;
+
+        if (!ShopLatitude.HasValue || !ShopLongitude.HasValue)
+        {
+            return false;
+        }
+
+        latitude = ShopLatitude.Value;
+        longitude = ShopLongitude.Value;
+        return IsValidCoordinate(latitude, longitude);
+    }
+
     private static bool IsValidCoordinate(double latitude, double longitude) => !double.IsNaN(latitude) && !double.IsNaN(longitude) && !double.IsInfinity(latitude) && !double.IsInfinity(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180 && !(latitude == 0 && longitude == 0);
     private void NormalizePhotoOrder() { for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i; OnPropertyChanged(nameof(Photos)); }
     private void ClearErrors() { ErrorMessage = string.Empty; ShopNameError = string.Empty; ShopPriceError = string.Empty; RatingError = string.Empty; LocationError = string.Empty; }
