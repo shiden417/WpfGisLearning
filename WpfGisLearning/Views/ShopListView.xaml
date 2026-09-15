@@ -3,6 +3,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:models="clr-namespace:WpfGisLearning.Models">
     <UserControl.Resources>
+        <Style x:Key="FilterComboBox" TargetType="ComboBox">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="#FFF7F5F2" />
+            <Setter Property="BorderBrush" Value="#FFE0DBD4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
+        <Style x:Key="FilterCheckBox" TargetType="CheckBox">
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="#FF454B50" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
         <Style x:Key="ShopCard" TargetType="Border">
             <Setter Property="Background" Value="White" />
             <Setter Property="CornerRadius" Value="14" />
@@ -20,46 +35,26 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-
         <Style x:Key="ShopListItem" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter /></ControlTemplate></Setter.Value></Setter>
         </Style>
-
         <Style x:Key="FavoriteButton" TargetType="Button">
             <Setter Property="Content" Value="☆" />
             <Setter Property="FontSize" Value="24" />
             <Setter Property="Foreground" Value="#FFB58A3C" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="4" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#FFB58A3C" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Foreground" Value="#FF9B7430" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter Property="Foreground" Value="#FFB58A3C" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Content" Value="★" /></DataTrigger>
-            </Style.Triggers>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" /></ControlTemplate></Setter.Value></Setter>
+            <Style.Triggers><DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Content" Value="★" /></DataTrigger></Style.Triggers>
         </Style>
     </UserControl.Resources>
 
@@ -70,39 +65,45 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="店舗を探す" FontSize="24" FontWeight="Bold" Foreground="#FF252A2F" />
-                <TextBlock Text="名前・住所・種類などからラーメン店を検索できます" FontSize="12" Foreground="#FF747D84" Margin="0,4,0,0" />
+                <TextBlock Text="名前・住所・ジャンルからラーメン店を検索できます" FontSize="12" Foreground="#FF747D84" Margin="0,4,0,0" />
             </StackPanel>
-            <Button Grid.Column="1" Content="＋ 店舗を登録" Command="{Binding NewShopCommand}" Background="#FFC56B4D" Foreground="White" BorderThickness="0" Padding="16,10" FontWeight="Bold" />
+            <Button Grid.Column="1" Content="＋  店舗を登録" Command="{Binding NewShopCommand}" Background="#FFC56B4D" Foreground="White" BorderThickness="0" Padding="18,11" FontWeight="Bold" FocusVisualStyle="{x:Null}" />
         </Grid>
 
         <Border Grid.Row="1" Background="White" CornerRadius="14" Padding="12" Margin="8,0,8,8" BorderBrush="#FFE0DBD4" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <Grid>
-                    <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,6,10,6" BorderThickness="0" Background="#FFF4F2EF" VerticalContentAlignment="Center" />
-                    <TextBlock Text="店舗名・住所・種類・タグ・おすすめメニューで検索" Foreground="#FFA0A6AB" VerticalAlignment="Center" Margin="12,0,8,0" IsHitTestVisible="False">
+                    <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="12,6" BorderThickness="0" Background="#FFF4F2EF" VerticalContentAlignment="Center" FocusVisualStyle="{x:Null}" />
+                    <TextBlock Text="店舗名・住所・ジャンルで検索" Foreground="#FFA0A6AB" VerticalAlignment="Center" Margin="12,0,8,0" IsHitTestVisible="False">
                         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding SearchKeyword}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                     </TextBlock>
                 </Grid>
-                <Button Grid.Column="1" Content="条件をクリア" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" />
+                <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" FocusVisualStyle="{x:Null}" />
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="10" Margin="8,0,8,10" BorderBrush="#FFE0DBD4" BorderThickness="1">
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled">
+        <Border Grid.Row="2" Background="#FFF8F5F1" CornerRadius="14" Padding="12" Margin="8,0,8,10" BorderBrush="#FFE0DBD4" BorderThickness="1">
+            <StackPanel>
+                <Grid Margin="2,0,2,10">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="FILTER" FontSize="11" FontWeight="Bold" Foreground="#FFC56B4D" VerticalAlignment="Center" />
+                        <TextBlock Text="条件で絞り込む" FontSize="12" Foreground="#FF747D84" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="SORT" FontSize="11" FontWeight="Bold" Foreground="#FF747D84" VerticalAlignment="Center" />
+                </Grid>
                 <WrapPanel>
-                    <TextBlock Text="絞り込み" FontWeight="SemiBold" Foreground="#FFC56B4D" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Height="34" Width="110" Padding="8,4" Margin="0,0,8,0" />
-                    <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Height="34" Width="115" Padding="8,4" Margin="0,0,8,0" />
-                    <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" VerticalAlignment="Center" Margin="4,0,12,0" />
-                    <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" VerticalAlignment="Center" Margin="4,0,8,0" />
-                    <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Height="34" Width="90" Padding="8,4" Margin="0,0,14,0" />
-                    <TextBlock Text="並べ替え" FontWeight="SemiBold" Foreground="#FFC56B4D" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <CheckBox Content="価格が安い順" IsChecked="{Binding SortByPrice}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <CheckBox Content="評価が高い順" IsChecked="{Binding SortByRating}" VerticalAlignment="Center" />
+                    <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="116" Margin="0,0,8,8}" />
+                    <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="126" Margin="0,0,8,8}" />
+                    <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="92" Margin="0,0,14,8}" />
+                    <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
                 </WrapPanel>
-            </ScrollViewer>
+            </StackPanel>
         </Border>
 
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="8,0">
@@ -122,9 +123,7 @@
                                         <Border Background="#FFE8EDF1" CornerRadius="6" Padding="7,3"><TextBlock Text="{Binding RamenType}" FontSize="11" Foreground="#FF53616C" FontWeight="SemiBold" /></Border>
                                         <TextBlock Text="{Binding Rating, StringFormat=★ {0:F1}}" FontSize="12" Foreground="#FFB58A3C" Margin="8,3,0,0" />
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Tags, TargetNullValue=タグ未登録, StringFormat=タグ: {0}}" FontSize="11" Foreground="#FF7C858C" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="#FF68727B" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{Binding RecommendedMenu, TargetNullValue=おすすめ未登録}" FontSize="12" Foreground="#FF68727B" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="#FF68727B" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                                     <TextBlock Text="{Binding Price, StringFormat=¥{0:N0}}" FontSize="15" FontWeight="Bold" Foreground="#FFC56B4D" Margin="0,8,0,0" />
                                 </StackPanel>
                                 <Button Grid.Column="1" Style="{StaticResource FavoriteButton}" Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" VerticalAlignment="Top" />
