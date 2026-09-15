@@ -28,10 +28,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     private MemoryLayer? _locationLayer;
     private bool _isDraggingLocation;
 
-    public ShopEditView(
-        ShopEditViewModel viewModel,
-        ICurrentLocationService currentLocationService,
-        IReverseGeocodingService reverseGeocodingService)
+    public ShopEditView(ShopEditViewModel viewModel, ICurrentLocationService currentLocationService, IReverseGeocodingService reverseGeocodingService)
     {
         InitializeComponent();
         _viewModel = viewModel;
@@ -47,96 +44,56 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void AddPhotoButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog
-        {
-            Title = "店舗写真を選択",
-            Filter = "画像ファイル|*.jpg;*.jpeg;*.png;*.webp;*.bmp|すべてのファイル|*.*",
-            Multiselect = true
-        };
-
-        if (dialog.ShowDialog() != true)
-        {
-            return;
-        }
-
-        foreach (var file in dialog.FileNames)
-        {
-            _viewModel.AddPhoto(file);
-        }
+        var dialog = new OpenFileDialog { Title = "店舗写真を選択", Filter = "画像ファイル|*.jpg;*.jpeg;*.png;*.webp;*.bmp|すべてのファイル|*.*", Multiselect = true };
+        if (dialog.ShowDialog() != true) return;
+        foreach (var file in dialog.FileNames) _viewModel.AddPhoto(file);
     }
 
     private void RemovePhotoButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button { Tag: ShopPhoto photo })
-        {
-            _viewModel.RemovePhoto(photo);
-        }
+        if (sender is System.Windows.Controls.Button { Tag: ShopPhoto photo }) _viewModel.RemovePhoto(photo);
     }
 
     private void SetMainPhotoButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button { Tag: ShopPhoto photo })
-        {
-            _viewModel.SetMainPhoto(photo);
-        }
+        if (sender is System.Windows.Controls.Button { Tag: ShopPhoto photo }) _viewModel.SetMainPhoto(photo);
     }
 
     private void ShopEditView_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_map is not null)
-        {
-            return;
-        }
-
+        if (_map is not null) return;
         _map = new Mapsui.Map();
         _map.Layers.Add(OpenStreetMap.CreateTileLayer());
         EditMapControl.Map = _map;
 
-        if (_viewModel.ShopId.HasValue
-            && _viewModel.ShopLatitude.HasValue
-            && _viewModel.ShopLongitude.HasValue)
+        if (_viewModel.ShopId.HasValue && _viewModel.ShopLatitude.HasValue && _viewModel.ShopLongitude.HasValue)
         {
             var latitude = _viewModel.ShopLatitude.Value;
             var longitude = _viewModel.ShopLongitude.Value;
             ShowLocation(latitude, longitude);
-
-            var point = SphericalMercator
-                .FromLonLat(longitude, latitude)
-                .ToMPoint();
+            var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
             _map.Navigator.CenterOnAndZoomTo(point, InitialShopLocationResolution);
             return;
         }
-
         SetJapanOverview();
     }
 
     private void SetJapanOverview()
     {
-        var point = SphericalMercator
-            .FromLonLat(JapanOverviewLongitude, JapanOverviewLatitude)
-            .ToMPoint();
+        var point = SphericalMercator.FromLonLat(JapanOverviewLongitude, JapanOverviewLatitude).ToMPoint();
         _map?.Navigator.CenterOnAndZoomTo(point, JapanOverviewResolution);
     }
 
     private async void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
     {
-        if (_map is null)
-        {
-            return;
-        }
-
+        if (_map is null) return;
         var position = e.GetPosition(EditMapControl);
         if (e.ClickCount == 2)
         {
-            if (SetLocationFromScreen(position.X, position.Y, false))
-            {
-                await UpdateAddressAsync();
-            }
-
+            if (SetLocationFromScreen(position.X, position.Y, false)) await UpdateAddressAsync();
             e.Handled = true;
             return;
         }
-
         if (HasLocationAt(position.X, position.Y))
         {
             _isDraggingLocation = true;
@@ -147,11 +104,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void EditMapControl_PreviewMouseMove(object? sender, MouseEventArgs e)
     {
-        if (!_isDraggingLocation || _map is null)
-        {
-            return;
-        }
-
+        if (!_isDraggingLocation || _map is null) return;
         var position = e.GetPosition(EditMapControl);
         SetLocationFromScreen(position.X, position.Y, false);
         e.Handled = true;
@@ -159,104 +112,52 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private async void EditMapControl_PreviewMouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
     {
-        if (!_isDraggingLocation)
-        {
-            return;
-        }
-
+        if (!_isDraggingLocation) return;
         _isDraggingLocation = false;
         EditMapControl.ReleaseMouseCapture();
-
         var position = e.GetPosition(EditMapControl);
-        if (SetLocationFromScreen(position.X, position.Y, false))
-        {
-            await UpdateAddressAsync();
-        }
-
+        if (SetLocationFromScreen(position.X, position.Y, false)) await UpdateAddressAsync();
         e.Handled = true;
     }
 
     private bool HasLocationAt(double x, double y)
     {
-        if (_locationLayer is null)
-        {
-            return false;
-        }
-
-        var mapInfo = EditMapControl.GetMapInfo(
-            new Mapsui.Manipulations.ScreenPosition((int)x, (int)y),
-            new[] { _locationLayer });
-
+        if (_locationLayer is null) return false;
+        var mapInfo = EditMapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)x, (int)y), new[] { _locationLayer });
         return mapInfo?.Feature is not null;
     }
 
     private bool SetLocationFromScreen(double x, double y, bool recenter)
     {
-        if (_map is null)
-        {
-            return false;
-        }
-
+        if (_map is null) return false;
         var screenPosition = new Mapsui.Manipulations.ScreenPosition((int)x, (int)y);
         var worldPosition = _map.Navigator.Viewport.ScreenToWorld(screenPosition);
         var lonLat = SphericalMercator.ToLonLat(worldPosition);
-
-        if (!_viewModel.TrySetLocation(lonLat.Y, lonLat.X))
-        {
-            return false;
-        }
-
+        if (!_viewModel.TrySetLocation(lonLat.Y, lonLat.X)) return false;
         ShowLocation(lonLat.Y, lonLat.X, recenter);
         return true;
     }
 
     private void ShowLocation(double latitude, double longitude, bool recenter = false)
     {
-        if (_map is null)
-        {
-            return;
-        }
-
-        var point = SphericalMercator
-            .FromLonLat(longitude, latitude)
-            .ToMPoint();
+        if (_map is null) return;
+        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: true));
+        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
 
-        if (_locationLayer is not null)
-        {
-            _map.Layers.Remove(_locationLayer);
-        }
-
-        _locationLayer = new MemoryLayer
-        {
-            Name = "SelectedLocation",
-            Style = null,
-            Features = new[] { feature }
-        };
+        if (_locationLayer is not null) _map.Layers.Remove(_locationLayer);
+        _locationLayer = new MemoryLayer { Name = "SelectedLocation", Style = null, Features = new[] { feature } };
         _map.Layers.Add(_locationLayer);
-
-        if (recenter)
-        {
-            _map.Navigator.CenterOn(point);
-        }
-
+        if (recenter) _map.Navigator.CenterOn(point);
         EditMapControl.Refresh();
     }
 
     private async Task UpdateAddressAsync()
     {
-        if (!_viewModel.ShopLatitude.HasValue || !_viewModel.ShopLongitude.HasValue)
-        {
-            return;
-        }
-
+        if (!_viewModel.ShopLatitude.HasValue || !_viewModel.ShopLongitude.HasValue) return;
         try
         {
-            var address = await _reverseGeocodingService.GetAddressAsync(
-                _viewModel.ShopLatitude.Value,
-                _viewModel.ShopLongitude.Value);
-
+            var address = await _reverseGeocodingService.GetAddressAsync(_viewModel.ShopLatitude.Value, _viewModel.ShopLongitude.Value);
             if (!string.IsNullOrWhiteSpace(address))
             {
                 _viewModel.ShopAddress = address;
@@ -279,7 +180,6 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
                 _viewModel.ErrorMessage = "現在地を取得できませんでした。現在地へのアクセス許可とWindowsの位置情報設定を確認してください。";
                 return;
             }
-
             if (_viewModel.TrySetLocation(location.Latitude, location.Longitude))
             {
                 ShowLocation(location.Latitude, location.Longitude, false);
@@ -292,18 +192,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         }
     }
 
-    private void ZoomInButton_Click(object sender, RoutedEventArgs e)
-    {
-        _map?.Navigator.ZoomIn(ZoomAmount);
-    }
+    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
+    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
 
-    private void ZoomOutButton_Click(object sender, RoutedEventArgs e)
-    {
-        _map?.Navigator.ZoomOut(ZoomAmount);
-    }
-
-    private void ViewModel_RequestClose(object? sender, EventArgs e)
-    {
-        Window.GetWindow(this)?.Close();
-    }
+    private void ViewModel_RequestClose(object? sender, EventArgs e) => Window.GetWindow(this)?.Close();
 }
