@@ -21,9 +21,12 @@ public class NavigationService : INavigationService
         {
             Title = "店舗詳細 - Ramenia",
             Content = view,
-            Width = 760,
-            Height = 820,
+            Width = 1000,
+            Height = 900,
+            MinWidth = 820,
+            MinHeight = 700,
             Owner = Application.Current?.MainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Icon = CreateRameniaIcon()
         };
 
@@ -34,8 +37,6 @@ public class NavigationService : INavigationService
 
     public void NavigateToShopEdit(int? id = null)
     {
-        // VMを先に生成・初期化し、その同じインスタンスをViewへ渡す。
-        // これにより登録時のDI解決エラーと、編集時のデータ未読込を防ぐ。
         var viewModel = _provider.GetRequiredService<ShopEditViewModel>();
         viewModel.Load(id);
         var view = ActivatorUtilities.CreateInstance<ShopEditView>(_provider, viewModel);
