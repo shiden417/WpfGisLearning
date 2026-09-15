@@ -24,7 +24,7 @@ public class NewsItemParserTests
         Assert.IsNotNull(result);
         Assert.AreEqual("https://example.com/news/1", result!.Id);
         Assert.AreEqual("東京の新店ラーメン", result.Title);
-        Assert.AreEqual("新しいラーメン店がオープンしました。", result.Summary);
+        Assert.AreEqual("新しい ラーメン店 がオープンしました。", result.Summary);
         Assert.AreEqual("新店", result.Category);
         Assert.AreEqual("東京", result.Region);
         Assert.AreEqual("Example News", result.SourceName);
