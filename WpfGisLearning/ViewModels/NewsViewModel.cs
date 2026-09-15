@@ -28,7 +28,6 @@ public partial class NewsViewModel : ObservableObject
         _newsService = newsService;
         NewsView = CollectionViewSource.GetDefaultView(News);
         NewsView.Filter = FilterNews;
-        _ = RefreshAsync();
     }
 
     partial void OnSelectedCategoryChanged(string value) => NewsView.Refresh();
