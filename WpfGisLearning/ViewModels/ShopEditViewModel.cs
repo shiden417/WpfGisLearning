@@ -12,7 +12,6 @@ public partial class ShopEditViewModel : ObservableObject
 
     public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
-
     public string[] RamenTypes { get; } = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
 
     [ObservableProperty] private string shopName = string.Empty;
@@ -21,22 +20,19 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private double? shopLatitude;
     [ObservableProperty] private double? shopLongitude;
     [ObservableProperty] private string ramenType = "醤油";
+    [ObservableProperty] private string tags = string.Empty;
     [ObservableProperty] private string recommendedMenu = string.Empty;
     [ObservableProperty] private string openingHours = string.Empty;
     [ObservableProperty] private string closedDay = string.Empty;
     [ObservableProperty] private double rating;
 
-    public ShopEditViewModel(IShopService shopService)
-    {
-        _shopService = shopService;
-    }
+    public ShopEditViewModel(IShopService shopService) => _shopService = shopService;
 
     public void Load(int? shopId)
     {
         ShopId = shopId;
         _isEdit = shopId.HasValue;
         OnPropertyChanged(nameof(ScreenTitle));
-
         if (!shopId.HasValue)
             return;
 
@@ -50,6 +46,7 @@ public partial class ShopEditViewModel : ObservableObject
         ShopLatitude = shop.Latitude;
         ShopLongitude = shop.Longitude;
         RamenType = shop.RamenType;
+        Tags = shop.Tags;
         RecommendedMenu = shop.RecommendedMenu;
         OpeningHours = shop.OpeningHours;
         ClosedDay = shop.ClosedDay;
@@ -60,7 +57,6 @@ public partial class ShopEditViewModel : ObservableObject
     {
         if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)
             return false;
-
         ShopLatitude = latitude;
         ShopLongitude = longitude;
         return true;
@@ -69,10 +65,10 @@ public partial class ShopEditViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
-        if (string.IsNullOrWhiteSpace(ShopName) || ShopPrice <= 0 ||
-            !ShopLatitude.HasValue || !ShopLongitude.HasValue)
+        if (string.IsNullOrWhiteSpace(ShopName) || ShopPrice <= 0 || !ShopLatitude.HasValue || !ShopLongitude.HasValue)
             return;
 
+        var existing = ShopId.HasValue ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value) : null;
         var shop = new Shop
         {
             Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1),
@@ -82,12 +78,12 @@ public partial class ShopEditViewModel : ObservableObject
             Latitude = ShopLatitude.Value,
             Longitude = ShopLongitude.Value,
             RamenType = RamenType,
+            Tags = Tags.Trim(),
             RecommendedMenu = RecommendedMenu.Trim(),
             OpeningHours = OpeningHours.Trim(),
             ClosedDay = ClosedDay.Trim(),
             Rating = Math.Clamp(Rating, 0, 5),
-            IsFavorite = _isEdit && ShopId.HasValue &&
-                         (_shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value)?.IsFavorite ?? false)
+            IsFavorite = existing?.IsFavorite ?? false
         };
 
         if (_isEdit)
