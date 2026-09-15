@@ -1,0 +1,64 @@
+<UserControl x:Class="WpfGisLearning.Views.ShopEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf">
+    <Grid Background="#FFF9F4EF">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#FF9F3D2E" Padding="24,18">
+            <StackPanel>
+                <TextBlock Text="🍜 Ramenia" Foreground="White" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ScreenTitle}" Foreground="White" FontSize="26" FontWeight="Bold" Margin="0,4,0,0" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="360" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="22" BorderBrush="#FFE8D8CF" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="店舗情報" FontSize="18" FontWeight="Bold" Foreground="#FF332925" />
+
+                        <TextBlock Text="店舗名" Margin="0,22,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="価格" Margin="0,14,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding ShopPrice, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="住所" Margin="0,14,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="70" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
+
+                        <TextBlock Text="位置" Margin="0,18,0,5" Foreground="#FF765E55" />
+                        <Border Background="#FFFFF5EE" CornerRadius="10" Padding="12">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ShopLatitude, StringFormat=緯度: {0:F6}}" Foreground="#FF493D38" />
+                                <TextBlock Text="{Binding ShopLongitude, StringFormat=経度: {0:F6}}" Foreground="#FF493D38" Margin="0,4,0,0" />
+                                <TextBlock Text="地図をクリックして位置を変更できます" FontSize="11" Foreground="#FF98786B" Margin="0,8,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="10" BorderBrush="#FFE8D8CF" BorderThickness="1">
+                    <mapsui:MapControl x:Name="EditMapControl" />
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Background="White" BorderBrush="#FFE8D8CF" BorderThickness="0,1,0,0" Padding="18">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="キャンセル" Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,8,0" />
+                <Button Content="保存" Command="{Binding SaveCommand}" Padding="22,9" Background="#FFB83D2E" Foreground="White" BorderThickness="0" FontWeight="SemiBold" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
