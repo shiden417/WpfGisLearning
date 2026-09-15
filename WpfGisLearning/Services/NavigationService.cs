@@ -18,24 +18,15 @@ public class NavigationService : INavigationService
 
     public void NavigateToDetail(int id)
     {
-        // DetailViewModel はナビゲーション時に渡される値 (id) を受け取る。
-        var viewModel =
-            ActivatorUtilities.CreateInstance<DetailViewModel>(
-                _provider,
-                id);
+        var viewModel = ActivatorUtilities.CreateInstance<DetailViewModel>(_provider, id);
+        var view = ActivatorUtilities.CreateInstance<DetailView>(_provider, viewModel);
 
-        // Create view and inject the viewModel
-        var view =
-            ActivatorUtilities.CreateInstance<DetailView>(
-                _provider,
-                viewModel);
-
-        // Host the view in a Window
-        var window = new Window()
+        var window = new Window
         {
-            Title = "Detail",
+            Title = "店舗詳細 - Ramenia",
             Content = view,
-            SizeToContent = SizeToContent.WidthAndHeight,
+            Width = 720,
+            Height = 780,
             Owner = Application.Current?.MainWindow,
             Icon = CreateRameniaIcon()
         };
@@ -43,17 +34,31 @@ public class NavigationService : INavigationService
         window.Show();
     }
 
+    public void NavigateToShopEdit(int? id = null)
+    {
+        var viewModel = ActivatorUtilities.CreateInstance<ShopEditViewModel>(_provider, id);
+        var view = ActivatorUtilities.CreateInstance<ShopEditView>(_provider, viewModel);
+
+        var window = new Window
+        {
+            Title = id.HasValue ? "店舗を編集 - Ramenia" : "店舗を登録 - Ramenia",
+            Content = view,
+            Width = 1100,
+            Height = 760,
+            MinWidth = 900,
+            MinHeight = 650,
+            Owner = Application.Current?.MainWindow,
+            Icon = CreateRameniaIcon()
+        };
+
+        window.ShowDialog();
+    }
+
     public void NavigateToShopPageFrame()
     {
         var frame = new System.Windows.Controls.Frame();
-
-        var shopPage =
-            ActivatorUtilities.CreateInstance<Views.ShopPage>(
-                _provider);
-
-        frame.NavigationUIVisibility =
-            System.Windows.Navigation.NavigationUIVisibility.Visible;
-
+        var shopPage = ActivatorUtilities.CreateInstance<Views.ShopPage>(_provider);
+        frame.NavigationUIVisibility = System.Windows.Navigation.NavigationUIVisibility.Visible;
         frame.Navigate(shopPage);
 
         if (Application.Current?.MainWindow is MainWindow main)
@@ -62,22 +67,19 @@ public class NavigationService : INavigationService
             return;
         }
 
-        var window = new Window()
+        var window = new Window
         {
             Title = "Shop Page (Frame)",
             Content = frame,
             SizeToContent = SizeToContent.WidthAndHeight,
             Owner = Application.Current?.MainWindow
         };
-
         window.Show();
     }
 
     public void NavigateToShopList()
     {
-        var view =
-            ActivatorUtilities.CreateInstance<Views.ShopListView>(
-                _provider);
+        var view = ActivatorUtilities.CreateInstance<Views.ShopListView>(_provider);
 
         if (Application.Current?.MainWindow is MainWindow main)
         {
@@ -85,64 +87,44 @@ public class NavigationService : INavigationService
             return;
         }
 
-        var window = new Window()
+        var window = new Window
         {
             Title = "Shop List",
             Content = view,
             SizeToContent = SizeToContent.WidthAndHeight,
             Owner = Application.Current?.MainWindow
         };
-
         window.Show();
     }
 
-    private ImageSource CreateRameniaIcon()
+    private static ImageSource CreateRameniaIcon()
     {
         const int size = 64;
-
-        var visual =
-            new DrawingVisual();
+        var visual = new DrawingVisual();
 
         using (var context = visual.RenderOpen())
         {
-            var formattedText =
-                new FormattedText(
-                    "🍜",
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight,
-                    new Typeface(
-                        new FontFamily("Segoe UI Emoji"),
-                        FontStyles.Normal,
-                        FontWeights.Normal,
-                        FontStretches.Normal),
-                    48,
-                    Brushes.Black,
-                    1.0);
-
-            // 絵文字を中央に配置
-            var x =
-                (size - formattedText.Width) / 2;
-
-            var y =
-                (size - formattedText.Height) / 2;
+            var formattedText = new FormattedText(
+                "🍜",
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(
+                    new FontFamily("Segoe UI Emoji"),
+                    FontStyles.Normal,
+                    FontWeights.Normal,
+                    FontStretches.Normal),
+                48,
+                Brushes.Black,
+                1.0);
 
             context.DrawText(
                 formattedText,
-                new Point(x, y));
+                new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
-        var bitmap =
-            new RenderTargetBitmap(
-                size,
-                size,
-                96,
-                96,
-                PixelFormats.Pbgra32);
-
+        var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(visual);
-
         bitmap.Freeze();
-
         return bitmap;
     }
 }
