@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using WpfGisLearning.Services;
 using WpfGisLearning.ViewModels;
@@ -15,10 +15,7 @@ public partial class App : Application
         base.OnStartup(e);
         var services = new ServiceCollection();
         services.AddSingleton<MainViewModel>();
-        services.AddTransient<LifetimeTestService>();
         services.AddSingleton<MainWindow>();
-        services.AddSingleton<MessageViewModel>();
-        services.AddSingleton<MessageView>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddTransient<DetailView>();
         services.AddTransient<ShopListView>();
