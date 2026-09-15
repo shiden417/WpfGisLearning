@@ -13,6 +13,15 @@ public partial class NewsView : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         DataContext = viewModel;
+        IsVisibleChanged += NewsView_IsVisibleChanged;
+    }
+
+    private async void NewsView_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is true && DataContext is NewsViewModel viewModel)
+        {
+            await viewModel.RefreshCommand.ExecuteAsync(null);
+        }
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => RequestBack?.Invoke(this, EventArgs.Empty);
