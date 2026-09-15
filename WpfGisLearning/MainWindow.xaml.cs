@@ -337,7 +337,7 @@ public partial class MainWindow : Window
                 if (showMessageOnFailure)
                 {
                     MessageBox.Show(
-                        "現在地へのアクセスが許可されていないか、位置情報を取得できませんでした。Windowsの位置情報設定を確認してください。",
+                        "現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。",
                         "現在地",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
