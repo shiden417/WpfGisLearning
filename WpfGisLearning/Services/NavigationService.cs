@@ -11,16 +11,12 @@ public class NavigationService : INavigationService
 {
     private readonly IServiceProvider _provider;
 
-    public NavigationService(IServiceProvider provider)
-    {
-        _provider = provider;
-    }
+    public NavigationService(IServiceProvider provider) => _provider = provider;
 
     public void NavigateToDetail(int id)
     {
         var viewModel = ActivatorUtilities.CreateInstance<DetailViewModel>(_provider, id);
         var view = ActivatorUtilities.CreateInstance<DetailView>(_provider, viewModel);
-
         var window = new Window
         {
             Title = "店舗詳細 - Ramenia",
@@ -32,17 +28,17 @@ public class NavigationService : INavigationService
         };
 
         window.ShowDialog();
-
         if (Application.Current?.MainWindow is MainWindow main)
             main.RefreshShopData();
     }
 
     public void NavigateToShopEdit(int? id = null)
     {
-        // int? をDIのコンストラクタ引数として解決させず、生成後に対象IDを渡す。
+        // VMを先に生成・初期化し、その同じインスタンスをViewへ渡す。
+        // これにより登録時のDI解決エラーと、編集時のデータ未読込を防ぐ。
         var viewModel = _provider.GetRequiredService<ShopEditViewModel>();
         viewModel.Load(id);
-        var view = _provider.GetRequiredService<ShopEditView>();
+        var view = ActivatorUtilities.CreateInstance<ShopEditView>(_provider, viewModel);
 
         var window = new Window
         {
@@ -72,33 +68,20 @@ public class NavigationService : INavigationService
             return;
         }
 
-        var window = new Window
-        {
-            Title = "Shop Page (Frame)",
-            Content = frame,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            Owner = Application.Current?.MainWindow
-        };
+        var window = new Window { Title = "Shop Page (Frame)", Content = frame, SizeToContent = SizeToContent.WidthAndHeight, Owner = Application.Current?.MainWindow };
         window.Show();
     }
 
     public void NavigateToShopList()
     {
         var view = ActivatorUtilities.CreateInstance<Views.ShopListView>(_provider);
-
         if (Application.Current?.MainWindow is MainWindow main)
         {
             main.MainContent.Content = view;
             return;
         }
 
-        var window = new Window
-        {
-            Title = "Shop List",
-            Content = view,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            Owner = Application.Current?.MainWindow
-        };
+        var window = new Window { Title = "Shop List", Content = view, SizeToContent = SizeToContent.WidthAndHeight, Owner = Application.Current?.MainWindow };
         window.Show();
     }
 
@@ -109,17 +92,9 @@ public class NavigationService : INavigationService
         using (var context = visual.RenderOpen())
         {
             var formattedText = new FormattedText(
-                "🍜",
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                new Typeface(
-                    new FontFamily("Segoe UI Emoji"),
-                    FontStyles.Normal,
-                    FontWeights.Normal,
-                    FontStretches.Normal),
-                48,
-                Brushes.Black,
-                1.0);
+                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
+                48, Brushes.Black, 1.0);
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
