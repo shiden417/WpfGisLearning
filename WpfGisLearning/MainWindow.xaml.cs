@@ -254,10 +254,7 @@ public partial class MainWindow : Window
         if (_map is null) return;
         var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString("#4A90E2"),
-            Mapsui.Styles.Color.FromString("#FFFFFF"),
-            1.15));
+        feature.Styles.Add(MapMarkerStyleFactory.CreateCurrentLocationMarker());
         _currentLocationLayer ??= new MemoryLayer { Name = CurrentLocationLayerName, Style = null };
         _currentLocationLayer.Features = new[] { feature };
         if (!_map.Layers.Contains(_currentLocationLayer)) _map.Layers.Add(_currentLocationLayer);
