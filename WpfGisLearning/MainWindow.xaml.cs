@@ -59,7 +59,8 @@ public partial class MainWindow : Window
 
     private void InitializeMap()
     {
-        try { _map = new Mapsui.Map(); _map.Layers.Add(OpenStreetMap.CreateTileLayer()); MapControl.Map = _map; RebuildShopLayer(); MapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp; MapControl.Loaded += MapControl_Loaded; } catch { }
+        try { _map = new Mapsui.Map(); _map.Layers.Add(OpenStreetMap.CreateTileLayer()); MapControl.Map = _map; RebuildShopLayer(); MapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp; MapControl.Loaded += MapControl_Loaded; MapStatusText.Visibility = Visibility.Collapsed; }
+        catch (Exception ex) { MapStatusText.Text = $"地図を初期化できませんでした。\n{ex.Message}"; MapStatusText.Visibility = Visibility.Visible; }
     }
 
     private void RebuildShopLayer()
@@ -85,7 +86,7 @@ public partial class MainWindow : Window
             else { var minMap = SphericalMercator.FromLonLat(_minLon, _minLat).ToMPoint(); var maxMap = SphericalMercator.FromLonLat(_maxLon, _maxLat).ToMPoint(); resolution = Math.Max(Math.Abs(maxMap.X - minMap.X) / MapControl.ActualWidth, Math.Abs(maxMap.Y - minMap.Y) / MapControl.ActualHeight) * 1.2; }
             _map.Navigator.CenterOnAndZoomTo(center, resolution); _initialMapPositionSet = true;
         }
-        catch { }
+        catch (Exception ex) { MapStatusText.Text = $"地図の表示位置を設定できませんでした。\n{ex.Message}"; MapStatusText.Visibility = Visibility.Visible; }
     }
 
     private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e) => RebuildShopLayer();
@@ -93,7 +94,8 @@ public partial class MainWindow : Window
 
     private void MapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
     {
-        try { var pos = e.GetPosition(MapControl); var mapInfo = MapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y), MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>()); if (mapInfo?.Layer?.Name != "Shops" || mapInfo.Feature is null) return; if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId)) _shopListViewModel.SelectShopById(shopId); } catch { }
+        try { var pos = e.GetPosition(MapControl); var mapInfo = MapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y), MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>()); if (mapInfo?.Layer?.Name != "Shops" || mapInfo.Feature is null) return; if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId)) _shopListViewModel.SelectShopById(shopId); }
+        catch (Exception ex) { MapStatusText.Text = $"地図上の店舗情報を取得できませんでした。\n{ex.Message}"; MapStatusText.Visibility = Visibility.Visible; }
     }
 
     private static IFeature CreateShopFeature(Shop shop, bool selected)
@@ -108,27 +110,22 @@ public partial class MainWindow : Window
         InfoCardName.Text = shop.Name; InfoCardType.Text = shop.RamenType; InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address; InfoCardPrice.Text = $"¥{shop.Price:N0}"; InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}"; InfoCardBorder.Visibility = Visibility.Visible;
         var transform = (TranslateTransform)InfoCardBorder.RenderTransform; transform.X = 18; transform.Y = 18; InfoCardBorder.Opacity = 0; var storyboard = new Storyboard(); var opacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)); Storyboard.SetTarget(opacity, InfoCardBorder); Storyboard.SetTargetProperty(opacity, new PropertyPath(UIElement.OpacityProperty)); var slideX = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220)); Storyboard.SetTarget(slideX, transform); Storyboard.SetTargetProperty(slideX, new PropertyPath(TranslateTransform.XProperty)); var slideY = new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(220)); Storyboard.SetTarget(slideY, transform); Storyboard.SetTargetProperty(slideY, new PropertyPath(TranslateTransform.YProperty)); storyboard.Children.Add(opacity); storyboard.Children.Add(slideX); storyboard.Children.Add(slideY); storyboard.Begin();
     }
-
     private void InfoCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (e.ClickCount != 2 || e.OriginalSource is System.Windows.Controls.Button || !_selectedShopId.HasValue) return; _navigationService.NavigateToDetail(_selectedShopId.Value); e.Handled = true; }
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) => await TryShowCurrentLocationAsync(true, true);
-
     private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure, bool filterNearby)
     {
         try
         {
-            var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync();
-            if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed) { if (showMessageOnFailure) MessageBox.Show("現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); return; }
+            var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync(); if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed) { if (showMessageOnFailure) MessageBox.Show("現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); return; }
             var position = await new Windows.Devices.Geolocation.Geolocator { DesiredAccuracyInMeters = 50 }.GetGeopositionAsync(); var latitude = position.Coordinate.Point.Position.Latitude; var longitude = position.Coordinate.Point.Position.Longitude;
             if (_map is null || !IsValidCoordinate(latitude, longitude)) return; if (filterNearby) _shopListViewModel.SetNearbyLocation(latitude, longitude); ShowCurrentLocation(latitude, longitude); _map.Navigator.CenterOn(SphericalMercator.FromLonLat(longitude, latitude).ToMPoint());
         }
-        catch (Exception ex) { if (showMessageOnFailure) MessageBox.Show($"現在地を取得できませんでした。\n{ex.Message}", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); }
+        catch (Exception ex) { MapStatusText.Text = $"現在地を取得できませんでした。\n{ex.Message}"; MapStatusText.Visibility = Visibility.Visible; if (showMessageOnFailure) MessageBox.Show($"現在地を取得できませんでした。\n{ex.Message}", "現在地", MessageBoxButton.OK, MessageBoxImage.Information); }
     }
-
     private void ShowCurrentLocation(double latitude, double longitude)
     {
         if (_map is null) return; var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint(); var feature = new PointFeature(point); feature.Styles.Add(new SymbolStyle { SymbolType = SymbolType.Ellipse, SymbolScale = 1.15, Fill = new Mapsui.Styles.Brush(Mapsui.Styles.Color.FromString("#4A90E2")), Outline = new Mapsui.Styles.Pen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3) }); _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" }; _currentLocationLayer.Features = new[] { feature }; if (!_map.Layers.Contains(_currentLocationLayer)) _map.Layers.Add(_currentLocationLayer); MapControl.Refresh();
     }
-
     private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e) { _selectedShopId = null; _shopListViewModel.NearbyOnly = false; InfoCardBorder.Visibility = Visibility.Collapsed; RebuildShopLayer(); _initialMapPositionSet = false; MapControl_Loaded(sender, e); }
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(500);
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(500);
@@ -136,7 +133,6 @@ public partial class MainWindow : Window
     private void InfoCardEdit_Click(object sender, RoutedEventArgs e) { if (!_selectedShopId.HasValue) return; _navigationService.NavigateToShopEdit(_selectedShopId.Value); RefreshShopData(); }
     private void InfoCardClose_Click(object sender, RoutedEventArgs e) { InfoCardBorder.Visibility = Visibility.Collapsed; InfoCardBorder.Opacity = 0; }
     public void RefreshShopData() { _shopListViewModel.RefreshFromService(); RebuildShopLayer(); }
-
     private static ImageSource CreateRameniaIcon()
     {
         const int size = 64; var visual = new DrawingVisual(); using (var context = visual.RenderOpen()) { var formattedText = new FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 48, Brushes.Black, 1.0); context.DrawText(formattedText, new System.Windows.Point(8, 6)); } var bitmap = new RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32); bitmap.Render(visual); return bitmap;
