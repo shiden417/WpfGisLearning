@@ -1,30 +1,37 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
 namespace WpfGisLearning.ViewModels;
 
-public class DetailViewModel : ObservableObject
+public partial class DetailViewModel : ObservableObject
 {
+    private readonly IShopService _shopService;
+
     public int Id { get; }
+    public string ServiceInstanceId { get; }
+    public Shop? Shop { get; private set; }
 
-    public Guid ServiceInstanceId { get; }
+    [ObservableProperty]
+    private bool isFavorite;
 
-    public Shop? Shop { get; }
-
-    public DetailViewModel(
-        int id,
-        LifetimeTestService lifetimeTestService,
-        IShopService shopService)
+    public DetailViewModel(int id, IShopService shopService)
     {
         Id = id;
+        _shopService = shopService;
+        ServiceInstanceId = shopService.GetHashCode().ToString();
+        Shop = shopService.GetShops().FirstOrDefault(shop => shop.Id == id);
+        IsFavorite = Shop?.IsFavorite ?? false;
+    }
 
-        // DI 管理のサービスはコンストラクタ注入される
-        ServiceInstanceId = lifetimeTestService.Id;
+    [RelayCommand]
+    private void ToggleFavorite()
+    {
+        if (Shop is null)
+            return;
 
-        // 店舗IDから店舗情報を取得する
-        Shop = shopService
-            .GetShops()
-            .FirstOrDefault(shop => shop.Id == id);
+        _shopService.ToggleFavorite(Shop.Id);
+        IsFavorite = Shop.IsFavorite;
     }
 }
