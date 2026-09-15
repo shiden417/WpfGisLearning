@@ -4,9 +4,11 @@ using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Styles;
 using Mapsui.Tiling;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using WpfImage = System.Windows.Controls.Image;
 using WpfGisLearning.Services;
 using WpfGisLearning.ViewModels;
 
@@ -36,7 +38,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
     {
         var path = (sender as FrameworkElement)?.Tag as string;
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
-        var image = new Image { Source = new BitmapImage(new Uri(path)), Stretch = System.Windows.Media.Stretch.Uniform, Margin = new Thickness(20) };
+        var image = new WpfImage { Source = new BitmapImage(new Uri(path)), Stretch = System.Windows.Media.Stretch.Uniform, Margin = new Thickness(20) };
         var window = new Window { Title = "写真 - Ramenia", Content = image, Width = 1000, Height = 750, Owner = Window.GetWindow(this), Background = System.Windows.Media.Brushes.Black, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         window.ShowDialog();
     }
