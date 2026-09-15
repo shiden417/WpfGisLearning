@@ -154,6 +154,13 @@ public partial class MainWindow : Window
         storyboard.Children.Add(opacity); storyboard.Children.Add(slideX); storyboard.Children.Add(slideY); storyboard.Begin();
     }
 
+    private void InfoCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 || e.OriginalSource is Button || !_selectedShopId.HasValue) return;
+        _navigationService.NavigateToDetail(_selectedShopId.Value);
+        e.Handled = true;
+    }
+
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) => await TryShowCurrentLocationAsync(true);
 
     private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure)
@@ -202,7 +209,6 @@ public partial class MainWindow : Window
     private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e)
     {
         _selectedShopId = null; _shopListViewModel.NearbyOnly = false; InfoCardBorder.Visibility = Visibility.Collapsed;
-        if (_map is not null && _currentLocationLayer is not null) _map.Layers.Remove(_currentLocationLayer);
         RebuildShopLayer(); _initialMapPositionSet = false; MapControl_Loaded(sender, e);
     }
 
