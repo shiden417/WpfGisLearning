@@ -1,6 +1,7 @@
 using Mapsui;
-using Mapsui.Projections;
+using Mapsui.Extensions;
 using Mapsui.Layers;
+using Mapsui.Projections;
 using Mapsui.Styles;
 using Mapsui.Tiling;
 using System.Windows;
@@ -13,6 +14,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 {
     private readonly ShopEditViewModel _viewModel;
     private Mapsui.Map? _map;
+    private MemoryLayer? _locationLayer;
 
     public ShopEditView(ShopEditViewModel viewModel)
     {
@@ -34,9 +36,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         EditMapControl.Map = _map;
 
         if (_viewModel.ShopLatitude.HasValue && _viewModel.ShopLongitude.HasValue)
-        {
             ShowLocation(_viewModel.ShopLatitude.Value, _viewModel.ShopLongitude.Value);
-        }
     }
 
     private void EditMapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
@@ -50,9 +50,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         var lonLat = SphericalMercator.ToLonLat(worldPosition);
 
         if (_viewModel.TrySetLocation(lonLat.Y, lonLat.X))
-        {
             ShowLocation(lonLat.Y, lonLat.X);
-        }
     }
 
     private void ShowLocation(double latitude, double longitude)
@@ -62,27 +60,28 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
         var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(new SymbolStyle
-        {
-            SymbolType = SymbolType.Ellipse,
-            SymbolScale = 2.0,
-            Fill = new Brush(Mapsui.Styles.Color.FromString("#F28C28")),
-            Outline = new Pen(Mapsui.Styles.Color.White, 3)
-        });
+        feature.Styles.Add(
+            ImageStyles.CreatePinStyle(
+                Mapsui.Styles.Color.FromString("#F28C28"),
+                Mapsui.Styles.Color.White,
+                1.15));
 
-        _map.Layers.Remove("SelectedLocation");
-        _map.Layers.Add(new MemoryLayer
+        if (_locationLayer is not null)
+            _map.Layers.Remove(_locationLayer);
+
+        _locationLayer = new MemoryLayer
         {
             Name = "SelectedLocation",
             Features = new[] { feature }
-        });
+        };
+
+        _map.Layers.Add(_locationLayer);
         _map.Navigator.CenterOnAndZoomTo(point, 500);
         EditMapControl.Refresh();
     }
 
     private void ViewModel_RequestClose(object? sender, EventArgs e)
     {
-        var window = Window.GetWindow(this);
-        window?.Close();
+        Window.GetWindow(this)?.Close();
     }
 }
