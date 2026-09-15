@@ -10,16 +10,16 @@
         Height="900"
         MinWidth="1100"
         MinHeight="700"
-        Background="#FFF9F4EF">
+        Background="#FFF5F3EE">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentBrush" Color="#FFB83D2E" />
-        <SolidColorBrush x:Key="AccentOrangeBrush" Color="#FFF28C28" />
-        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF9F4EF" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF5C6F5B" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFE8EEE5" />
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF5F3EE" />
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#FFE4D6CE" />
+            <Setter Property="BorderBrush" Value="#FFD9DDD7" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="10,7" />
             <Setter Property="Margin" Value="3" />
@@ -27,9 +27,9 @@
         </Style>
 
         <Style x:Key="HeaderButton" TargetType="Button">
-            <Setter Property="Background" Value="#FFFFF7F1" />
-            <Setter Property="Foreground" Value="#FF6C342A" />
-            <Setter Property="BorderBrush" Value="#FFF0D6C8" />
+            <Setter Property="Background" Value="#FFF7F9F5" />
+            <Setter Property="Foreground" Value="#FF4F5F4D" />
+            <Setter Property="BorderBrush" Value="#FFD8E0D5" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="14,8" />
             <Setter Property="Margin" Value="4,0,0,0" />
@@ -40,46 +40,39 @@
 
     <Grid Background="{StaticResource WindowBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="82" />
+            <RowDefinition Height="72" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#FF9F3D2E">
+        <Border Grid.Row="0" Background="#FF596B58">
             <Grid Margin="24,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="🍜 Ramenia" Foreground="White" FontSize="30" FontWeight="Bold" />
-                    <TextBlock Text="ラーメン店を地図から探す" Foreground="#FFFFE8DC" FontSize="12" Margin="2,1,0,0" />
-                </StackPanel>
-
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource HeaderButton}" Content="📍 現在地" Click="CurrentLocationButton_Click" />
-                    <Button Style="{StaticResource HeaderButton}" Content="＋ 店舗を登録" Click="NewShopButton_Click" />
+                    <TextBlock Text="🍜 Ramenia" Foreground="White" FontSize="28" FontWeight="Bold" />
+                    <TextBlock Text="ラーメン店を地図から探す" Foreground="#FFE7EEE4" FontSize="12" Margin="2,1,0,0" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <Grid Grid.Row="1" Margin="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="480" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="480" MinWidth="340" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*" MinWidth="420" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White" CornerRadius="16" BorderBrush="#FFE9DED8" BorderThickness="1" ClipToBounds="True">
+            <Border Grid.Column="0" Background="White" CornerRadius="16" BorderBrush="#FFDCE0DA" BorderThickness="1" ClipToBounds="True">
                 <ContentControl x:Name="MainContent" />
             </Border>
 
-            <Border Grid.Column="2" Background="White" CornerRadius="16" BorderBrush="#FFE9DED8" BorderThickness="1" ClipToBounds="True">
+            <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" ShowsPreview="False" />
+
+            <Border Grid.Column="2" Background="White" CornerRadius="16" BorderBrush="#FFDCE0DA" BorderThickness="1" ClipToBounds="True">
                 <Grid>
                     <mapsui:MapControl x:Name="MapControl" />
 
                     <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14">
                         <Button Content="全店舗を表示" Click="ShowAllShopsButton_Click" Padding="12,8" />
+                        <Button Content="📍 現在地" Click="CurrentLocationButton_Click" Padding="12,8" />
                     </StackPanel>
 
                     <Border x:Name="InfoCardBorder"
@@ -91,11 +84,10 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="16"
-                            BorderBrush="#FFE1CFC5"
+                            BorderBrush="#FFD8E0D5"
                             BorderThickness="1">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -105,18 +97,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="🍜 店舗情報" FontSize="12" Foreground="#FFB83D2E" FontWeight="Bold" />
+                            <TextBlock Grid.Row="0" Text="店舗情報" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                             <Button Grid.Row="0" Grid.Column="1" Content="×" Width="28" Height="28" Margin="0" Padding="0" Click="InfoCardClose_Click" />
-                            <TextBlock Grid.Row="1" x:Name="InfoCardName" Text="店舗名" FontSize="21" FontWeight="Bold" Foreground="#FF332925" Margin="0,10,0,0" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="1" x:Name="InfoCardName" Text="店舗名" FontSize="21" FontWeight="Bold" Foreground="#FF303630" Margin="0,10,0,0" TextWrapping="Wrap" />
                             <StackPanel Grid.Row="2" Margin="0,10,0,0">
-                                <TextBlock x:Name="InfoCardType" Text="種類" FontSize="12" Foreground="#FF9F3D2E" FontWeight="SemiBold" />
-                                <TextBlock x:Name="InfoCardAddress" Text="住所" FontSize="13" Foreground="#FF6F5B53" TextWrapping="Wrap" Margin="0,5,0,0" />
-                                <TextBlock x:Name="InfoCardPrice" Text="-" FontSize="18" FontWeight="Bold" Foreground="#FFB83D2E" Margin="0,6,0,0" />
-                                <TextBlock x:Name="InfoCardRating" Text="" FontSize="12" Foreground="#FFB83D2E" Margin="0,4,0,0" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Content="詳細を見る" Click="InfoCardDetail_Click" Padding="12,7" />
-                                <Button Content="編集" Click="InfoCardEdit_Click" Padding="12,7" Background="#FFF28C28" Foreground="White" BorderThickness="0" />
+                                <TextBlock x:Name="InfoCardType" Text="種類" FontSize="12" Foreground="#FF596B58" FontWeight="SemiBold" />
+                                <TextBlock x:Name="InfoCardAddress" Text="住所" FontSize="13" Foreground="#FF657064" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                <TextBlock x:Name="InfoCardPrice" Text="-" FontSize="18" FontWeight="Bold" Foreground="#FF596B58" Margin="0,6,0,0" />
+                                <TextBlock x:Name="InfoCardRating" Text="" FontSize="12" Foreground="#FF596B58" Margin="0,4,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
