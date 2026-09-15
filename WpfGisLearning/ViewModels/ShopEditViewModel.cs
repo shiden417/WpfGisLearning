@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
@@ -8,11 +9,14 @@ namespace WpfGisLearning.ViewModels;
 public partial class ShopEditViewModel : ObservableObject
 {
     private readonly IShopService _shopService;
+    private readonly IPhotoService _photoService;
+    private readonly List<ShopPhoto> _originalPhotos = [];
     private bool _isEdit;
 
     public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
     public string[] RamenTypes { get; } = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
+    public ObservableCollection<ShopPhoto> Photos { get; } = new();
 
     [ObservableProperty] private string shopName = string.Empty;
     [ObservableProperty] private decimal shopPrice;
@@ -28,13 +32,19 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string shopPriceError = string.Empty;
     [ObservableProperty] private string locationError = string.Empty;
 
-    public ShopEditViewModel(IShopService shopService) => _shopService = shopService;
+    public ShopEditViewModel(IShopService shopService, IPhotoService photoService)
+    {
+        _shopService = shopService;
+        _photoService = photoService;
+    }
 
     public void Load(int? shopId)
     {
         ShopId = shopId;
         _isEdit = shopId.HasValue;
         ClearErrors();
+        Photos.Clear();
+        _originalPhotos.Clear();
         OnPropertyChanged(nameof(ScreenTitle));
 
         if (!shopId.HasValue)
@@ -60,6 +70,54 @@ public partial class ShopEditViewModel : ObservableObject
         OpeningHours = shop.OpeningHours;
         ClosedDay = shop.ClosedDay;
         Rating = shop.Rating;
+
+        foreach (var photo in shop.Photos.OrderBy(x => x.SortOrder))
+        {
+            Photos.Add(new ShopPhoto
+            {
+                Id = photo.Id,
+                FileName = photo.FileName,
+                IsMain = photo.IsMain,
+                SortOrder = photo.SortOrder
+            });
+            _originalPhotos.Add(new ShopPhoto { Id = photo.Id, FileName = photo.FileName, IsMain = photo.IsMain, SortOrder = photo.SortOrder });
+        }
+    }
+
+    public string GetPhotoPath(ShopPhoto photo, int? shopId = null)
+    {
+        var id = shopId ?? ShopId ?? 0;
+        return _photoService.GetPhotoPath(new Shop { Id = id }, photo);
+    }
+
+    public void AddPhoto(string sourcePath)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath)) return;
+        if (Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))) return;
+        var photo = new ShopPhoto
+        {
+            SourcePath = sourcePath,
+            SortOrder = Photos.Count,
+            IsMain = Photos.Count == 0
+        };
+        Photos.Add(photo);
+        OnPropertyChanged(nameof(Photos));
+    }
+
+    public void RemovePhoto(ShopPhoto? photo)
+    {
+        if (photo is null) return;
+        var wasMain = photo.IsMain;
+        Photos.Remove(photo);
+        if (wasMain && Photos.Count > 0) Photos[0].IsMain = true;
+        NormalizePhotoOrder();
+    }
+
+    public void SetMainPhoto(ShopPhoto? photo)
+    {
+        if (photo is null) return;
+        foreach (var item in Photos) item.IsMain = item == photo;
+        OnPropertyChanged(nameof(Photos));
     }
 
     public bool TrySetLocation(double latitude, double longitude)
@@ -77,18 +135,10 @@ public partial class ShopEditViewModel : ObservableObject
     private void Save()
     {
         ClearErrors();
-
-        if (string.IsNullOrWhiteSpace(ShopName))
-            ShopNameError = "店舗名を入力してください。";
-
-        if (ShopPrice <= 0)
-            ShopPriceError = "価格は1円以上で入力してください。";
-
-        if (!ShopLatitude.HasValue || !ShopLongitude.HasValue)
-            LocationError = "地図上で店舗位置を指定してください。ダブルクリックで設定できます。";
-
-        if (!string.IsNullOrEmpty(ShopNameError) || !string.IsNullOrEmpty(ShopPriceError) || !string.IsNullOrEmpty(LocationError))
-            return;
+        if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
+        if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
+        if (!ShopLatitude.HasValue || !ShopLongitude.HasValue) LocationError = "地図上で店舗位置を指定してください。ダブルクリックで設定できます。";
+        if (!string.IsNullOrEmpty(ShopNameError) || !string.IsNullOrEmpty(ShopPriceError) || !string.IsNullOrEmpty(LocationError)) return;
 
         var existing = ShopId.HasValue ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value) : null;
         if (ShopId.HasValue && existing is null)
@@ -100,25 +150,34 @@ public partial class ShopEditViewModel : ObservableObject
         var shop = new Shop
         {
             Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1),
-            Name = ShopName.Trim(),
-            Price = ShopPrice,
-            Address = ShopAddress.Trim(),
-            Latitude = ShopLatitude.Value,
-            Longitude = ShopLongitude.Value,
-            RamenType = RamenType,
-            OpeningHours = OpeningHours.Trim(),
-            ClosedDay = ClosedDay.Trim(),
-            Rating = Math.Clamp(Rating, 0, 5),
-            IsFavorite = existing?.IsFavorite ?? false
+            Name = ShopName.Trim(), Price = ShopPrice, Address = ShopAddress.Trim(),
+            Latitude = ShopLatitude.Value, Longitude = ShopLongitude.Value, RamenType = RamenType,
+            OpeningHours = OpeningHours.Trim(), ClosedDay = ClosedDay.Trim(), Rating = Math.Clamp(Rating, 0, 5),
+            IsFavorite = existing?.IsFavorite ?? false,
+            Photos = Photos.Select((p, index) => new ShopPhoto { Id = string.IsNullOrWhiteSpace(p.Id) ? Guid.NewGuid().ToString("N") : p.Id, FileName = p.FileName, IsMain = p.IsMain, SortOrder = index }).ToList()
         };
 
         try
         {
-            if (_isEdit)
-                _shopService.UpdateShop(shop);
-            else
+            if (!_isEdit)
+            {
                 _shopService.AddShop(shop);
+            }
+            else
+            {
+                foreach (var original in _originalPhotos.Where(p => Photos.All(x => x.Id != p.Id)))
+                    _photoService.DeletePhoto(shop, original);
+                _shopService.UpdateShop(shop);
+            }
 
+            var newPhotos = Photos.Where(p => !string.IsNullOrWhiteSpace(p.SourcePath)).Select(p => (p.SourcePath, p)).ToList();
+            _photoService.SavePhotos(shop, newPhotos);
+            foreach (var photo in shop.Photos)
+            {
+                var source = Photos.FirstOrDefault(x => x.Id == photo.Id);
+                if (source is not null) photo.FileName = source.FileName;
+            }
+            _shopService.UpdateShop(shop);
             RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
@@ -127,12 +186,15 @@ public partial class ShopEditViewModel : ObservableObject
         }
     }
 
+    private void NormalizePhotoOrder()
+    {
+        for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i;
+        OnPropertyChanged(nameof(Photos));
+    }
+
     private void ClearErrors()
     {
-        ErrorMessage = string.Empty;
-        ShopNameError = string.Empty;
-        ShopPriceError = string.Empty;
-        LocationError = string.Empty;
+        ErrorMessage = string.Empty; ShopNameError = string.Empty; ShopPriceError = string.Empty; LocationError = string.Empty;
     }
 
     [RelayCommand]
