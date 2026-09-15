@@ -43,10 +43,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
 
         var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString("#343A40"),
-            Mapsui.Styles.Color.FromString("#343A40"),
-            1.15));
+        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
 
         _map.Layers.Add(new MemoryLayer { Name = "Shop", Features = new[] { feature } });
         _map.Navigator.CenterOnAndZoomTo(point, 500);
