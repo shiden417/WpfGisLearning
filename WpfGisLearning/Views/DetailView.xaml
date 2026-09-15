@@ -1,8 +1,10 @@
 <UserControl x:Class="WpfGisLearning.Views.DetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf">
+             xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf"
+             xmlns:conv="clr-namespace:WpfGisLearning.Converters">
     <UserControl.Resources>
+        <conv:ImagePathConverter x:Key="ImagePathConverter" />
         <SolidColorBrush x:Key="AccentBrush" Color="#FFC56B4D" />
         <SolidColorBrush x:Key="TextBrush" Color="#FF252A2F" />
         <SolidColorBrush x:Key="MutedBrush" Color="#FF747D84" />
@@ -86,7 +88,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Width="150" Height="110" Margin="0,0,10,0" CornerRadius="8" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1" Background="#FFEDE8E2">
-                                            <Image Stretch="UniformToFill" Source="{Binding}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
+                                            <Image Stretch="UniformToFill" Source="{Binding Converter={StaticResource ImagePathConverter}}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
