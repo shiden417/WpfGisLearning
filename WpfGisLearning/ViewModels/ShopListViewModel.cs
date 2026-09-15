@@ -15,7 +15,6 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
 
-    // ICollectionView を公開して DataGrid の表示順を切り替える
     public ICollectionView ShopsView { get; }
 
     public ShopListViewModel(
@@ -30,11 +29,9 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
             Shops.Add(s);
         }
 
-        // CollectionViewSource からデフォルトのビューを取得
         ShopsView = CollectionViewSource.GetDefaultView(Shops);
     }
 
-    // Validation storage
     private readonly Dictionary<string, List<string>> _errors = new();
 
     public bool HasErrors => _errors.Any();
@@ -83,7 +80,6 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         }
     }
 
-    // New shop input properties
     [ObservableProperty]
     private string newShopName = string.Empty;
 
@@ -106,9 +102,7 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
 
         if (string.IsNullOrWhiteSpace(NewShopName))
         {
-            AddError(
-                nameof(NewShopName),
-                "店舗名は必須です。");
+            AddError(nameof(NewShopName), "店舗名は必須です。");
         }
     }
 
@@ -118,16 +112,13 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
 
         if (NewShopPrice <= 0m)
         {
-            AddError(
-                nameof(NewShopPrice),
-                "価格は0より大きい値を入力してください。");
+            AddError(nameof(NewShopPrice), "価格は0より大きい値を入力してください。");
         }
     }
 
     [RelayCommand]
     private void Register()
     {
-        // Validate before registering
         ValidateNewShopName();
         ValidateNewShopPrice();
 
@@ -136,7 +127,6 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
             return;
         }
 
-        // Add new shop to collection. Id is next integer.
         var nextId = Shops.Any()
             ? Shops.Max(s => s.Id) + 1
             : 1;
@@ -148,7 +138,6 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
             Price = NewShopPrice
         });
 
-        // Clear inputs
         NewShopName = string.Empty;
         NewShopPrice = 0m;
     }
@@ -156,12 +145,22 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     [ObservableProperty]
     private Shop? selectedShop;
 
-    // 店舗選択変更をMainWindowなどへ通知するイベント
     public event EventHandler<Shop?>? SelectedShopChanged;
 
     partial void OnSelectedShopChanged(Shop? value)
     {
         SelectedShopChanged?.Invoke(this, value);
+    }
+
+    // 地図など外部のUIから店舗を選択するための入口
+    public void SelectShopById(int shopId)
+    {
+        var shop = Shops.FirstOrDefault(s => s.Id == shopId);
+
+        if (shop is not null)
+        {
+            SelectedShop = shop;
+        }
     }
 
     [RelayCommand]
@@ -184,12 +183,8 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         ShopsView.SortDescriptions.Clear();
-
         ShopsView.SortDescriptions.Add(
-            new SortDescription(
-                nameof(Shop.Price),
-                ListSortDirection.Ascending));
-
+            new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
         ShopsView.Refresh();
     }
 
@@ -202,12 +197,8 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         }
 
         ShopsView.SortDescriptions.Clear();
-
         ShopsView.SortDescriptions.Add(
-            new SortDescription(
-                nameof(Shop.Price),
-                ListSortDirection.Descending));
-
+            new SortDescription(nameof(Shop.Price), ListSortDirection.Descending));
         ShopsView.Refresh();
     }
 }
