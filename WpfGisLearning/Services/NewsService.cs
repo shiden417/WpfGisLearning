@@ -13,8 +13,10 @@ public class NewsService
 
     public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(DateTime date, CancellationToken cancellationToken = default)
     {
-        var start = new DateTimeOffset(date.Date, TimeSpan.FromHours(9));
-        var end = start.AddDays(1);
+        // Google News の after/before は境界が厳密なため、前後1日を含めて取得し、
+        // 最後に公開日時を日本時間へ変換して指定日だけに絞り込む。
+        var start = date.Date.AddDays(-1);
+        var end = date.Date.AddDays(2);
         var query = $"ラーメン after:{start:yyyy-MM-dd} before:{end:yyyy-MM-dd}";
         var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
 
@@ -45,6 +47,7 @@ public class NewsService
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link)) return null;
         if (!DateTimeOffset.TryParse(publishedText, out var publishedAt)) return null;
 
+        var localPublishedAt = publishedAt.ToLocalTime();
         var cleanTitle = title;
         if (!string.IsNullOrWhiteSpace(source) && cleanTitle.EndsWith($" - {source}", StringComparison.OrdinalIgnoreCase))
             cleanTitle = cleanTitle[..^(source.Length + 3)].Trim();
@@ -53,7 +56,7 @@ public class NewsService
         {
             Id = link, Title = cleanTitle, Summary = CleanDescription(description),
             Category = DetectCategory(cleanTitle), Region = DetectRegion(cleanTitle),
-            PublishedAt = publishedAt.LocalDateTime,
+            PublishedAt = localPublishedAt.DateTime,
             SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
             SourceUrl = link
         };
