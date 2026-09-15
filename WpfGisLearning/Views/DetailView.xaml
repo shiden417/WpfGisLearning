@@ -92,7 +92,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Width="92" Height="68" Margin="0,0,8,0" CornerRadius="7" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1">
+                                            <Border Width="100" Height="72" Margin="0,0,8,0" CornerRadius="7" ClipToBounds="True" BorderBrush="#FFE0DBD4" BorderThickness="1">
                                                 <Image Stretch="UniformToFill" Source="{Binding}" MouseLeftButtonUp="Photo_Click" Tag="{Binding}" />
                                             </Border>
                                         </DataTemplate>
