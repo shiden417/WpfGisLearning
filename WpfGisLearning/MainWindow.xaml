@@ -33,7 +33,7 @@
                             <Button Content="−" Click="ZoomOutButton_Click" Width="40" Height="38" FontSize="18" FontWeight="Bold" ToolTip="縮小" />
                         </StackPanel>
                     </StackPanel>
-                    <Border x:Name="InfoCardBorder" Background="White" CornerRadius="14" Padding="16" Width="330" Visibility="Collapsed" Opacity="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16" BorderBrush="#FFE0DBD4" BorderThickness="1" RenderTransformOrigin="1,1">
+                    <Border x:Name="InfoCardBorder" Background="White" CornerRadius="14" Padding="16" Width="330" Visibility="Collapsed" Opacity="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="14" BorderBrush="#FFE0DBD4" BorderThickness="1" RenderTransformOrigin="1,1" MouseLeftButtonDown="InfoCard_MouseLeftButtonDown">
                         <Border.RenderTransform><TranslateTransform X="18" Y="18" /></Border.RenderTransform>
                         <Grid>
                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
