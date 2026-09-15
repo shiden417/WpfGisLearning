@@ -47,6 +47,6 @@ public class MapViewportCalculatorTests
             paddingFactor: 1.2,
             singleShopResolutionIndex: 12);
 
-        Assert.IsTrue(resolution > 0);
+        Assert.IsGreaterThan(0, resolution);
     }
 }
