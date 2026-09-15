@@ -1,0 +1,12 @@
+<Page
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  x:Class="WpfGisLearning.Views.DetailPage"
+  Title="DetailPage">
+    <StackPanel Margin="16">
+        <TextBlock Text="Detail Page (Frame sample)" FontSize="18" FontWeight="Bold" />
+        <TextBlock Text="ID:" Margin="0,8,0,0" />
+        <TextBlock x:Name="IdText" FontSize="16" />
+        <Button Content="Go Back" Click="GoBack_Click" Margin="0,12,0,0" />
+    </StackPanel>
+</Page>

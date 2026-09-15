@@ -1,0 +1,20 @@
+﻿<Application x:Class="WpfGisLearning.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:WpfGisLearning">
+
+    <Application.Resources>
+        <!-- アプリケーション全体のアクセントブラシ（MainWindow のローカル定義が優先されることを確認するため色を変える） -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#0080FF" />
+
+        <!-- PrimaryButton スタイルを追加: MessageView などから StaticResource PrimaryButton で参照される -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+        </Style>
+
+    </Application.Resources>
+
+</Application>
