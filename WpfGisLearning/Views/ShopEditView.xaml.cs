@@ -24,15 +24,20 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private readonly ShopEditViewModel _viewModel;
     private readonly ICurrentLocationService _currentLocationService;
+    private readonly IReverseGeocodingService _reverseGeocodingService;
     private Mapsui.Map? _map;
     private MemoryLayer? _locationLayer;
     private bool _isDraggingLocation;
 
-    public ShopEditView(ShopEditViewModel viewModel, ICurrentLocationService currentLocationService)
+    public ShopEditView(
+        ShopEditViewModel viewModel,
+        ICurrentLocationService currentLocationService,
+        IReverseGeocodingService reverseGeocodingService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _currentLocationService = currentLocationService;
+        _reverseGeocodingService = reverseGeocodingService;
         DataContext = viewModel;
         viewModel.RequestClose += ViewModel_RequestClose;
         Loaded += ShopEditView_Loaded;
@@ -114,7 +119,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         _map?.Navigator.CenterOnAndZoomTo(point, JapanOverviewResolution);
     }
 
-    private void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+    private async void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
     {
         if (_map is null)
         {
@@ -124,7 +129,11 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         var position = e.GetPosition(EditMapControl);
         if (e.ClickCount == 2)
         {
-            SetLocationFromScreen(position.X, position.Y, false);
+            if (SetLocationFromScreen(position.X, position.Y, false))
+            {
+                await UpdateAddressAsync();
+            }
+
             e.Handled = true;
             return;
         }
@@ -149,7 +158,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         e.Handled = true;
     }
 
-    private void EditMapControl_PreviewMouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
+    private async void EditMapControl_PreviewMouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
     {
         if (!_isDraggingLocation)
         {
@@ -160,7 +169,11 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         EditMapControl.ReleaseMouseCapture();
 
         var position = e.GetPosition(EditMapControl);
-        SetLocationFromScreen(position.X, position.Y, false);
+        if (SetLocationFromScreen(position.X, position.Y, false))
+        {
+            await UpdateAddressAsync();
+        }
+
         e.Handled = true;
     }
 
@@ -178,21 +191,24 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         return mapInfo?.Feature is not null;
     }
 
-    private void SetLocationFromScreen(double x, double y, bool recenter)
+    private bool SetLocationFromScreen(double x, double y, bool recenter)
     {
         if (_map is null)
         {
-            return;
+            return false;
         }
 
         var screenPosition = new Mapsui.Manipulations.ScreenPosition((int)x, (int)y);
         var worldPosition = _map.Navigator.Viewport.ScreenToWorld(screenPosition);
         var lonLat = SphericalMercator.ToLonLat(worldPosition);
 
-        if (_viewModel.TrySetLocation(lonLat.Y, lonLat.X))
+        if (!_viewModel.TrySetLocation(lonLat.Y, lonLat.X))
         {
-            ShowLocation(lonLat.Y, lonLat.X, recenter);
+            return false;
         }
+
+        ShowLocation(lonLat.Y, lonLat.X, recenter);
+        return true;
     }
 
     private void ShowLocation(double latitude, double longitude, bool recenter = false)
@@ -219,6 +235,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         _locationLayer = new MemoryLayer
         {
             Name = "SelectedLocation",
+            Style = null,
             Features = new[] { feature }
         };
         _map.Layers.Add(_locationLayer);
@@ -229,6 +246,31 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         }
 
         EditMapControl.Refresh();
+    }
+
+    private async Task UpdateAddressAsync()
+    {
+        if (!_viewModel.ShopLatitude.HasValue || !_viewModel.ShopLongitude.HasValue)
+        {
+            return;
+        }
+
+        try
+        {
+            var address = await _reverseGeocodingService.GetAddressAsync(
+                _viewModel.ShopLatitude.Value,
+                _viewModel.ShopLongitude.Value);
+
+            if (!string.IsNullOrWhiteSpace(address))
+            {
+                _viewModel.ShopAddress = address;
+                _viewModel.ErrorMessage = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            _viewModel.ErrorMessage = $"住所を自動取得できませんでした。住所は手入力できます。\n{ex.Message}";
+        }
     }
 
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e)
@@ -245,6 +287,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             if (_viewModel.TrySetLocation(location.Latitude, location.Longitude))
             {
                 ShowLocation(location.Latitude, location.Longitude, false);
+                await UpdateAddressAsync();
             }
         }
         catch (Exception ex)
