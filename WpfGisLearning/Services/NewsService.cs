@@ -1,18 +1,86 @@
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using WpfGisLearning.Models;
 
 namespace WpfGisLearning.Services;
 
 public class NewsService
 {
-    private readonly List<NewsItem> _items =
-    [
-        new NewsItem { Id = "news-1", Title = "東京・丸の内に話題の新しいラーメン店がオープン", Summary = "駅から徒歩圏内に注目の新店が登場。こだわりの一杯を提供しています。", Category = "新店", Region = "東京", PublishedAt = new DateTime(2026, 9, 15), IsFeatured = true },
-        new NewsItem { Id = "news-2", Title = "秋限定の味噌ラーメンが各地で登場", Summary = "秋の食材を使った季節限定メニューをチェック。", Category = "限定", Region = "全国", PublishedAt = new DateTime(2026, 9, 14), IsFeatured = true },
-        new NewsItem { Id = "news-3", Title = "今月注目したいラーメン新店5選", Summary = "今月オープンした注目店をエリア別に紹介します。", Category = "特集", Region = "全国", PublishedAt = new DateTime(2026, 9, 13) },
-        new NewsItem { Id = "news-4", Title = "全国ラーメンイベント開催情報", Summary = "今秋開催されるラーメン関連イベントをまとめました。", Category = "イベント", Region = "全国", PublishedAt = new DateTime(2026, 9, 12) },
-        new NewsItem { Id = "news-5", Title = "大阪で新しい豚骨ラーメン店がオープン", Summary = "濃厚な豚骨スープを楽しめる新店がオープンしました。", Category = "新店", Region = "大阪", PublishedAt = new DateTime(2026, 9, 11) },
-        new NewsItem { Id = "news-6", Title = "人気店の期間限定メニューを紹介", Summary = "今しか食べられない限定メニューをピックアップ。", Category = "限定", Region = "全国", PublishedAt = new DateTime(2026, 9, 10) }
-    ];
+    private const string FeedUrl = "https://news.google.com/rss/search?q=%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+when%3A7d&hl=ja&gl=JP&ceid=JP%3Aja";
+    private static readonly HttpClient HttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
 
-    public IEnumerable<NewsItem> GetNews() => _items.OrderByDescending(x => x.PublishedAt);
+    public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, FeedUrl);
+        request.Headers.UserAgent.ParseAdd("Ramenia/1.0");
+
+        using var response = await HttpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+
+        return document.Descendants("item")
+            .Select(ParseItem)
+            .Where(x => x is not null)
+            .Select(x => x!)
+            .OrderByDescending(x => x.PublishedAt)
+            .Take(20)
+            .ToList();
+    }
+
+    private static NewsItem? ParseItem(XElement item)
+    {
+        var title = item.Element("title")?.Value?.Trim();
+        var link = item.Element("link")?.Value?.Trim();
+        var publishedText = item.Element("pubDate")?.Value?.Trim();
+        var description = item.Element("description")?.Value ?? string.Empty;
+        var source = item.Element("source")?.Value?.Trim();
+
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link)) return null;
+        if (!DateTimeOffset.TryParse(publishedText, out var publishedAt)) publishedAt = DateTimeOffset.Now;
+
+        var cleanTitle = title;
+        if (!string.IsNullOrWhiteSpace(source) && cleanTitle.EndsWith($" - {source}", StringComparison.OrdinalIgnoreCase))
+            cleanTitle = cleanTitle[..^(source.Length + 3)].Trim();
+
+        return new NewsItem
+        {
+            Id = link,
+            Title = cleanTitle,
+            Summary = CleanDescription(description),
+            Category = DetectCategory(cleanTitle),
+            Region = DetectRegion(cleanTitle),
+            PublishedAt = publishedAt.LocalDateTime,
+            SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
+            SourceUrl = link,
+            IsFeatured = false
+        };
+    }
+
+    private static string CleanDescription(string html)
+    {
+        var text = Regex.Replace(html, "<[^>]+>", " ");
+        text = WebUtility.HtmlDecode(text);
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+        return text.Length > 180 ? text[..180] + "…" : text;
+    }
+
+    private static string DetectCategory(string title)
+    {
+        if (title.Contains("イベント") || title.Contains("フェス") || title.Contains("開催")) return "イベント";
+        if (title.Contains("限定") || title.Contains("期間") || title.Contains("発売")) return "限定";
+        if (title.Contains("新店") || title.Contains("オープン") || title.Contains("開店")) return "新店";
+        return "特集";
+    }
+
+    private static string DetectRegion(string title)
+    {
+        var regions = new[] { "北海道", "東京", "大阪", "京都", "神奈川", "千葉", "埼玉", "愛知", "福岡", "兵庫", "宮城", "広島", "静岡", "茨城", "栃木", "群馬", "長野", "新潟" };
+        return regions.FirstOrDefault(title.Contains) ?? "全国";
+    }
 }
