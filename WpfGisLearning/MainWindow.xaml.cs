@@ -1,4 +1,5 @@
 using Mapsui;
+using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Styles;
@@ -21,8 +22,8 @@ public partial class MainWindow : Window
     private const string CurrentLocationLayerName = "CurrentLocation";
     private const double InitialMapPaddingFactor = 1.2;
     private const int SingleShopResolutionIndex = 12;
-    private const double ZoomAmount = 500;
-    private const double CurrentLocationAccuracyMeters = 50;
+    private const long ZoomAmount = 500;
+    private const uint CurrentLocationAccuracyMeters = 50;
     private const double InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
