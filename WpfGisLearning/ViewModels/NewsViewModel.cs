@@ -1,8 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows.Data;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
@@ -13,10 +11,7 @@ public partial class NewsViewModel : ObservableObject
     private readonly NewsService _newsService;
 
     public ObservableCollection<NewsItem> News { get; } = new();
-    public ICollectionView NewsView { get; }
-    public string[] Categories { get; } = ["すべて", "新店", "限定", "イベント", "特集"];
 
-    [ObservableProperty] private string selectedCategory = "すべて";
     [ObservableProperty] private NewsItem? selectedNews;
     [ObservableProperty] private bool isLoading;
     [ObservableProperty] private string statusMessage = "";
@@ -27,11 +22,7 @@ public partial class NewsViewModel : ObservableObject
     public NewsViewModel(NewsService newsService)
     {
         _newsService = newsService;
-        NewsView = CollectionViewSource.GetDefaultView(News);
-        NewsView.Filter = FilterNews;
     }
-
-    partial void OnSelectedCategoryChanged(string value) => NewsView.Refresh();
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -39,7 +30,7 @@ public partial class NewsViewModel : ObservableObject
         if (IsLoading) return;
 
         IsLoading = true;
-        StatusMessage = $"{SelectedDate:yyyy/MM/dd} のニュースを取得しています…";
+        StatusMessage = $"{SelectedDate:yyyy/MM/dd}以前のニュースを取得しています…";
 
         try
         {
@@ -55,10 +46,9 @@ public partial class NewsViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(FeaturedNews));
-            NewsView.Refresh();
             StatusMessage = News.Count == 0
-                ? $"{SelectedDate:yyyy/MM/dd} のニュースが見つかりませんでした。"
-                : $"{SelectedDate:yyyy/MM/dd}：{News.Count}件のニュースを取得しました。";
+                ? $"{SelectedDate:yyyy/MM/dd}以前のニュースが見つかりませんでした。"
+                : $"{SelectedDate:yyyy/MM/dd}以前：{News.Count}件のニュースを取得しました。";
         }
         catch (Exception ex)
         {
@@ -69,7 +59,4 @@ public partial class NewsViewModel : ObservableObject
             IsLoading = false;
         }
     }
-
-    private bool FilterNews(object item)
-        => item is NewsItem news && (SelectedCategory == "すべて" || news.Category == SelectedCategory);
 }
