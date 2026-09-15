@@ -77,8 +77,7 @@ public class ShopMapLayerBuilderTests
             .Select(style => (style.Offset.X, style.Offset.Y))
             .ToList();
         var labels = result.Layer.Features
-            .SelectMany(feature => feature.Styles.OfType<LabelStyle>())
-            .Select(style => style.Text)
+            .Select(feature => feature.Styles.OfType<LabelStyle>().Single().GetLabelText(feature))
             .OrderBy(text => text)
             .ToList();
 
