@@ -20,7 +20,7 @@
                             <TextBlock Text="🍜 店舗詳細" FontSize="14" Foreground="#FFB83D2E" FontWeight="Bold" />
                             <TextBlock Text="{Binding Shop.Name}" FontSize="28" FontWeight="Bold" Foreground="#FF332925" Margin="0,4,0,0" TextWrapping="Wrap" />
                         </StackPanel>
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" Content="☆" FontSize="28" Padding="8,2" Background="Transparent" BorderThickness="0" Foreground="#FFB83D2E" Command="{Binding ToggleFavoriteCommand}">
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="28" Padding="8,2" Background="Transparent" BorderThickness="0" Foreground="#FFB83D2E" Command="{Binding ToggleFavoriteCommand}">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Content" Value="☆" />
