@@ -2,7 +2,6 @@ using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
-using Mapsui.Styles;
 using Mapsui.Tiling;
 using System.Windows;
 using System.Windows.Input;
@@ -78,7 +77,7 @@ public partial class MainWindow : Window
         }
 
         _initialLocationRequested = true;
-        await TryShowCurrentLocationAsync(showMessageOnFailure: false, filterNearby: false);
+        await TryShowCurrentLocationAsync(showMessageOnFailure: false);
     }
 
     private void NewsButton_Click(object sender, RoutedEventArgs e)
@@ -104,7 +103,7 @@ public partial class MainWindow : Window
         NewsContent.Visibility = Visibility.Collapsed;
         NewsContent.Content = null;
         MainArea.Visibility = Visibility.Visible;
-        HeaderSubtitle.Text = "ラーメン店を地図から探す";
+        HeaderSubtitle.Text = "お気に入りのラーメン店を地図から探そう";
     }
 
     private void InitializeMap()
@@ -165,8 +164,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        SetInitialMapPosition();
+    }
+
+    private void SetInitialMapPosition()
+    {
         var bounds = _shopMapLayerResult?.Bounds;
-        if (bounds is null || !bounds.HasValidCoordinates)
+        if (_map is null || bounds is null || !bounds.HasValidCoordinates)
         {
             return;
         }
@@ -315,29 +319,12 @@ public partial class MainWindow : Window
         storyboard.Children.Add(animation);
     }
 
-    private void InfoCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ClickCount != 2
-            || e.OriginalSource is System.Windows.Controls.Button
-            || !_selectedShopId.HasValue)
-        {
-            return;
-        }
-
-        _navigationService.NavigateToDetail(_selectedShopId.Value);
-        e.Handled = true;
-    }
-
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e)
     {
-        await TryShowCurrentLocationAsync(
-            showMessageOnFailure: true,
-            filterNearby: true);
+        await TryShowCurrentLocationAsync(showMessageOnFailure: true);
     }
 
-    private async Task TryShowCurrentLocationAsync(
-        bool showMessageOnFailure,
-        bool filterNearby)
+    private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure)
     {
         try
         {
@@ -354,11 +341,6 @@ public partial class MainWindow : Window
                 }
 
                 return;
-            }
-
-            if (filterNearby)
-            {
-                _shopListViewModel.SetNearbyLocation(location.Latitude, location.Longitude);
             }
 
             ShowCurrentLocation(location.Latitude, location.Longitude);
@@ -406,7 +388,8 @@ public partial class MainWindow : Window
 
         _currentLocationLayer ??= new MemoryLayer
         {
-            Name = CurrentLocationLayerName
+            Name = CurrentLocationLayerName,
+            Style = null
         };
         _currentLocationLayer.Features = new[] { feature };
 
@@ -426,7 +409,7 @@ public partial class MainWindow : Window
         RebuildShopLayer();
 
         _initialMapPositionSet = false;
-        MapControl_Loaded(sender, e);
+        SetInitialMapPosition();
     }
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e)
