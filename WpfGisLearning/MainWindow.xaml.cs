@@ -47,10 +47,8 @@ public partial class MainWindow : Window
 
         _shopListViewModel.SelectedShopChanged +=
             ShopListViewModel_SelectedShopChanged;
-
         _shopListViewModel.LocationSelectionRequested +=
             ShopListViewModel_LocationSelectionRequested;
-
         _shopListViewModel.ShopAdded +=
             ShopListViewModel_ShopAdded;
 
@@ -92,7 +90,7 @@ public partial class MainWindow : Window
                     if (lat < _minLat) _minLat = lat;
                     if (lat > _maxLat) _maxLat = lat;
 
-                    features.Add(CreateShopFeature(shop, mapPoint));
+                    features.Add(CreateShopFeature(shop));
                 }
                 catch
                 {
@@ -257,7 +255,6 @@ public partial class MainWindow : Window
         EventArgs e)
     {
         _isSelectingLocation = true;
-        InfoCardBorder.Visibility = Visibility.Collapsed;
     }
 
     private void ShopListViewModel_ShopAdded(
@@ -284,7 +281,9 @@ public partial class MainWindow : Window
                 var worldPosition = _map.Navigator.Viewport
                     .ScreenToWorld(screenPos);
 
-                var (lon, lat) = SphericalMercator.ToLonLat(worldPosition);
+                var lonLat = SphericalMercator.ToLonLat(worldPosition);
+                var lon = lonLat.X;
+                var lat = lonLat.Y;
 
                 if (IsValidCoordinate(lat, lon))
                 {
@@ -297,7 +296,7 @@ public partial class MainWindow : Window
 
             var mapInfo = MapControl.GetMapInfo(
                 screenPos,
-                MapControl.Map?.Layers);
+                MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
 
             if (mapInfo?.Layer?.Name != "Shops" ||
                 mapInfo.Feature is null)
@@ -321,33 +320,29 @@ public partial class MainWindow : Window
 
     private void AddShopFeatureToMap(Shop shop)
     {
-        if (_shopLayer is null || _map is null)
-            return;
-
-        if (!IsValidCoordinate(shop.Latitude, shop.Longitude))
+        if (_shopLayer is null || !IsValidCoordinate(shop.Latitude, shop.Longitude))
             return;
 
         try
         {
-            var mapPoint = SphericalMercator
-                .FromLonLat(shop.Longitude, shop.Latitude)
-                .ToMPoint();
-
-            var feature = CreateShopFeature(shop, mapPoint);
             _shopLayer.Features = _shopLayer.Features
-                .Append(feature)
+                .Concat(new[] { CreateShopFeature(shop) })
                 .ToList();
 
-            _map.RefreshGraphics();
+            MapControl.Refresh();
         }
         catch
         {
-            // 新規店舗のマーカー追加に失敗しても登録処理を妨げない
+            // 店舗追加後の地図更新に失敗しても登録自体は維持
         }
     }
 
-    private static IFeature CreateShopFeature(Shop shop, MPoint mapPoint)
+    private static IFeature CreateShopFeature(Shop shop)
     {
+        var mapPoint = SphericalMercator
+            .FromLonLat(shop.Longitude, shop.Latitude)
+            .ToMPoint();
+
         var feature = new PointFeature(mapPoint);
 
         feature["Name"] = shop.Name;
