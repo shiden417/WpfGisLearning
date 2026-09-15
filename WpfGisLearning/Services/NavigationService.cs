@@ -31,13 +31,15 @@ public class NavigationService : INavigationService
             Icon = CreateRameniaIcon()
         };
 
-        window.Show();
+        window.ShowDialog();
+
+        if (Application.Current?.MainWindow is MainWindow main)
+            main.RefreshShopData();
     }
 
     public void NavigateToShopEdit(int? id = null)
     {
         // int? をDIのコンストラクタ引数として解決させず、生成後に対象IDを渡す。
-        // これにより「店舗を登録」時のActivatorUtilitiesによる解決エラーを防ぐ。
         var viewModel = _provider.GetRequiredService<ShopEditViewModel>();
         viewModel.Load(id);
         var view = _provider.GetRequiredService<ShopEditView>();
@@ -104,7 +106,6 @@ public class NavigationService : INavigationService
     {
         const int size = 64;
         var visual = new DrawingVisual();
-
         using (var context = visual.RenderOpen())
         {
             var formattedText = new FormattedText(
@@ -119,10 +120,7 @@ public class NavigationService : INavigationService
                 48,
                 Brushes.Black,
                 1.0);
-
-            context.DrawText(
-                formattedText,
-                new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
+            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
         var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
