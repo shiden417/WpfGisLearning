@@ -26,7 +26,7 @@ public static class ShopMapLayerBuilder
 {
     public const string LayerName = "Shops";
 
-    private const double OverlapOffsetMeters = 12;
+    private const double OverlapOffsetPixels = 12;
     private const double NormalMarkerScale = 1.15;
     private const double SelectedMarkerScale = 1.4;
 
@@ -64,8 +64,8 @@ public static class ShopMapLayerBuilder
         {
             var shop = shops[index];
             var angle = 2 * Math.PI * index / shops.Count;
-            var offsetX = Math.Cos(angle) * OverlapOffsetMeters;
-            var offsetY = Math.Sin(angle) * OverlapOffsetMeters;
+            var offsetX = Math.Cos(angle) * OverlapOffsetPixels;
+            var offsetY = Math.Sin(angle) * OverlapOffsetPixels;
             yield return CreateFeature(
                 shop,
                 selectedShopId == shop.Id,
@@ -87,7 +87,6 @@ public static class ShopMapLayerBuilder
         var point = SphericalMercator
             .FromLonLat(shop.Longitude, shop.Latitude)
             .ToMPoint();
-        point = new MPoint(point.X + offsetX, point.Y + offsetY);
 
         var feature = new PointFeature(point)
         {
@@ -96,10 +95,12 @@ public static class ShopMapLayerBuilder
             ["Id"] = shop.Id
         };
 
-        feature.Styles.Add(ImageStyles.CreatePinStyle(
+        var markerStyle = ImageStyles.CreatePinStyle(
             Color.FromString(selected ? "#C56B4D" : "#4A90E2"),
             Color.White,
-            selected ? SelectedMarkerScale : NormalMarkerScale));
+            selected ? SelectedMarkerScale : NormalMarkerScale);
+        markerStyle.Offset = new Offset(offsetX, offsetY);
+        feature.Styles.Add(markerStyle);
 
         if (overlapCount > 1)
         {
@@ -114,7 +115,7 @@ public static class ShopMapLayerBuilder
                 CornerRounding = 6,
                 HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
                 VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Bottom,
-                Offset = new Offset(0, -18),
+                Offset = new Offset(offsetX, offsetY - 18),
                 CollisionDetection = false
             });
         }
