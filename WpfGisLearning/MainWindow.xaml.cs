@@ -268,8 +268,7 @@ public partial class MainWindow : Window
                 : _map.Navigator.Resolutions[^1];
 
             _map.Navigator.CenterOnAndZoomTo(mapPoint, resolution);
-
-            ShowInfoCard(shop.Name, shop.Address);
+            ShowInfoCard(shop);
         }
         catch
         {
@@ -299,12 +298,7 @@ public partial class MainWindow : Window
             }
 
             var feature = mapInfo.Feature;
-            var name = feature["Name"]?.ToString() ?? string.Empty;
-            var address = feature["Address"]?.ToString() ?? string.Empty;
 
-            ShowInfoCard(name, address);
-
-            // 地図で選択した店舗を一覧側のSelectedShopにも反映する。
             if (feature["Id"] is not null &&
                 int.TryParse(feature["Id"]?.ToString(), out var shopId))
             {
@@ -328,10 +322,15 @@ public partial class MainWindow : Window
                !(lat == 0 && lon == 0);
     }
 
-    private void ShowInfoCard(string name, string address)
+    private void ShowInfoCard(Shop shop)
     {
-        InfoCardName.Text = name;
-        InfoCardAddress.Text = address;
+        InfoCardName.Text = shop.Name;
+        InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address)
+            ? "住所未登録"
+            : shop.Address;
+        InfoCardPrice.Text = $"¥{shop.Price:N0}";
+        InfoCardLatitude.Text = shop.Latitude.ToString("F6");
+        InfoCardLongitude.Text = shop.Longitude.ToString("F6");
         InfoCardBorder.Visibility = Visibility.Visible;
     }
 
