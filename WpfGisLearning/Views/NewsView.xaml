@@ -10,7 +10,7 @@
         <Style x:Key="NewsImage" TargetType="Image"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasImage}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#FFF4F1EC">
-        <StackPanel Margin="28">
+        <StackPanel Margin="28,28,0,28">
             <Grid Margin="0,0,0,18"><TextBlock Text="📰 ラーメンニュース" FontSize="28" FontWeight="Bold" Foreground="#FF252A2F" /></Grid>
             <Border Background="White" BorderBrush="#FFE0DBD4" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,0,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="180" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel Grid.Column="0" VerticalAlignment="Center"><TextBlock Text="日付" FontWeight="SemiBold" Foreground="#FF343A40" /><TextBlock Text="取得する日を選択" FontSize="10" Foreground="#FF9A938C" Margin="0,2,0,0" /></StackPanel><DatePicker Grid.Column="1" SelectedDate="{Binding SelectedDate}" Margin="16,0,0,0" Padding="8,4" /><Button Grid.Column="3" Content="↻" ToolTip="ニュースを更新" Command="{Binding RefreshCommand}" Style="{StaticResource RefreshButton}" VerticalAlignment="Center" /></Grid></Border>
             <ProgressBar Style="{StaticResource LoadingBar}" IsIndeterminate="True" Margin="4,6,4,0" />
