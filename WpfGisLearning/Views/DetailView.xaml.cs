@@ -38,8 +38,8 @@ public partial class DetailView : System.Windows.Controls.UserControl
         var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
         feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString("#B83D2E"),
-            Mapsui.Styles.Color.White,
+            Mapsui.Styles.Color.FromString("#343A40"),
+            Mapsui.Styles.Color.FromString("#343A40"),
             1.15));
 
         map.Layers.Add(new MemoryLayer
