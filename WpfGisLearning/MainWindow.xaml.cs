@@ -12,6 +12,8 @@ using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
+using WpfBrush = System.Windows.Media.Brush;
+using WpfPen = System.Windows.Media.Pen;
 
 namespace WpfGisLearning;
 
@@ -189,8 +191,8 @@ public partial class MainWindow : Window
         {
             SymbolType = SymbolType.Ellipse,
             SymbolScale = 1.15,
-            Fill = new Brush(Mapsui.Styles.Color.FromString("#4A90E2")),
-            Outline = new Pen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3)
+            Fill = new WpfBrush(Mapsui.Styles.Color.FromString("#4A90E2")),
+            Outline = new WpfPen(Mapsui.Styles.Color.FromString("#FFFFFF"), 3)
         });
         _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" };
         _currentLocationLayer.Features = new[] { feature };
@@ -218,8 +220,10 @@ public partial class MainWindow : Window
         using (var context = visual.RenderOpen())
         {
             var formattedText = new FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 48, Brushes.Black, 1.0);
-            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
+            context.DrawText(formattedText, new System.Windows.Point(8, 6));
         }
-        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32); bitmap.Render(visual); bitmap.Freeze(); return bitmap;
+        var bitmap = new RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        return bitmap;
     }
 }
