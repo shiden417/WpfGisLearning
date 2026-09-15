@@ -208,6 +208,20 @@ public partial class MainWindow : Window
         }
 
         ShowInfoCard(shop);
+        CenterMapOnShop(shop);
+    }
+
+    private void CenterMapOnShop(Shop shop)
+    {
+        if (_map is null)
+        {
+            return;
+        }
+
+        var point = SphericalMercator
+            .FromLonLat(shop.Longitude, shop.Latitude)
+            .ToMPoint();
+        _map.Navigator.CenterOn(point);
     }
 
     private void MapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
