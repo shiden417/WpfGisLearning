@@ -19,15 +19,16 @@ public partial class ShopListViewModel : ObservableObject
     private double? _nearbyLongitude;
 
     [ObservableProperty] private string searchKeyword = string.Empty;
-    [ObservableProperty] private string selectedSort = "おすすめ";
     [ObservableProperty] private string selectedRamenType = "すべて";
     [ObservableProperty] private string selectedPriceFilter = "すべて";
     [ObservableProperty] private string selectedNearbyRadius = "5km";
     [ObservableProperty] private bool favoriteOnly;
     [ObservableProperty] private bool nearbyOnly;
+    [ObservableProperty] private bool sortByName;
+    [ObservableProperty] private bool sortByPrice;
+    [ObservableProperty] private bool sortByRating;
     [ObservableProperty] private Shop? selectedShop;
 
-    public string[] SortOptions { get; } = ["おすすめ", "店舗名: A → Z", "価格: 安い順", "価格: 高い順", "評価: 高い順"];
     public string[] RamenTypeOptions { get; } = ["すべて", "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
     public string[] PriceFilterOptions { get; } = ["すべて", "1000円以下", "1500円以下", "2000円以下"];
     public string[] NearbyRadiusOptions { get; } = ["1km", "3km", "5km", "10km", "20km"];
@@ -50,17 +51,19 @@ public partial class ShopListViewModel : ObservableObject
     partial void OnSelectedNearbyRadiusChanged(string value) => ShopsView.Refresh();
     partial void OnFavoriteOnlyChanged(bool value) => ShopsView.Refresh();
     partial void OnNearbyOnlyChanged(bool value) => ShopsView.Refresh();
+    partial void OnSortByNameChanged(bool value) => ApplySort();
+    partial void OnSortByPriceChanged(bool value) => ApplySort();
+    partial void OnSortByRatingChanged(bool value) => ApplySort();
 
-    partial void OnSelectedSortChanged(string value)
+    private void ApplySort()
     {
         ShopsView.SortDescriptions.Clear();
-        switch (value)
-        {
-            case "店舗名: A → Z": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending)); break;
-            case "価格: 安い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending)); break;
-            case "価格: 高い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Descending)); break;
-            case "評価: 高い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending)); break;
-        }
+        if (SortByRating)
+            ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending));
+        if (SortByPrice)
+            ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
+        if (SortByName)
+            ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending));
         ShopsView.Refresh();
     }
 
@@ -180,6 +183,9 @@ public partial class ShopListViewModel : ObservableObject
         SelectedPriceFilter = "すべて";
         FavoriteOnly = false;
         NearbyOnly = false;
+        SortByName = false;
+        SortByPrice = false;
+        SortByRating = false;
     }
 
     public void SetNearbyLocation(double latitude, double longitude)
@@ -202,6 +208,7 @@ public partial class ShopListViewModel : ObservableObject
     public void RefreshFromService()
     {
         ReloadShops();
+        ApplySort();
         ShopsView.Refresh();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
