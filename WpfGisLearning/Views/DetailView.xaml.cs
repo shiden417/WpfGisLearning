@@ -36,9 +36,9 @@ public partial class DetailView : System.Windows.Controls.UserControl
         map.Layers.Add(new MemoryLayer { Name = "Shop", Features = new[] { feature } }); map.Navigator.CenterOnAndZoomTo(point, 500);
     }
 
-    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => DetailMap.Navigator.ZoomIn(ZoomAmount);
+    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => DetailMap.Map?.Navigator.ZoomIn(ZoomAmount);
 
-    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => DetailMap.Navigator.ZoomOut(ZoomAmount);
+    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => DetailMap.Map?.Navigator.ZoomOut(ZoomAmount);
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
