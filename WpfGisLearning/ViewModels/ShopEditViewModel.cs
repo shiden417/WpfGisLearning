@@ -142,7 +142,18 @@ public partial class ShopEditViewModel : ObservableObject
             item.IsMain = item == photo;
         }
 
-        OnPropertyChanged(nameof(Photos));
+        RefreshPhotoCollection();
+    }
+
+    private void RefreshPhotoCollection()
+    {
+        var photos = Photos.ToList();
+        Photos.Clear();
+
+        foreach (var photo in photos)
+        {
+            Photos.Add(photo);
+        }
     }
 
     public bool TrySetLocation(double latitude, double longitude)
