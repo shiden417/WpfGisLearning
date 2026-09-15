@@ -76,9 +76,7 @@ public partial class ShopListViewModel : ObservableObject
         if (!string.IsNullOrWhiteSpace(keyword) &&
             !shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
             !shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
-            !shop.RamenType.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
-            !shop.Tags.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
-            !shop.RecommendedMenu.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            !shop.RamenType.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             return false;
 
         if (SelectedRamenType != "すべて" && shop.RamenType != SelectedRamenType)
@@ -128,35 +126,15 @@ public partial class ShopListViewModel : ObservableObject
             Shops.Add(shop);
     }
 
-    [RelayCommand]
-    private void NewShop()
-    {
-        _navigationService.NavigateToShopEdit();
-        RefreshFromService();
-    }
-
-    [RelayCommand]
-    private void OpenSelectedShop()
-    {
-        if (SelectedShop is not null)
-            _navigationService.NavigateToDetail(SelectedShop.Id);
-    }
-
-    [RelayCommand]
-    private void EditSelectedShop()
-    {
-        if (SelectedShop is null)
-            return;
-        _navigationService.NavigateToShopEdit(SelectedShop.Id);
-        RefreshFromService();
-    }
+    [RelayCommand] private void NewShop() { _navigationService.NavigateToShopEdit(); RefreshFromService(); }
+    [RelayCommand] private void OpenSelectedShop() { if (SelectedShop is not null) _navigationService.NavigateToDetail(SelectedShop.Id); }
+    [RelayCommand] private void EditSelectedShop() { if (SelectedShop is null) return; _navigationService.NavigateToShopEdit(SelectedShop.Id); RefreshFromService(); }
 
     [RelayCommand]
     private void ToggleFavorite(Shop? shop)
     {
         shop ??= SelectedShop;
-        if (shop is null)
-            return;
+        if (shop is null) return;
         _shopService.ToggleFavorite(shop.Id);
         ShopsView.Refresh();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
@@ -165,11 +143,9 @@ public partial class ShopListViewModel : ObservableObject
     [RelayCommand]
     private void DeleteSelectedShop()
     {
-        if (SelectedShop is null)
-            return;
+        if (SelectedShop is null) return;
         var result = MessageBox.Show($"「{SelectedShop.Name}」を削除しますか？", "店舗削除の確認", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (result != MessageBoxResult.Yes)
-            return;
+        if (result != MessageBoxResult.Yes) return;
         _shopService.DeleteShop(SelectedShop.Id);
         SelectedShop = null;
         RefreshFromService();
@@ -199,8 +175,7 @@ public partial class ShopListViewModel : ObservableObject
     public void SelectShopById(int shopId)
     {
         var shop = Shops.FirstOrDefault(s => s.Id == shopId);
-        if (shop is not null)
-            SelectedShop = shop;
+        if (shop is not null) SelectedShop = shop;
     }
 
     partial void OnSelectedShopChanged(Shop? value) => SelectedShopChanged?.Invoke(this, value);
