@@ -32,6 +32,7 @@ public partial class App : Application
         services.AddSingleton<NewsService>();
         services.AddSingleton<IShopService, ShopService>();
         services.AddSingleton<IPhotoService, PhotoService>();
+        services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
         _serviceProvider = services.BuildServiceProvider();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
