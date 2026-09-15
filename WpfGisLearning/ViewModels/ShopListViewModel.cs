@@ -13,7 +13,6 @@ public partial class ShopListViewModel : ObservableObject
 {
     public ObservableCollection<Shop> Shops { get; } = new();
     public ICollectionView ShopsView { get; }
-
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
     private double? _nearbyLatitude;
@@ -28,18 +27,9 @@ public partial class ShopListViewModel : ObservableObject
     [ObservableProperty] private bool nearbyOnly;
     [ObservableProperty] private Shop? selectedShop;
 
-    public string[] SortOptions { get; } = [
-        "おすすめ", "店舗名: A → Z", "価格: 安い順", "価格: 高い順", "評価: 高い順"
-    ];
-
-    public string[] RamenTypeOptions { get; } = [
-        "すべて", "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"
-    ];
-
-    public string[] PriceFilterOptions { get; } = [
-        "すべて", "1000円以下", "1500円以下", "2000円以下"
-    ];
-
+    public string[] SortOptions { get; } = ["おすすめ", "店舗名: A → Z", "価格: 安い順", "価格: 高い順", "評価: 高い順"];
+    public string[] RamenTypeOptions { get; } = ["すべて", "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
+    public string[] PriceFilterOptions { get; } = ["すべて", "1000円以下", "1500円以下", "2000円以下"];
     public string[] NearbyRadiusOptions { get; } = ["1km", "3km", "5km", "10km", "20km"];
 
     public event EventHandler<Shop?>? SelectedShopChanged;
@@ -66,18 +56,10 @@ public partial class ShopListViewModel : ObservableObject
         ShopsView.SortDescriptions.Clear();
         switch (value)
         {
-            case "店舗名: A → Z":
-                ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending));
-                break;
-            case "価格: 安い順":
-                ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
-                break;
-            case "価格: 高い順":
-                ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Descending));
-                break;
-            case "評価: 高い順":
-                ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending));
-                break;
+            case "店舗名: A → Z": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending)); break;
+            case "価格: 安い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending)); break;
+            case "価格: 高い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Descending)); break;
+            case "評価: 高い順": ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending)); break;
         }
         ShopsView.Refresh();
     }
@@ -92,12 +74,12 @@ public partial class ShopListViewModel : ObservableObject
             !shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
             !shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
             !shop.RamenType.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+            !shop.Tags.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
             !shop.RecommendedMenu.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             return false;
 
         if (SelectedRamenType != "すべて" && shop.RamenType != SelectedRamenType)
             return false;
-
         if (FavoriteOnly && !shop.IsFavorite)
             return false;
 
@@ -118,12 +100,10 @@ public partial class ShopListViewModel : ObservableObject
         {
             if (!_nearbyLatitude.HasValue || !_nearbyLongitude.HasValue)
                 return false;
-
             var radiusKm = double.Parse(SelectedNearbyRadius.Replace("km", ""));
             if (DistanceKm(_nearbyLatitude.Value, _nearbyLongitude.Value, shop.Latitude, shop.Longitude) > radiusKm)
                 return false;
         }
-
         return true;
     }
 
@@ -132,9 +112,7 @@ public partial class ShopListViewModel : ObservableObject
         const double earthRadiusKm = 6371.0;
         var dLat = DegreesToRadians(lat2 - lat1);
         var dLon = DegreesToRadians(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) + Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
         return earthRadiusKm * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
@@ -166,7 +144,6 @@ public partial class ShopListViewModel : ObservableObject
     {
         if (SelectedShop is null)
             return;
-
         _navigationService.NavigateToShopEdit(SelectedShop.Id);
         RefreshFromService();
     }
@@ -177,7 +154,6 @@ public partial class ShopListViewModel : ObservableObject
         shop ??= SelectedShop;
         if (shop is null)
             return;
-
         _shopService.ToggleFavorite(shop.Id);
         ShopsView.Refresh();
         ShopsChanged?.Invoke(this, EventArgs.Empty);
@@ -188,11 +164,9 @@ public partial class ShopListViewModel : ObservableObject
     {
         if (SelectedShop is null)
             return;
-
         var result = MessageBox.Show($"「{SelectedShop.Name}」を削除しますか？", "店舗削除の確認", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes)
             return;
-
         _shopService.DeleteShop(SelectedShop.Id);
         SelectedShop = null;
         RefreshFromService();
