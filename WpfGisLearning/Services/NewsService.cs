@@ -13,10 +13,8 @@ public class NewsService
 
     public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(DateTime date, CancellationToken cancellationToken = default)
     {
-        // 指定日以前のニュースを十分な期間から取得し、公開日時の新しい順に最大20件返す。
         var end = date.Date.AddDays(1);
-        var start = date.Date.AddDays(-30);
-        var query = $"ラーメン after:{start:yyyy-MM-dd} before:{end:yyyy-MM-dd}";
+        var query = $"ラーメン before:{end:yyyy-MM-dd}";
         var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
@@ -35,10 +33,9 @@ public class NewsService
             .Take(20)
             .ToList();
 
-        // RSSに画像が含まれない場合は、記事ページのメタ情報から画像を補完する。
+        // Google ニュース側のアイコン等は使わず、記事ページの画像だけを採用する。
         foreach (var item in items)
         {
-            if (!string.IsNullOrWhiteSpace(item.ImageUrl)) continue;
             item.ImageUrl = await TryGetArticleImageUrlAsync(item.SourceUrl, cancellationToken);
         }
 
@@ -68,34 +65,9 @@ public class NewsService
             Category = DetectCategory(cleanTitle),
             Region = DetectRegion(cleanTitle),
             PublishedAt = localPublishedAt.DateTime,
-            ImageUrl = ExtractImageUrl(item, description),
             SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
             SourceUrl = link
         };
-    }
-
-    private static string ExtractImageUrl(XElement item, string description)
-    {
-        var mediaImage = item.Elements()
-            .Where(x => x.Name.LocalName is "content" or "thumbnail")
-            .Select(x => x.Attribute("url")?.Value?.Trim())
-            .FirstOrDefault(IsImageUrl);
-
-        if (IsImageUrl(mediaImage)) return mediaImage!;
-
-        var enclosureImage = item.Element("enclosure")?.Attribute("url")?.Value?.Trim();
-        if (IsImageUrl(enclosureImage)) return enclosureImage!;
-
-        var match = Regex.Match(
-            description,
-            "<img[^>]+src=[\"'](?<url>[^\"']+)[\"']",
-            RegexOptions.IgnoreCase);
-
-        var descriptionImage = match.Success
-            ? WebUtility.HtmlDecode(match.Groups["url"].Value.Trim())
-            : string.Empty;
-
-        return IsImageUrl(descriptionImage) ? descriptionImage : string.Empty;
     }
 
     private static async Task<string> TryGetArticleImageUrlAsync(string url, CancellationToken cancellationToken)
@@ -113,7 +85,7 @@ public class NewsService
                 ?? FindMetaContent(html, "name", "twitter:image")
                 ?? FindMetaContent(html, "property", "og:image:url");
 
-            return IsImageUrl(imageUrl) ? imageUrl! : string.Empty;
+            return IsArticleImageUrl(imageUrl) ? imageUrl! : string.Empty;
         }
         catch (OperationCanceledException)
         {
@@ -121,7 +93,6 @@ public class NewsService
         }
         catch
         {
-            // 個別記事の画像取得失敗はニュース一覧全体には影響させない。
             return string.Empty;
         }
     }
@@ -137,10 +108,13 @@ public class NewsService
         return match.Success ? WebUtility.HtmlDecode(match.Groups["content"].Value.Trim()) : null;
     }
 
-    private static bool IsImageUrl(string? url)
+    private static bool IsArticleImageUrl(string? url)
     {
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;
+
+        var host = uri.Host.ToLowerInvariant();
+        return host != "news.google.com" && !host.EndsWith(".google.com", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string CleanDescription(string html)
