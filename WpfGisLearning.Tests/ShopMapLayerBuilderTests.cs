@@ -1,3 +1,4 @@
+using Mapsui.Styles;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
@@ -18,7 +19,7 @@ public class ShopMapLayerBuilderTests
 
         var result = ShopMapLayerBuilder.Build(shops, selectedShopId: null);
 
-        Assert.AreEqual(2, result.Layer.Features.Count());
+        Assert.HasCount(2, result.Layer.Features);
         Assert.IsTrue(result.Bounds.HasValidCoordinates);
         Assert.AreEqual(139.0, result.Bounds.MinLongitude);
         Assert.AreEqual(140.0, result.Bounds.MaxLongitude);
@@ -37,7 +38,7 @@ public class ShopMapLayerBuilderTests
 
         var result = ShopMapLayerBuilder.Build(shops, selectedShopId: null);
 
-        Assert.AreEqual(0, result.Layer.Features.Count());
+        Assert.HasCount(0, result.Layer.Features);
         Assert.IsFalse(result.Bounds.HasValidCoordinates);
     }
 
@@ -53,11 +54,14 @@ public class ShopMapLayerBuilderTests
         var result = ShopMapLayerBuilder.Build(shops, selectedShopId: 2);
         var selectedFeature = result.Layer.Features.Single(feature => feature["Id"]?.ToString() == "2");
         var normalFeature = result.Layer.Features.Single(feature => feature["Id"]?.ToString() == "1");
+        var selectedStyle = selectedFeature.Styles.Single() as ImageStyle;
+        var normalStyle = normalFeature.Styles.Single() as ImageStyle;
 
         Assert.AreEqual(1, selectedFeature.Styles.Count);
         Assert.AreEqual(1, normalFeature.Styles.Count);
-        Assert.AreNotEqual(
-            selectedFeature.Styles.Single().ToString(),
-            normalFeature.Styles.Single().ToString());
+        Assert.IsNotNull(selectedStyle);
+        Assert.IsNotNull(normalStyle);
+        Assert.AreEqual(1.4, selectedStyle!.SymbolScale);
+        Assert.AreEqual(1.15, normalStyle!.SymbolScale);
     }
 }
