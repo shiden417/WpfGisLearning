@@ -109,7 +109,7 @@ public static class ShopMapLayerBuilder
                 Text = $"{overlapIndex + 1}/{overlapCount}",
                 Font = new Font { Size = 10, Bold = true },
                 ForeColor = Color.White,
-                BackColor = new Brush(Color.FromString("CC343A40")),
+                BackColor = new Brush(Color.FromString("#343A40")),
                 BorderColor = Color.White,
                 BorderThickness = 1,
                 CornerRounding = 6,
