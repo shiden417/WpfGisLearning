@@ -9,7 +9,9 @@ public class NewsItem
     public string Region { get; set; } = "全国";
     public DateTime PublishedAt { get; set; }
     public string ImagePath { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
     public string SourceName { get; set; } = "Ramenia編集部";
     public string SourceUrl { get; set; } = string.Empty;
     public bool IsFeatured { get; set; }
+    public bool HasImage => !string.IsNullOrWhiteSpace(ImageUrl);
 }
