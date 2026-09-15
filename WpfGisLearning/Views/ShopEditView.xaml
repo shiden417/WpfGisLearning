@@ -3,9 +3,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf">
     <UserControl.Resources>
-        <Style TargetType="Button"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="Cursor" Value="Hand" /></Style>
-        <Style TargetType="TextBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
-        <Style TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#FF2B3035" />
+            <Setter Property="BorderBrush" Value="#FFE0DBD4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#FFF3E1DA" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFC56B4D" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#FFE8CFC3" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </UserControl.Resources>
     <Grid Background="#FFF4F1EC">
         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
@@ -15,8 +51,14 @@
                 <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="22" BorderBrush="#FFE0DBD4" BorderThickness="1">
                     <StackPanel>
                         <TextBlock Text="店舗情報" FontSize="18" FontWeight="Bold" Foreground="#FF252A2F" />
-                        <TextBlock Text="店舗名" Margin="0,18,0,5" Foreground="#FF68727B" /><TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
-                        <TextBlock Text="価格" Margin="0,12,0,5" Foreground="#FF68727B" /><TextBox Text="{Binding ShopPrice, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+                        <TextBlock Text="店舗名" Margin="0,18,0,5" Foreground="#FF68727B" />
+                        <TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+                        <TextBlock Text="{Binding ShopNameError}" Foreground="#FFB44B4B" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+                        <TextBlock Text="価格" Margin="0,12,0,5" Foreground="#FF68727B" />
+                        <TextBox Text="{Binding ShopPrice, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+                        <TextBlock Text="{Binding ShopPriceError}" Foreground="#FFB44B4B" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
+
                         <TextBlock Text="ラーメンの種類" Margin="0,12,0,5" Foreground="#FF68727B" /><ComboBox ItemsSource="{Binding RamenTypes}" SelectedItem="{Binding RamenType}" Height="36" Padding="8,0" />
                         <TextBlock Text="営業時間" Margin="0,12,0,5" Foreground="#FF68727B" /><TextBox Text="{Binding OpeningHours, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
                         <TextBlock Text="定休日" Margin="0,12,0,5" Foreground="#FF68727B" /><TextBox Text="{Binding ClosedDay, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
@@ -24,14 +66,15 @@
                         <TextBlock Text="住所" Margin="0,12,0,5" Foreground="#FF68727B" /><TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="60" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
                         <TextBlock Text="位置" Margin="0,16,0,5" Foreground="#FF68727B" />
                         <Border Background="#FFF8F5F1" CornerRadius="10" Padding="12"><StackPanel><TextBlock Text="{Binding ShopLatitude, StringFormat=緯度: {0:F6}}" Foreground="#FF343A40" /><TextBlock Text="{Binding ShopLongitude, StringFormat=経度: {0:F6}}" Foreground="#FF343A40" Margin="0,4,0,0" /><TextBlock Text="新規登録: 地図をダブルクリック / 編集: マーカーをドラッグ" FontSize="11" Foreground="#FF7B858C" Margin="0,8,0,0" TextWrapping="Wrap" /></StackPanel></Border>
-                        <Border Background="#FFFFF0EE" CornerRadius="8" Padding="10" Margin="0,12,0,0"><TextBlock Text="{Binding ErrorMessage}" Foreground="#FFB44B4B" FontSize="12" TextWrapping="Wrap" /></Border>
+                        <TextBlock Text="{Binding LocationError}" Foreground="#FFB44B4B" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#FFB44B4B" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0" />
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="10" BorderBrush="#FFE0DBD4" BorderThickness="1">
                     <Grid><mapsui:MapControl x:Name="EditMapControl" />
-                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12">
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14">
                             <Button Content="◎  現在地" Click="CurrentLocationButton_Click" Padding="12,8" FontWeight="SemiBold" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0"><Button Content="＋" Click="ZoomInButton_Click" Width="40" Height="38" FontSize="18" FontWeight="Bold" ToolTip="拡大" /><Button Content="−" Click="ZoomOutButton_Click" Width="40" Height="38" FontSize="18" FontWeight="Bold" ToolTip="縮小" /></StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0"><Button Content="＋" Click="ZoomInButton_Click" Width="40" Height="38" FontSize="18" FontWeight="Bold" ToolTip="拡大" /><Button Content="−" Click="ZoomOutButton_Click" Width="40" Height="38" FontSize="18" FontWeight="Bold" ToolTip="縮小" /></StackPanel>
                         </StackPanel>
                     </Grid>
                 </Border>
