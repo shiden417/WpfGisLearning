@@ -8,44 +8,52 @@ namespace WpfGisLearning.ViewModels;
 public partial class ShopEditViewModel : ObservableObject
 {
     private readonly IShopService _shopService;
-    private readonly bool _isEdit;
+    private bool _isEdit;
 
-    public int? ShopId { get; }
+    public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
 
-    [ObservableProperty]
-    private string shopName = string.Empty;
+    public string[] RamenTypes { get; } = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
 
-    [ObservableProperty]
-    private decimal shopPrice;
+    [ObservableProperty] private string shopName = string.Empty;
+    [ObservableProperty] private decimal shopPrice;
+    [ObservableProperty] private string shopAddress = string.Empty;
+    [ObservableProperty] private double? shopLatitude;
+    [ObservableProperty] private double? shopLongitude;
+    [ObservableProperty] private string ramenType = "醤油";
+    [ObservableProperty] private string recommendedMenu = string.Empty;
+    [ObservableProperty] private string openingHours = string.Empty;
+    [ObservableProperty] private string closedDay = string.Empty;
+    [ObservableProperty] private double rating;
 
-    [ObservableProperty]
-    private string shopAddress = string.Empty;
-
-    [ObservableProperty]
-    private double? shopLatitude;
-
-    [ObservableProperty]
-    private double? shopLongitude;
-
-    public ShopEditViewModel(IShopService shopService, int? shopId = null)
+    public ShopEditViewModel(IShopService shopService)
     {
         _shopService = shopService;
+    }
+
+    public void Load(int? shopId)
+    {
         ShopId = shopId;
         _isEdit = shopId.HasValue;
+        OnPropertyChanged(nameof(ScreenTitle));
 
-        if (shopId.HasValue)
-        {
-            var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value);
-            if (shop is not null)
-            {
-                ShopName = shop.Name;
-                ShopPrice = shop.Price;
-                ShopAddress = shop.Address;
-                ShopLatitude = shop.Latitude;
-                ShopLongitude = shop.Longitude;
-            }
-        }
+        if (!shopId.HasValue)
+            return;
+
+        var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value);
+        if (shop is null)
+            return;
+
+        ShopName = shop.Name;
+        ShopPrice = shop.Price;
+        ShopAddress = shop.Address;
+        ShopLatitude = shop.Latitude;
+        ShopLongitude = shop.Longitude;
+        RamenType = shop.RamenType;
+        RecommendedMenu = shop.RecommendedMenu;
+        OpeningHours = shop.OpeningHours;
+        ClosedDay = shop.ClosedDay;
+        Rating = shop.Rating;
     }
 
     public bool TrySetLocation(double latitude, double longitude)
@@ -61,51 +69,37 @@ public partial class ShopEditViewModel : ObservableObject
     [RelayCommand]
     private void Save()
     {
-        if (string.IsNullOrWhiteSpace(ShopName) ||
-            ShopPrice <= 0 ||
-            !ShopLatitude.HasValue ||
-            !ShopLongitude.HasValue)
-        {
+        if (string.IsNullOrWhiteSpace(ShopName) || ShopPrice <= 0 ||
+            !ShopLatitude.HasValue || !ShopLongitude.HasValue)
             return;
-        }
 
-        if (_isEdit && ShopId.HasValue)
+        var shop = new Shop
         {
-            _shopService.UpdateShop(new Shop
-            {
-                Id = ShopId.Value,
-                Name = ShopName.Trim(),
-                Price = ShopPrice,
-                Address = ShopAddress.Trim(),
-                Latitude = ShopLatitude.Value,
-                Longitude = ShopLongitude.Value
-            });
-        }
+            Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1),
+            Name = ShopName.Trim(),
+            Price = ShopPrice,
+            Address = ShopAddress.Trim(),
+            Latitude = ShopLatitude.Value,
+            Longitude = ShopLongitude.Value,
+            RamenType = RamenType,
+            RecommendedMenu = RecommendedMenu.Trim(),
+            OpeningHours = OpeningHours.Trim(),
+            ClosedDay = ClosedDay.Trim(),
+            Rating = Math.Clamp(Rating, 0, 5),
+            IsFavorite = _isEdit && ShopId.HasValue &&
+                         (_shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value)?.IsFavorite ?? false)
+        };
+
+        if (_isEdit)
+            _shopService.UpdateShop(shop);
         else
-        {
-            var nextId = _shopService.GetShops().Any()
-                ? _shopService.GetShops().Max(x => x.Id) + 1
-                : 1;
-
-            _shopService.AddShop(new Shop
-            {
-                Id = nextId,
-                Name = ShopName.Trim(),
-                Price = ShopPrice,
-                Address = ShopAddress.Trim(),
-                Latitude = ShopLatitude.Value,
-                Longitude = ShopLongitude.Value
-            });
-        }
+            _shopService.AddShop(shop);
 
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
-    private void Cancel()
-    {
-        RequestClose?.Invoke(this, EventArgs.Empty);
-    }
+    private void Cancel() => RequestClose?.Invoke(this, EventArgs.Empty);
 
     public event EventHandler? RequestClose;
 }
