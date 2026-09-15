@@ -54,14 +54,33 @@ public class ShopMapLayerBuilderTests
         var result = ShopMapLayerBuilder.Build(shops, selectedShopId: 2);
         var selectedFeature = result.Layer.Features.Single(feature => feature["Id"]?.ToString() == "2");
         var normalFeature = result.Layer.Features.Single(feature => feature["Id"]?.ToString() == "1");
-        var selectedStyle = selectedFeature.Styles.Single() as ImageStyle;
-        var normalStyle = normalFeature.Styles.Single() as ImageStyle;
+        var selectedStyle = selectedFeature.Styles.OfType<ImageStyle>().Single();
+        var normalStyle = normalFeature.Styles.OfType<ImageStyle>().Single();
 
-        Assert.HasCount(1, selectedFeature.Styles);
-        Assert.HasCount(1, normalFeature.Styles);
-        Assert.IsNotNull(selectedStyle);
-        Assert.IsNotNull(normalStyle);
-        Assert.AreEqual(1.4, selectedStyle!.SymbolScale);
-        Assert.AreEqual(1.15, normalStyle!.SymbolScale);
+        Assert.AreEqual(1.4, selectedStyle.SymbolScale);
+        Assert.AreEqual(1.15, normalStyle.SymbolScale);
+    }
+
+    [TestMethod]
+    public void Build_OverlappingShopsAreSeparatedAndNumbered()
+    {
+        var shops = new[]
+        {
+            new Shop { Id = 1, Name = "Shop 1", Latitude = 35.0, Longitude = 139.0 },
+            new Shop { Id = 2, Name = "Shop 2", Latitude = 35.0, Longitude = 139.0 },
+            new Shop { Id = 3, Name = "Shop 3", Latitude = 35.0, Longitude = 139.0 }
+        };
+
+        var result = ShopMapLayerBuilder.Build(shops, selectedShopId: null);
+        var points = result.Layer.Features.OfType<PointFeature>().Select(feature => feature.Point).ToList();
+        var labels = result.Layer.Features
+            .SelectMany(feature => feature.Styles.OfType<LabelStyle>())
+            .Select(style => style.Text)
+            .OrderBy(text => text)
+            .ToList();
+
+        Assert.HasCount(3, points);
+        Assert.HasCount(3, points.DistinctBy(point => (point.X, point.Y)));
+        CollectionAssert.AreEqual(new[] { "1/3", "2/3", "3/3" }, labels);
     }
 }
