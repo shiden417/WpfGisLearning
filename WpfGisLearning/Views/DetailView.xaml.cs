@@ -43,14 +43,16 @@ public partial class DetailView : System.Windows.Controls.UserControl
 
         var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
+        feature.Styles.Add(ImageStyles.CreatePinStyle(
+            Mapsui.Styles.Color.FromString("#C74B4B"),
+            Mapsui.Styles.Color.FromString("#C74B4B"),
+            1.15));
 
         _map.Layers.Add(new MemoryLayer { Name = "Shop", Features = new[] { feature } });
         _map.Navigator.CenterOnAndZoomTo(point, 500);
     }
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
-
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
