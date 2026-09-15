@@ -41,25 +41,17 @@ public partial class MainWindow : Window
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
 
-    public MainWindow(
-        MainViewModel viewModel,
-        ShopListView shopListView,
-        IShopService shopService,
-        INavigationService navigationService,
-        ICurrentLocationService currentLocationService,
-        NewsView newsView)
+    public MainWindow(MainViewModel viewModel, ShopListView shopListView, IShopService shopService, INavigationService navigationService, ICurrentLocationService currentLocationService, NewsView newsView)
     {
         InitializeComponent();
         DataContext = viewModel;
         Icon = CreateRameniaIcon();
         MainContent.Content = shopListView;
-
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
         _navigationService = navigationService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
-
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
         _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
         _newsView.RequestBack += NewsView_RequestBack;
@@ -82,7 +74,6 @@ public partial class MainWindow : Window
     }
 
     private void ShopMapButton_Click(object sender, RoutedEventArgs e) => ShowShopMap();
-
     private void NewsView_RequestBack(object? sender, EventArgs e) => ShowShopMap();
 
     private void ShowShopMap()
@@ -139,9 +130,7 @@ public partial class MainWindow : Window
         try
         {
             var center = MapViewportCalculator.CalculateCenter(bounds);
-            var resolution = MapViewportCalculator.CalculateResolution(
-                bounds, _map.Navigator.Resolutions, MapControl.ActualWidth,
-                MapControl.ActualHeight, InitialMapPaddingFactor, SingleShopResolutionIndex);
+            var resolution = MapViewportCalculator.CalculateResolution(bounds, _map.Navigator.Resolutions, MapControl.ActualWidth, MapControl.ActualHeight, InitialMapPaddingFactor, SingleShopResolutionIndex);
             _map.Navigator.CenterOnAndZoomTo(center, resolution);
             _initialMapPositionSet = true;
         }
@@ -174,9 +163,7 @@ public partial class MainWindow : Window
         try
         {
             var position = e.GetPosition(MapControl);
-            var mapInfo = MapControl.GetMapInfo(
-                new Mapsui.Manipulations.ScreenPosition((int)position.X, (int)position.Y),
-                MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
+            var mapInfo = MapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)position.X, (int)position.Y), MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
             if (mapInfo?.Layer?.Name != ShopLayerName || mapInfo.Feature is null) return;
             if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId))
                 _shopListViewModel.SelectShopById(shopId);
@@ -198,10 +185,7 @@ public partial class MainWindow : Window
         AnimateInfoCard();
     }
 
-    private void InfoCardClose_Click(object sender, RoutedEventArgs e)
-    {
-        InfoCardBorder.Visibility = Visibility.Collapsed;
-    }
+    private void InfoCardClose_Click(object sender, RoutedEventArgs e) => InfoCardBorder.Visibility = Visibility.Collapsed;
 
     private void AnimateInfoCard()
     {
@@ -259,10 +243,7 @@ public partial class MainWindow : Window
         MapControl.Refresh();
     }
 
-    public void RefreshShopData()
-    {
-        _shopListViewModel.RefreshFromService();
-    }
+    public void RefreshShopData() => _shopListViewModel.RefreshFromService();
 
     private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e)
     {
@@ -294,10 +275,7 @@ public partial class MainWindow : Window
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
-            var formattedText = new FormattedText(
-                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                RameniaIconFontSize, Brushes.Black, 1.0);
+            var formattedText = new FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), RameniaIconFontSize, Brushes.Black, 1.0);
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
         var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
