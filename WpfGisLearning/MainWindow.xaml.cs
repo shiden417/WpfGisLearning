@@ -38,19 +38,16 @@ public partial class MainWindow : Window
         INavigationService navigationService)
     {
         InitializeComponent();
-
         DataContext = viewModel;
         Icon = CreateRameniaIcon();
 
         MainContent.Content = shopListView;
-
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
         _navigationService = navigationService;
 
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
         _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
-
         InitializeMap();
     }
 
@@ -62,7 +59,6 @@ public partial class MainWindow : Window
             _map.Layers.Add(OpenStreetMap.CreateTileLayer());
             MapControl.Map = _map;
             RebuildShopLayer();
-
             MapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp;
             MapControl.Loaded += MapControl_Loaded;
         }
@@ -94,19 +90,13 @@ public partial class MainWindow : Window
             _maxLon = Math.Max(_maxLon, shop.Longitude);
             _minLat = Math.Min(_minLat, shop.Latitude);
             _maxLat = Math.Max(_maxLat, shop.Latitude);
-            features.Add(CreateShopFeature(shop));
+            features.Add(CreateShopFeature(shop, shop.Id == _selectedShopId));
         }
 
-        _shopLayer = new MemoryLayer
-        {
-            Name = "Shops",
-            Features = features
-        };
-
+        _shopLayer = new MemoryLayer { Name = "Shops", Features = features };
         var oldLayer = _map.Layers.FirstOrDefault(layer => layer.Name == "Shops");
         if (oldLayer is not null)
             _map.Layers.Remove(oldLayer);
-
         _map.Layers.Add(_shopLayer);
         MapControl.Refresh();
     }
@@ -115,7 +105,6 @@ public partial class MainWindow : Window
     {
         if (_initialMapPositionSet || _map is null || !_hasValidCoords)
             return;
-
         if (MapControl.ActualWidth <= 0 || MapControl.ActualHeight <= 0)
             return;
 
@@ -128,9 +117,7 @@ public partial class MainWindow : Window
             double resolution;
             if (_minLon == _maxLon && _minLat == _maxLat)
             {
-                resolution = _map.Navigator.Resolutions.Count > 12
-                    ? _map.Navigator.Resolutions[12]
-                    : _map.Navigator.Resolutions[^1];
+                resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
             }
             else
             {
@@ -157,15 +144,14 @@ public partial class MainWindow : Window
 
     private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop)
     {
+        _selectedShopId = shop?.Id;
+        RebuildShopLayer();
+
         if (shop is null || _map is null || !IsValidCoordinate(shop.Latitude, shop.Longitude))
             return;
 
-        _selectedShopId = shop.Id;
         var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
-        var resolution = _map.Navigator.Resolutions.Count > 12
-            ? _map.Navigator.Resolutions[12]
-            : _map.Navigator.Resolutions[^1];
-
+        var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
         _map.Navigator.CenterOnAndZoomTo(mapPoint, resolution);
         ShowInfoCard(shop);
     }
@@ -181,11 +167,8 @@ public partial class MainWindow : Window
             if (mapInfo?.Layer?.Name != "Shops" || mapInfo.Feature is null)
                 return;
 
-            if (mapInfo.Feature["Id"] is not null &&
-                int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId))
-            {
+            if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId))
                 _shopListViewModel.SelectShopById(shopId);
-            }
         }
         catch
         {
@@ -193,20 +176,18 @@ public partial class MainWindow : Window
         }
     }
 
-    private static IFeature CreateShopFeature(Shop shop)
+    private static IFeature CreateShopFeature(Shop shop, bool selected)
     {
         var mapPoint = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
         var feature = new PointFeature(mapPoint);
-
         feature["Name"] = shop.Name;
         feature["Address"] = shop.Address;
         feature["Id"] = shop.Id;
 
-        feature.Styles.Add(
-            ImageStyles.CreatePinStyle(
-                Mapsui.Styles.Color.FromString("#B83D2E"),
-                Mapsui.Styles.Color.White,
-                1.15));
+        feature.Styles.Add(ImageStyles.CreatePinStyle(
+            Mapsui.Styles.Color.FromString(selected ? "#F28C28" : "#B83D2E"),
+            Mapsui.Styles.Color.White,
+            selected ? 1.35 : 1.15));
 
         return feature;
     }
@@ -222,15 +203,55 @@ public partial class MainWindow : Window
     private void ShowInfoCard(Shop shop)
     {
         InfoCardName.Text = shop.Name;
+        InfoCardType.Text = $"{shop.RamenType}  ·  {shop.RecommendedMenu}";
         InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
         InfoCardPrice.Text = $"¥{shop.Price:N0}";
+        InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
         InfoCardBorder.Visibility = Visibility.Visible;
     }
 
     private void NewShopButton_Click(object sender, RoutedEventArgs e)
     {
         _navigationService.NavigateToShopEdit();
-        _shopListViewModel.RefreshFromService();
+        RefreshShopData();
+    }
+
+    private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync();
+            if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed)
+            {
+                MessageBox.Show("現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var locator = new Windows.Devices.Geolocation.Geolocator();
+            var position = await locator.GetGeopositionAsync();
+            var latitude = position.Coordinate.Point.Position.Latitude;
+            var longitude = position.Coordinate.Point.Position.Longitude;
+
+            if (_map is null || !IsValidCoordinate(latitude, longitude))
+                return;
+
+            var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
+            var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
+            _map.Navigator.CenterOnAndZoomTo(point, resolution);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"現在地を取得できませんでした。\n{ex.Message}", "現在地", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedShopId = null;
+        InfoCardBorder.Visibility = Visibility.Collapsed;
+        RebuildShopLayer();
+        _initialMapPositionSet = false;
+        MapControl_Loaded(sender, e);
     }
 
     private void InfoCardDetail_Click(object sender, RoutedEventArgs e)
@@ -245,7 +266,7 @@ public partial class MainWindow : Window
             return;
 
         _navigationService.NavigateToShopEdit(_selectedShopId.Value);
-        _shopListViewModel.RefreshFromService();
+        RefreshShopData();
     }
 
     private void InfoCardClose_Click(object sender, RoutedEventArgs e)
@@ -253,11 +274,16 @@ public partial class MainWindow : Window
         InfoCardBorder.Visibility = Visibility.Collapsed;
     }
 
+    public void RefreshShopData()
+    {
+        _shopListViewModel.RefreshFromService();
+        RebuildShopLayer();
+    }
+
     private static ImageSource CreateRameniaIcon()
     {
         const int size = 64;
         var visual = new System.Windows.Media.DrawingVisual();
-
         using (var context = visual.RenderOpen())
         {
             var formattedText = new System.Windows.Media.FormattedText(
@@ -272,12 +298,10 @@ public partial class MainWindow : Window
                 48,
                 System.Windows.Media.Brushes.Black,
                 1.0);
-
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
-        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
-            size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
         return bitmap;
