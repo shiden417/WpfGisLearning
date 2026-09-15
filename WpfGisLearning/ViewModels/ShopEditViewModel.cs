@@ -53,11 +53,9 @@ public partial class ShopEditViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
         if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
         if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
-        if (!ShopLatitude.HasValue || !ShopLongitude.HasValue || !IsValidCoordinate(ShopLatitude.Value, ShopLongitude.Value)) LocationError = "有効な緯度・経度を地図上で指定してください。";
+        if (ShopLatitude is not double latitude || ShopLongitude is not double longitude || !IsValidCoordinate(latitude, longitude)) LocationError = "有効な緯度・経度を地図上で指定してください。";
         if (!string.IsNullOrEmpty(ShopNameError) || !string.IsNullOrEmpty(ShopPriceError) || !string.IsNullOrEmpty(RatingError) || !string.IsNullOrEmpty(LocationError)) return;
 
-        var latitude = ShopLatitude.Value;
-        var longitude = ShopLongitude.Value;
         var existing = ShopId.HasValue ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value) : null;
         if (ShopId.HasValue && existing is null) { ErrorMessage = "編集対象の店舗が見つかりません。画面を閉じてもう一度お試しください。"; return; }
         var shop = new Shop { Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1), Name = ShopName.Trim(), Price = ShopPrice, Address = ShopAddress.Trim(), Latitude = latitude, Longitude = longitude, RamenType = RamenType, OpeningHours = OpeningHours.Trim(), ClosedDay = ClosedDay.Trim(), Rating = Rating, IsFavorite = existing?.IsFavorite ?? false, Photos = Photos.Select((p, index) => new ShopPhoto { Id = string.IsNullOrWhiteSpace(p.Id) ? Guid.NewGuid().ToString("N") : p.Id, FileName = p.FileName, IsMain = p.IsMain, SortOrder = index }).ToList() };
