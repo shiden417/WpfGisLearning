@@ -20,8 +20,6 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private double? shopLatitude;
     [ObservableProperty] private double? shopLongitude;
     [ObservableProperty] private string ramenType = "醤油";
-    [ObservableProperty] private string tags = string.Empty;
-    [ObservableProperty] private string recommendedMenu = string.Empty;
     [ObservableProperty] private string openingHours = string.Empty;
     [ObservableProperty] private string closedDay = string.Empty;
     [ObservableProperty] private double rating;
@@ -36,9 +34,8 @@ public partial class ShopEditViewModel : ObservableObject
 
         if (!shopId.HasValue)
         {
-            // 新規登録は日本全体を見渡せる初期地図の中央付近にマーカーを置く。
-            ShopLatitude = 36.0;
-            ShopLongitude = 138.0;
+            ShopLatitude = null;
+            ShopLongitude = null;
             return;
         }
 
@@ -52,8 +49,6 @@ public partial class ShopEditViewModel : ObservableObject
         ShopLatitude = shop.Latitude;
         ShopLongitude = shop.Longitude;
         RamenType = shop.RamenType;
-        Tags = shop.Tags;
-        RecommendedMenu = shop.RecommendedMenu;
         OpeningHours = shop.OpeningHours;
         ClosedDay = shop.ClosedDay;
         Rating = shop.Rating;
@@ -84,8 +79,6 @@ public partial class ShopEditViewModel : ObservableObject
             Latitude = ShopLatitude.Value,
             Longitude = ShopLongitude.Value,
             RamenType = RamenType,
-            Tags = Tags.Trim(),
-            RecommendedMenu = RecommendedMenu.Trim(),
             OpeningHours = OpeningHours.Trim(),
             ClosedDay = ClosedDay.Trim(),
             Rating = Math.Clamp(Rating, 0, 5),
