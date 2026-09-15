@@ -14,7 +14,10 @@ public partial class Shop : ObservableObject
     public string OpeningHours { get; set; } = string.Empty;
     public string ClosedDay { get; set; } = string.Empty;
     public double Rating { get; set; }
+    public List<ShopPhoto> Photos { get; set; } = [];
 
     [ObservableProperty]
     private bool isFavorite;
+
+    public ShopPhoto? MainPhoto => Photos.OrderByDescending(x => x.IsMain).ThenBy(x => x.SortOrder).FirstOrDefault();
 }
