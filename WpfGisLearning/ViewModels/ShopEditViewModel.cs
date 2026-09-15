@@ -31,26 +31,15 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string locationError = string.Empty;
 
     public ShopEditViewModel(IShopService shopService, IPhotoService photoService) { _shopService = shopService; _photoService = photoService; }
-
     public void Load(int? shopId)
     {
         ShopId = shopId; _isEdit = shopId.HasValue; ClearErrors(); Photos.Clear(); _originalPhotos.Clear(); OnPropertyChanged(nameof(ScreenTitle));
         if (!shopId.HasValue) { ShopLatitude = null; ShopLongitude = null; return; }
-        var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value);
-        if (shop is null) { ErrorMessage = "編集対象の店舗が見つかりません。"; return; }
+        var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value); if (shop is null) { ErrorMessage = "編集対象の店舗が見つかりません。"; return; }
         ShopName = shop.Name; ShopPrice = shop.Price; ShopAddress = shop.Address; ShopLatitude = shop.Latitude; ShopLongitude = shop.Longitude; RamenType = shop.RamenType; OpeningHours = shop.OpeningHours; ClosedDay = shop.ClosedDay; Rating = shop.Rating;
-        foreach (var photo in shop.Photos.OrderBy(x => x.SortOrder))
-        {
-            Photos.Add(new ShopPhoto { Id = photo.Id, FileName = photo.FileName, IsMain = photo.IsMain, SortOrder = photo.SortOrder, SourcePath = _photoService.GetPhotoPath(shop, photo) });
-            _originalPhotos.Add(new ShopPhoto { Id = photo.Id, FileName = photo.FileName, IsMain = photo.IsMain, SortOrder = photo.SortOrder });
-        }
+        foreach (var photo in shop.Photos.OrderBy(x => x.SortOrder)) { Photos.Add(new ShopPhoto { Id = photo.Id, FileName = photo.FileName, IsMain = photo.IsMain, SortOrder = photo.SortOrder, SourcePath = _photoService.GetPhotoPath(shop, photo) }); _originalPhotos.Add(new ShopPhoto { Id = photo.Id, FileName = photo.FileName, IsMain = photo.IsMain, SortOrder = photo.SortOrder }); }
     }
-
-    public void AddPhoto(string sourcePath)
-    {
-        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath) || Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))) return;
-        Photos.Add(new ShopPhoto { SourcePath = sourcePath, SortOrder = Photos.Count, IsMain = Photos.Count == 0 }); OnPropertyChanged(nameof(Photos));
-    }
+    public void AddPhoto(string sourcePath) { if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath) || Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))) return; Photos.Add(new ShopPhoto { SourcePath = sourcePath, SortOrder = Photos.Count, IsMain = Photos.Count == 0 }); OnPropertyChanged(nameof(Photos)); }
     public void RemovePhoto(ShopPhoto? photo) { if (photo is null) return; var wasMain = photo.IsMain; Photos.Remove(photo); if (wasMain && Photos.Count > 0) Photos[0].IsMain = true; NormalizePhotoOrder(); }
     public void SetMainPhoto(ShopPhoto? photo) { if (photo is null) return; foreach (var item in Photos) item.IsMain = item == photo; OnPropertyChanged(nameof(Photos)); }
     public bool TrySetLocation(double latitude, double longitude) { if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return false; ShopLatitude = latitude; ShopLongitude = longitude; LocationError = string.Empty; ErrorMessage = string.Empty; return true; }
@@ -63,16 +52,14 @@ public partial class ShopEditViewModel : ObservableObject
         var shop = new Shop { Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1), Name = ShopName.Trim(), Price = ShopPrice, Address = ShopAddress.Trim(), Latitude = ShopLatitude.Value, Longitude = ShopLongitude.Value, RamenType = RamenType, OpeningHours = OpeningHours.Trim(), ClosedDay = ClosedDay.Trim(), Rating = Math.Clamp(Rating, 0, 5), IsFavorite = existing?.IsFavorite ?? false, Photos = Photos.Select((p, index) => new ShopPhoto { Id = string.IsNullOrWhiteSpace(p.Id) ? Guid.NewGuid().ToString("N") : p.Id, FileName = p.FileName, IsMain = p.IsMain, SortOrder = index }).ToList() };
         try
         {
-            if (_isEdit) { foreach (var original in _originalPhotos.Where(p => Photos.All(x => x.Id != p.Id))) _photoService.DeletePhoto(shop, original); _shopService.UpdateShop(shop); }
-            else _shopService.AddShop(shop);
-            var newPhotos = Photos.Where(p => !string.IsNullOrWhiteSpace(p.SourcePath) && !Path.IsPathFullyQualified(p.SourcePath) || (p.SourcePath.Contains(Path.DirectorySeparatorChar) && !File.Exists(_photoService.GetPhotoPath(shop, p)))).Where(p => File.Exists(p.SourcePath)).Select(p => (p.SourcePath, p)).ToList();
+            if (_isEdit) { foreach (var original in _originalPhotos.Where(p => Photos.All(x => x.Id != p.Id))) _photoService.DeletePhoto(shop, original); _shopService.UpdateShop(shop); } else _shopService.AddShop(shop);
+            var newPhotos = Photos.Where(p => File.Exists(p.SourcePath) && !string.Equals(Path.GetFullPath(p.SourcePath), Path.GetFullPath(_photoService.GetPhotoPath(shop, p)), StringComparison.OrdinalIgnoreCase)).Select(p => (p.SourcePath, p)).ToList();
             _photoService.SavePhotos(shop, newPhotos);
             foreach (var photo in shop.Photos) { var source = Photos.FirstOrDefault(x => x.Id == photo.Id); if (source is not null) photo.FileName = source.FileName; }
             _shopService.UpdateShop(shop); RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex) { ErrorMessage = $"店舗を保存できませんでした。\n{ex.Message}"; }
     }
-
     private void NormalizePhotoOrder() { for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i; OnPropertyChanged(nameof(Photos)); }
     private void ClearErrors() { ErrorMessage = string.Empty; ShopNameError = string.Empty; ShopPriceError = string.Empty; LocationError = string.Empty; }
     [RelayCommand] private void Cancel() => RequestClose?.Invoke(this, EventArgs.Empty);
