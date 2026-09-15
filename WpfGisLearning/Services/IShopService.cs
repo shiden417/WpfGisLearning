@@ -9,4 +9,5 @@ public interface IShopService
     void AddShop(Shop shop);
     void UpdateShop(Shop shop);
     void DeleteShop(int id);
+    void ToggleFavorite(int id);
 }
