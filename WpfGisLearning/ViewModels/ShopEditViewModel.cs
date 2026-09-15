@@ -23,6 +23,7 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string openingHours = string.Empty;
     [ObservableProperty] private string closedDay = string.Empty;
     [ObservableProperty] private double rating;
+    [ObservableProperty] private string errorMessage = string.Empty;
 
     public ShopEditViewModel(IShopService shopService) => _shopService = shopService;
 
@@ -30,6 +31,7 @@ public partial class ShopEditViewModel : ObservableObject
     {
         ShopId = shopId;
         _isEdit = shopId.HasValue;
+        ErrorMessage = string.Empty;
         OnPropertyChanged(nameof(ScreenTitle));
 
         if (!shopId.HasValue)
@@ -41,7 +43,10 @@ public partial class ShopEditViewModel : ObservableObject
 
         var shop = _shopService.GetShops().FirstOrDefault(x => x.Id == shopId.Value);
         if (shop is null)
+        {
+            ErrorMessage = "編集対象の店舗が見つかりません。";
             return;
+        }
 
         ShopName = shop.Name;
         ShopPrice = shop.Price;
@@ -60,16 +65,40 @@ public partial class ShopEditViewModel : ObservableObject
             return false;
         ShopLatitude = latitude;
         ShopLongitude = longitude;
+        ErrorMessage = string.Empty;
         return true;
     }
 
     [RelayCommand]
     private void Save()
     {
-        if (string.IsNullOrWhiteSpace(ShopName) || ShopPrice <= 0 || !ShopLatitude.HasValue || !ShopLongitude.HasValue)
+        ErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(ShopName))
+        {
+            ErrorMessage = "店舗名を入力してください。";
             return;
+        }
+
+        if (ShopPrice <= 0)
+        {
+            ErrorMessage = "価格は1円以上で入力してください。";
+            return;
+        }
+
+        if (!ShopLatitude.HasValue || !ShopLongitude.HasValue)
+        {
+            ErrorMessage = "地図上で店舗位置を指定してください。ダブルクリックで設定できます。";
+            return;
+        }
 
         var existing = ShopId.HasValue ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value) : null;
+        if (ShopId.HasValue && existing is null)
+        {
+            ErrorMessage = "編集対象の店舗が見つかりません。画面を閉じてもう一度お試しください。";
+            return;
+        }
+
         var shop = new Shop
         {
             Id = ShopId ?? (_shopService.GetShops().Any() ? _shopService.GetShops().Max(x => x.Id) + 1 : 1),
@@ -85,12 +114,19 @@ public partial class ShopEditViewModel : ObservableObject
             IsFavorite = existing?.IsFavorite ?? false
         };
 
-        if (_isEdit)
-            _shopService.UpdateShop(shop);
-        else
-            _shopService.AddShop(shop);
+        try
+        {
+            if (_isEdit)
+                _shopService.UpdateShop(shop);
+            else
+                _shopService.AddShop(shop);
 
-        RequestClose?.Invoke(this, EventArgs.Empty);
+            RequestClose?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"店舗を保存できませんでした。\n{ex.Message}";
+        }
     }
 
     [RelayCommand]
