@@ -27,8 +27,6 @@ public static class ShopMapLayerBuilder
     public const string LayerName = "Shops";
 
     private const double OverlapOffsetPixels = 12;
-    private const double NormalMarkerScale = 1.15;
-    private const double SelectedMarkerScale = 1.4;
 
     public static ShopMapLayerResult Build(IEnumerable<Shop> shops, int? selectedShopId)
     {
@@ -95,10 +93,7 @@ public static class ShopMapLayerBuilder
             ["Id"] = shop.Id
         };
 
-        var markerStyle = ImageStyles.CreatePinStyle(
-            Color.FromString(selected ? "#C56B4D" : "#4A90E2"),
-            Color.White,
-            selected ? SelectedMarkerScale : NormalMarkerScale);
+        var markerStyle = MapMarkerStyleFactory.CreateShopMarker(selected);
         markerStyle.Offset = new Offset(offsetX, offsetY);
         feature.Styles.Add(markerStyle);
 
