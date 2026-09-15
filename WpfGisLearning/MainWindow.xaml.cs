@@ -30,12 +30,7 @@ public partial class MainWindow : Window
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
 
-    public MainWindow(
-        MainViewModel viewModel,
-        ShopListView shopListView,
-        MessageView messageView,
-        IShopService shopService,
-        INavigationService navigationService)
+    public MainWindow(MainViewModel viewModel, ShopListView shopListView, MessageView messageView, IShopService shopService, INavigationService navigationService)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -137,10 +132,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e)
-    {
-        RebuildShopLayer();
-    }
+    private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e) => RebuildShopLayer();
 
     private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop)
     {
@@ -183,21 +175,17 @@ public partial class MainWindow : Window
         feature["Name"] = shop.Name;
         feature["Address"] = shop.Address;
         feature["Id"] = shop.Id;
-
         feature.Styles.Add(ImageStyles.CreatePinStyle(
             Mapsui.Styles.Color.FromString(selected ? "#F28C28" : "#B83D2E"),
             Mapsui.Styles.Color.White,
             selected ? 1.35 : 1.15));
-
         return feature;
     }
 
     private static bool IsValidCoordinate(double lat, double lon)
     {
-        return !double.IsNaN(lat) && !double.IsNaN(lon) &&
-               !double.IsInfinity(lat) && !double.IsInfinity(lon) &&
-               lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 &&
-               !(lat == 0 && lon == 0);
+        return !double.IsNaN(lat) && !double.IsNaN(lon) && !double.IsInfinity(lat) && !double.IsInfinity(lon) &&
+               lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 && !(lat == 0 && lon == 0);
     }
 
     private void ShowInfoCard(Shop shop)
@@ -235,6 +223,8 @@ public partial class MainWindow : Window
             if (_map is null || !IsValidCoordinate(latitude, longitude))
                 return;
 
+            _shopListViewModel.SetNearbyLocation(latitude, longitude);
+
             var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
             var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
             _map.Navigator.CenterOnAndZoomTo(point, resolution);
@@ -269,10 +259,7 @@ public partial class MainWindow : Window
         RefreshShopData();
     }
 
-    private void InfoCardClose_Click(object sender, RoutedEventArgs e)
-    {
-        InfoCardBorder.Visibility = Visibility.Collapsed;
-    }
+    private void InfoCardClose_Click(object sender, RoutedEventArgs e) => InfoCardBorder.Visibility = Visibility.Collapsed;
 
     public void RefreshShopData()
     {
@@ -287,20 +274,11 @@ public partial class MainWindow : Window
         using (var context = visual.RenderOpen())
         {
             var formattedText = new System.Windows.Media.FormattedText(
-                "🍜",
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                new System.Windows.Media.Typeface(
-                    new System.Windows.Media.FontFamily("Segoe UI Emoji"),
-                    FontStyles.Normal,
-                    FontWeights.Normal,
-                    FontStretches.Normal),
-                48,
-                System.Windows.Media.Brushes.Black,
-                1.0);
+                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                new System.Windows.Media.Typeface(new System.Windows.Media.FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
+                48, System.Windows.Media.Brushes.Black, 1.0);
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
-
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
