@@ -15,12 +15,13 @@
         <Style x:Key="RefreshButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#FF747D84" />
+            <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0" />
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="FontSize" Value="18" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         </Style>
@@ -52,52 +53,110 @@
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#FFF4F1EC">
         <StackPanel Margin="28">
-            <DockPanel>
-                <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
                     <TextBlock Text="📰 ラーメンニュース" FontSize="28" FontWeight="Bold" Foreground="#FF252A2F" />
                     <TextBlock Text="日付を指定してラーメン関連ニュースを取得" Foreground="#FF747D84" Margin="0,4,0,0" />
                 </StackPanel>
-                <Button Content="↻" ToolTip="ニュースを更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Right" Style="{StaticResource RefreshButton}" />
-            </DockPanel>
+                <Button Grid.Column="1"
+                        Content="↻"
+                        ToolTip="ニュースを更新"
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource RefreshButton}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top" />
+            </Grid>
             <Border Background="White" BorderBrush="#FFE0DBD4" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,18,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="180" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="180" /><ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center"><TextBlock Text="日付" FontWeight="SemiBold" Foreground="#FF343A40" /><TextBlock Text="取得する日を選択" FontSize="10" Foreground="#FF9A938C" Margin="0,2,0,0" /></StackPanel>
-                    <DatePicker Grid.Column="1" SelectedDate="{Binding SelectedDate}" Margin="16,0,20,0" Padding="8,4" />
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center"><TextBlock Text="カテゴリ" FontWeight="SemiBold" Foreground="#FF343A40" /><TextBlock Text="表示を絞り込み" FontSize="10" Foreground="#FF9A938C" Margin="0,2,0,0" /></StackPanel>
-                    <ComboBox Grid.Column="3" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" Margin="16,0,0,0" Padding="8,4" />
-                    <Button Grid.Column="4" Content="検索" Command="{Binding RefreshCommand}" HorizontalAlignment="Left" Padding="18,8" Margin="18,0,0,0" />
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="日付" FontWeight="SemiBold" Foreground="#FF343A40" />
+                        <TextBlock Text="取得する日を選択" FontSize="10" Foreground="#FF9A938C" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <DatePicker Grid.Column="1" SelectedDate="{Binding SelectedDate}" Margin="16,0,0,0" Padding="8,4" />
                 </Grid>
             </Border>
             <TextBlock Text="{Binding StatusMessage}" Foreground="#FF9A938C" FontSize="11" Margin="4,8,0,0" />
-            <Border Background="#FFF8F5F1" CornerRadius="10" Padding="10" Margin="0,8,0,0"><TextBlock Text="ニュース一覧をダブルクリックすると、元の記事をブラウザで開きます。画像がない記事はラーメンアイコンを表示します。" FontSize="11" Foreground="#FF747D84" /></Border>
+            <Border Background="#FFF8F5F1" CornerRadius="10" Padding="10" Margin="0,8,0,0">
+                <TextBlock Text="ニュース一覧をダブルクリックすると、元の記事をブラウザで開きます。画像がない記事はラーメンアイコンを表示します。" FontSize="11" Foreground="#FF747D84" />
+            </Border>
             <TextBlock Text="注目の記事" FontSize="20" FontWeight="Bold" Foreground="#FF252A2F" Margin="0,18,0,10" />
             <ItemsControl ItemsSource="{Binding FeaturedNews}">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate><DataTemplate>
-                    <Border Background="White" CornerRadius="14" BorderBrush="#FFE0DBD4" BorderThickness="1" Margin="0,0,8,0" Padding="16" Style="{StaticResource NewsCard}" MouseLeftButtonDown="NewsCard_MouseLeftButtonDown">
-                        <StackPanel>
-                            <Grid Height="110"><Border Background="#FFE8CFC3" CornerRadius="10" /><Image Source="{Binding ImageUrl}" Stretch="UniformToFill" Style="{StaticResource NewsImage}" /><TextBlock Text="🍜" FontSize="52" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ImagePlaceholder}" /></Grid>
-                            <TextBlock Text="{Binding Category}" Foreground="#FFC56B4D" FontSize="11" FontWeight="Bold" Margin="0,12,0,4" />
-                            <TextBlock Text="{Binding Title}" FontSize="19" FontWeight="Bold" Foreground="#FF252A2F" TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="#FF747D84" TextWrapping="Wrap" Margin="0,7,0,0" />
-                            <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="{Binding PublishedAt, StringFormat=yyyy.MM.dd}" FontSize="11" Foreground="#FF9A938C" /><TextBlock Text="{Binding SourceName}" Grid.Column="2" FontSize="11" Foreground="#FF9A938C" /></Grid>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate></ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" CornerRadius="14" BorderBrush="#FFE0DBD4" BorderThickness="1" Margin="0,0,8,0" Padding="16" Style="{StaticResource NewsCard}" MouseLeftButtonDown="NewsCard_MouseLeftButtonDown">
+                            <StackPanel>
+                                <Grid Height="110">
+                                    <Border Background="#FFE8CFC3" CornerRadius="10" />
+                                    <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" Style="{StaticResource NewsImage}" />
+                                    <TextBlock Text="🍜" FontSize="52" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ImagePlaceholder}" />
+                                </Grid>
+                                <TextBlock Text="{Binding Category}" Foreground="#FFC56B4D" FontSize="11" FontWeight="Bold" Margin="0,12,0,4" />
+                                <TextBlock Text="{Binding Title}" FontSize="19" FontWeight="Bold" Foreground="#FF252A2F" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="#FF747D84" TextWrapping="Wrap" Margin="0,7,0,0" />
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding PublishedAt, StringFormat=yyyy.MM.dd}" FontSize="11" Foreground="#FF9A938C" />
+                                    <TextBlock Text="{Binding SourceName}" Grid.Column="2" FontSize="11" Foreground="#FF9A938C" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <DockPanel Margin="0,28,0,10"><TextBlock Text="新着ニュース" FontSize="20" FontWeight="Bold" Foreground="#FF252A2F" /><TextBlock DockPanel.Dock="Right" Text="指定日以前・最新順" Foreground="#FF9A938C" VerticalAlignment="Bottom" /></DockPanel>
-            <ItemsControl ItemsSource="{Binding NewsView}">
-                <ItemsControl.ItemTemplate><DataTemplate>
-                    <Border Background="White" CornerRadius="12" BorderBrush="#FFE0DBD4" BorderThickness="1" Padding="14" Margin="0,0,0,8" Style="{StaticResource NewsCard}" MouseLeftButtonDown="NewsCard_MouseLeftButtonDown">
-                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" Height="76"><Border Background="#FFF3E1DA" CornerRadius="8" /><Image Source="{Binding ImageUrl}" Stretch="UniformToFill" Style="{StaticResource NewsImage}" /><TextBlock Text="🍜" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ImagePlaceholder}" /></Grid>
-                            <StackPanel Grid.Column="1" Margin="14,0,0,0"><TextBlock Text="{Binding Category}" Foreground="#FFC56B4D" FontSize="11" FontWeight="Bold" /><TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="#FF252A2F" TextWrapping="Wrap" Margin="0,3,0,0" /><TextBlock Text="{Binding Summary}" FontSize="11" Foreground="#FF747D84" TextWrapping="Wrap" Margin="0,4,0,0" /><Grid Margin="0,5,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="{Binding PublishedAt, StringFormat=yyyy.MM.dd HH:mm}" FontSize="10" Foreground="#FF9A938C" /><TextBlock Text="{Binding Region}" Grid.Column="2" FontSize="10" Foreground="#FF9A938C" /></Grid></StackPanel>
-                        </Grid>
-                    </Border>
-                </DataTemplate></ItemsControl.ItemTemplate>
+            <DockPanel Margin="0,28,0,10">
+                <TextBlock Text="新着ニュース" FontSize="20" FontWeight="Bold" Foreground="#FF252A2F" />
+                <TextBlock DockPanel.Dock="Right" Text="指定日以前・最新順" Foreground="#FF9A938C" VerticalAlignment="Bottom" />
+            </DockPanel>
+            <ItemsControl ItemsSource="{Binding News}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" CornerRadius="12" BorderBrush="#FFE0DBD4" BorderThickness="1" Padding="14" Margin="0,0,0,8" Style="{StaticResource NewsCard}" MouseLeftButtonDown="NewsCard_MouseLeftButtonDown">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid Grid.Column="0" Height="76">
+                                    <Border Background="#FFF3E1DA" CornerRadius="8" />
+                                    <Image Source="{Binding ImageUrl}" Stretch="UniformToFill" Style="{StaticResource NewsImage}" />
+                                    <TextBlock Text="🍜" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ImagePlaceholder}" />
+                                </Grid>
+                                <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                    <TextBlock Text="{Binding Category}" Foreground="#FFC56B4D" FontSize="11" FontWeight="Bold" />
+                                    <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="#FF252A2F" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <TextBlock Text="{Binding Summary}" FontSize="11" Foreground="#FF747D84" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                    <Grid Margin="0,5,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding PublishedAt, StringFormat=yyyy.MM.dd HH:mm}" FontSize="10" Foreground="#FF9A938C" />
+                                        <TextBlock Text="{Binding Region}" Grid.Column="2" FontSize="10" Foreground="#FF9A938C" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
             </ItemsControl>
         </StackPanel>
     </ScrollViewer>
