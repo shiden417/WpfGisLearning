@@ -57,8 +57,8 @@ public class ShopMapLayerBuilderTests
         var selectedStyle = selectedFeature.Styles.Single() as ImageStyle;
         var normalStyle = normalFeature.Styles.Single() as ImageStyle;
 
-        Assert.AreEqual(1, selectedFeature.Styles.Count);
-        Assert.AreEqual(1, normalFeature.Styles.Count);
+        Assert.HasCount(1, selectedFeature.Styles);
+        Assert.HasCount(1, normalFeature.Styles);
         Assert.IsNotNull(selectedStyle);
         Assert.IsNotNull(normalStyle);
         Assert.AreEqual(1.4, selectedStyle!.SymbolScale);
