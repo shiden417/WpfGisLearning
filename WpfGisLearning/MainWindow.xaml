@@ -10,30 +10,20 @@
         Height="900"
         MinWidth="1100"
         MinHeight="700"
-        Background="#FFF5F3EE">
+        Background="#FFF4F1EC">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF5C6F5B" />
-        <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFE8EEE5" />
-        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF5F3EE" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#FFC56B4D" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF3E1DA" />
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF4F1EC" />
 
         <Style TargetType="Button">
             <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#FFD9DDD7" />
+            <Setter Property="Foreground" Value="#FF2B3035" />
+            <Setter Property="BorderBrush" Value="#FFE0DBD4" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="10,7" />
             <Setter Property="Margin" Value="3" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style x:Key="HeaderButton" TargetType="Button">
-            <Setter Property="Background" Value="#FFF7F9F5" />
-            <Setter Property="Foreground" Value="#FF4F5F4D" />
-            <Setter Property="BorderBrush" Value="#FFD8E0D5" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="14,8" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
     </Window.Resources>
@@ -44,11 +34,11 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#FF596B58">
+        <Border Grid.Row="0" Background="#FF20252A">
             <Grid Margin="24,0">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="🍜 Ramenia" Foreground="White" FontSize="28" FontWeight="Bold" />
-                    <TextBlock Text="ラーメン店を地図から探す" Foreground="#FFE7EEE4" FontSize="12" Margin="2,1,0,0" />
+                    <TextBlock Text="ラーメン店を地図から探す" Foreground="#FFBFC5CA" FontSize="12" Margin="2,1,0,0" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -60,19 +50,19 @@
                 <ColumnDefinition Width="*" MinWidth="420" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White" CornerRadius="16" BorderBrush="#FFDCE0DA" BorderThickness="1" ClipToBounds="True">
+            <Border Grid.Column="0" Background="#FFFFFFFF" CornerRadius="16" BorderBrush="#FFE0DBD4" BorderThickness="1" ClipToBounds="True">
                 <ContentControl x:Name="MainContent" />
             </Border>
 
             <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" ShowsPreview="False" />
 
-            <Border Grid.Column="2" Background="White" CornerRadius="16" BorderBrush="#FFDCE0DA" BorderThickness="1" ClipToBounds="True">
+            <Border Grid.Column="2" Background="#FFFFFFFF" CornerRadius="16" BorderBrush="#FFE0DBD4" BorderThickness="1" ClipToBounds="True">
                 <Grid>
                     <mapsui:MapControl x:Name="MapControl" />
 
                     <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14">
                         <Button Content="全店舗を表示" Click="ShowAllShopsButton_Click" Padding="12,8" />
-                        <Button Content="📍 現在地" Click="CurrentLocationButton_Click" Padding="12,8" />
+                        <Button Content="現在地" Click="CurrentLocationButton_Click" Padding="12,8" />
                     </StackPanel>
 
                     <Border x:Name="InfoCardBorder"
@@ -84,7 +74,7 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Bottom"
                             Margin="16"
-                            BorderBrush="#FFD8E0D5"
+                            BorderBrush="#FFE0DBD4"
                             BorderThickness="1">
                         <Grid>
                             <Grid.RowDefinitions>
@@ -99,12 +89,12 @@
 
                             <TextBlock Grid.Row="0" Text="店舗情報" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                             <Button Grid.Row="0" Grid.Column="1" Content="×" Width="28" Height="28" Margin="0" Padding="0" Click="InfoCardClose_Click" />
-                            <TextBlock Grid.Row="1" x:Name="InfoCardName" Text="店舗名" FontSize="21" FontWeight="Bold" Foreground="#FF303630" Margin="0,10,0,0" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="1" x:Name="InfoCardName" Text="店舗名" FontSize="21" FontWeight="Bold" Foreground="#FF252A2F" Margin="0,10,0,0" TextWrapping="Wrap" />
                             <StackPanel Grid.Row="2" Margin="0,10,0,0">
-                                <TextBlock x:Name="InfoCardType" Text="種類" FontSize="12" Foreground="#FF596B58" FontWeight="SemiBold" />
-                                <TextBlock x:Name="InfoCardAddress" Text="住所" FontSize="13" Foreground="#FF657064" TextWrapping="Wrap" Margin="0,5,0,0" />
-                                <TextBlock x:Name="InfoCardPrice" Text="-" FontSize="18" FontWeight="Bold" Foreground="#FF596B58" Margin="0,6,0,0" />
-                                <TextBlock x:Name="InfoCardRating" Text="" FontSize="12" Foreground="#FF596B58" Margin="0,4,0,0" />
+                                <TextBlock x:Name="InfoCardType" Text="種類" FontSize="12" Foreground="#FF59636D" FontWeight="SemiBold" />
+                                <TextBlock x:Name="InfoCardAddress" Text="住所" FontSize="13" Foreground="#FF68727B" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                <TextBlock x:Name="InfoCardPrice" Text="-" FontSize="18" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,6,0,0" />
+                                <TextBlock x:Name="InfoCardRating" Text="" FontSize="12" Foreground="#FFB58A3C" Margin="0,4,0,0" />
                             </StackPanel>
                         </Grid>
                     </Border>
