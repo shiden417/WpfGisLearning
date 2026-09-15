@@ -54,6 +54,7 @@ public partial class NewsViewModel : ObservableObject
                 index++;
             }
 
+            OnPropertyChanged(nameof(FeaturedNews));
             NewsView.Refresh();
             StatusMessage = News.Count == 0 ? "ニュースが見つかりませんでした。" : $"{News.Count}件のニュースを取得しました。";
         }
