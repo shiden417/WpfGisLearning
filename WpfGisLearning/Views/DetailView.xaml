@@ -59,7 +59,7 @@
                             <TextBlock Text="店舗詳細" FontSize="13" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
                             <TextBlock Text="{Binding Shop.Name}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextBrush}" Margin="0,4,0,0" TextWrapping="Wrap" />
                         </StackPanel>
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="26" Style="{StaticResource IconButton}" Command="{Binding ToggleFavoriteCommand}">
+                        <Button HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="26" Style="{StaticResource IconButton}" Command="{Binding ToggleFavoriteCommand}" Content="☆">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource IconButton}">
                                     <Setter Property="Content" Value="☆" />
