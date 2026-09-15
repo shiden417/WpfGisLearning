@@ -25,8 +25,8 @@ public class NavigationService : INavigationService
         {
             Title = "店舗詳細 - Ramenia",
             Content = view,
-            Width = 720,
-            Height = 780,
+            Width = 760,
+            Height = 820,
             Owner = Application.Current?.MainWindow,
             Icon = CreateRameniaIcon()
         };
@@ -36,8 +36,11 @@ public class NavigationService : INavigationService
 
     public void NavigateToShopEdit(int? id = null)
     {
-        var viewModel = ActivatorUtilities.CreateInstance<ShopEditViewModel>(_provider, id);
-        var view = ActivatorUtilities.CreateInstance<ShopEditView>(_provider, viewModel);
+        // int? をDIのコンストラクタ引数として解決させず、生成後に対象IDを渡す。
+        // これにより「店舗を登録」時のActivatorUtilitiesによる解決エラーを防ぐ。
+        var viewModel = _provider.GetRequiredService<ShopEditViewModel>();
+        viewModel.Load(id);
+        var view = _provider.GetRequiredService<ShopEditView>();
 
         var window = new Window
         {
