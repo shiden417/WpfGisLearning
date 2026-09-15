@@ -175,13 +175,15 @@ public partial class MainWindow : Window
         try
         {
             var bounds = result.Bounds;
-            var center = SphericalMercator
-                .FromLonLat(
-                    (bounds.MinLongitude + bounds.MaxLongitude) / 2,
-                    (bounds.MinLatitude + bounds.MaxLatitude) / 2)
-                .ToMPoint();
+            var center = MapViewportCalculator.CalculateCenter(bounds);
+            var resolution = MapViewportCalculator.CalculateResolution(
+                bounds,
+                _map.Navigator.Resolutions,
+                MapControl.ActualWidth,
+                MapControl.ActualHeight,
+                InitialMapPaddingFactor,
+                SingleShopResolutionIndex);
 
-            var resolution = CalculateMapResolution(bounds);
             _map.Navigator.CenterOnAndZoomTo(center, resolution);
             _initialMapPositionSet = true;
         }
@@ -189,32 +191,6 @@ public partial class MainWindow : Window
         {
             ShowMapError("地図の表示位置を設定できませんでした。", ex);
         }
-    }
-
-    private double CalculateMapResolution(ShopMapBounds bounds)
-    {
-        if (bounds.MinLongitude == bounds.MaxLongitude
-            && bounds.MinLatitude == bounds.MaxLatitude)
-        {
-            var resolutions = _map!.Navigator.Resolutions;
-            var index = Math.Min(SingleShopResolutionIndex, resolutions.Count - 1);
-            return resolutions[index];
-        }
-
-        var minMap = SphericalMercator
-            .FromLonLat(bounds.MinLongitude, bounds.MinLatitude)
-            .ToMPoint();
-        var maxMap = SphericalMercator
-            .FromLonLat(bounds.MaxLongitude, bounds.MaxLatitude)
-            .ToMPoint();
-
-        var widthResolution =
-            Math.Abs(maxMap.X - minMap.X) / MapControl.ActualWidth;
-        var heightResolution =
-            Math.Abs(maxMap.Y - minMap.Y) / MapControl.ActualHeight;
-
-        return Math.Max(widthResolution, heightResolution)
-            * InitialMapPaddingFactor;
     }
 
     private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e)
