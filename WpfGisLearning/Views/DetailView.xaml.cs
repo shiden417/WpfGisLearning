@@ -16,6 +16,8 @@ namespace WpfGisLearning.Views;
 
 public partial class DetailView : System.Windows.Controls.UserControl
 {
+    private const long ZoomAmount = 500;
+
     private readonly DetailViewModel _viewModel;
     private readonly INavigationService _navigationService;
     private readonly IShopService _shopService;
@@ -33,6 +35,10 @@ public partial class DetailView : System.Windows.Controls.UserControl
         var feature = new PointFeature(point); feature.Styles.Add(ImageStyles.CreatePinStyle(Mapsui.Styles.Color.FromString("#343A40"), Mapsui.Styles.Color.FromString("#343A40"), 1.15));
         map.Layers.Add(new MemoryLayer { Name = "Shop", Features = new[] { feature } }); map.Navigator.CenterOnAndZoomTo(point, 500);
     }
+
+    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => DetailMap.Navigator.ZoomIn(ZoomAmount);
+
+    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => DetailMap.Navigator.ZoomOut(ZoomAmount);
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
