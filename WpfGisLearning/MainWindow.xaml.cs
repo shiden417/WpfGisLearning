@@ -457,7 +457,6 @@ public partial class MainWindow : Window
     public void RefreshShopData()
     {
         _shopListViewModel.RefreshFromService();
-        RebuildShopLayer();
     }
 
     private void ShowMapError(string message, Exception exception)
