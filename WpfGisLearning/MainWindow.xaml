@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf"
-        Title="Ramenia" Width="1500" Height="900" MinWidth="1100" MinHeight="700" Background="#FFF4F1EC">
+        Title="Ramenia" Width="1500" Height="900" MinWidth="900" MinHeight="700" Background="#FFF4F1EC">
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#FFC56B4D" />
         <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF3E1DA" />
@@ -63,7 +63,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="480" MinWidth="340" />
                     <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="*" MinWidth="420" />
+                    <ColumnDefinition Width="*" MinWidth="300" />
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Background="#FFFFFFFF" CornerRadius="16" BorderBrush="#FFE0DBD4" BorderThickness="1" ClipToBounds="True">
                     <ContentControl x:Name="MainContent" />
@@ -73,7 +73,7 @@
                     <Grid>
                         <mapsui:MapControl x:Name="MapControl" />
                         <TextBlock x:Name="MapStatusText" Text="" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFB44B4B" Background="#EEFFFFFF" Padding="14,10" FontSize="13" TextWrapping="Wrap" MaxWidth="360" Visibility="Collapsed" />
-                        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#F8FFFFFF" BorderBrush="#FFE0DBD4" BorderThickness="1" CornerRadius="10" Padding="4" Panel.ZIndex="10">
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#F8FFFFFF" BorderBrush="#FFE0DBD4" BorderThickness="1" CornerRadius="10" Padding="4" Panel.ZIndex="100">
                             <StackPanel>
                                 <Button Content="＋  全店舗" Click="ShowAllShopsButton_Click" Padding="10,6" FontWeight="SemiBold" Margin="1" />
                                 <Button Content="◎  現在地" Click="CurrentLocationButton_Click" Padding="10,6" FontWeight="SemiBold" Margin="1" />
