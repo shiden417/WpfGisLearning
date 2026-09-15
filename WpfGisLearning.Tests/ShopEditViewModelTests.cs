@@ -62,6 +62,23 @@ public class ShopEditViewModelTests
         Assert.HasCount(0, shopService.Shops);
     }
 
+    [TestMethod]
+    public void SetMainPhoto_ChangesMainPhoto()
+    {
+        var viewModel = CreateViewModel(new TestShopService());
+        var firstPhoto = new ShopPhoto { Id = "first", IsMain = true };
+        var secondPhoto = new ShopPhoto { Id = "second", IsMain = false };
+        viewModel.Photos.Add(firstPhoto);
+        viewModel.Photos.Add(secondPhoto);
+
+        viewModel.SetMainPhoto(secondPhoto);
+
+        Assert.IsFalse(firstPhoto.IsMain);
+        Assert.IsTrue(secondPhoto.IsMain);
+        Assert.AreEqual("first", viewModel.Photos[0].Id);
+        Assert.AreEqual("second", viewModel.Photos[1].Id);
+    }
+
     private static ShopEditViewModel CreateViewModel(TestShopService shopService)
     {
         return new ShopEditViewModel(shopService, new TestPhotoService());
