@@ -12,6 +12,18 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         </Style>
+        <Style x:Key="RefreshButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#FF747D84" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
         <Style x:Key="NewsCard" TargetType="Border">
             <Setter Property="Cursor" Value="Hand" />
             <Style.Triggers>
@@ -45,7 +57,7 @@
                     <TextBlock Text="📰 ラーメンニュース" FontSize="28" FontWeight="Bold" Foreground="#FF252A2F" />
                     <TextBlock Text="日付を指定してラーメン関連ニュースを取得" Foreground="#FF747D84" Margin="0,4,0,0" />
                 </StackPanel>
-                <Button Content="↻" ToolTip="ニュースを更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Right" Padding="7,4" Margin="3,0,0,0" FontSize="16" MinWidth="32" Height="32" />
+                <Button Content="↻" ToolTip="ニュースを更新" Command="{Binding RefreshCommand}" DockPanel.Dock="Right" Style="{StaticResource RefreshButton}" />
             </DockPanel>
             <Border Background="White" BorderBrush="#FFE0DBD4" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,18,0,0">
                 <Grid>
