@@ -45,11 +45,12 @@ public class NavigationService : INavigationService
         {
             Title = id.HasValue ? "店舗を編集 - Ramenia" : "店舗を登録 - Ramenia",
             Content = view,
-            Width = 1100,
-            Height = 760,
-            MinWidth = 900,
-            MinHeight = 650,
+            Width = 1250,
+            Height = 850,
+            MinWidth = 1000,
+            MinHeight = 700,
             Owner = Application.Current?.MainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Icon = CreateRameniaIcon()
         };
 
