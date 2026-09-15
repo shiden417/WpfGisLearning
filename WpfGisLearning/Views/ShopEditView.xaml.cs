@@ -24,9 +24,9 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         DataContext = viewModel;
         viewModel.RequestClose += ViewModel_RequestClose;
         Loaded += ShopEditView_Loaded;
-        EditMapControl.MouseLeftButtonDown += EditMapControl_MouseLeftButtonDown;
-        EditMapControl.MouseMove += EditMapControl_MouseMove;
-        EditMapControl.MouseLeftButtonUp += EditMapControl_MouseLeftButtonUp;
+        EditMapControl.PreviewMouseLeftButtonDown += EditMapControl_PreviewMouseLeftButtonDown;
+        EditMapControl.PreviewMouseMove += EditMapControl_PreviewMouseMove;
+        EditMapControl.PreviewMouseLeftButtonUp += EditMapControl_PreviewMouseLeftButtonUp;
     }
 
     private void ShopEditView_Loaded(object sender, RoutedEventArgs e)
@@ -38,21 +38,15 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         _map.Layers.Add(OpenStreetMap.CreateTileLayer());
         EditMapControl.Map = _map;
 
-        if (_viewModel.ShopLatitude.HasValue && _viewModel.ShopLongitude.HasValue)
+        if (_viewModel.ShopId.HasValue && _viewModel.ShopLatitude.HasValue && _viewModel.ShopLongitude.HasValue)
         {
             ShowLocation(_viewModel.ShopLatitude.Value, _viewModel.ShopLongitude.Value);
-            if (_viewModel.ShopId.HasValue)
-            {
-                var point = SphericalMercator.FromLonLat(_viewModel.ShopLongitude.Value, _viewModel.ShopLatitude.Value).ToMPoint();
-                _map.Navigator.CenterOnAndZoomTo(point, 500);
-            }
-            else
-            {
-                SetJapanOverview();
-            }
+            var point = SphericalMercator.FromLonLat(_viewModel.ShopLongitude.Value, _viewModel.ShopLatitude.Value).ToMPoint();
+            _map.Navigator.CenterOnAndZoomTo(point, 500);
         }
         else
         {
+            // 新規登録ではピンを表示せず、日本全体を見渡せる状態から開始する。
             SetJapanOverview();
         }
     }
@@ -66,34 +60,41 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         _map.Navigator.CenterOnAndZoomTo(japanCenter, 6000);
     }
 
-    private void EditMapControl_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+    private void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
     {
         if (_map is null)
             return;
 
         var pos = e.GetPosition(EditMapControl);
-        var screenPosition = new Mapsui.Manipulations.ScreenPosition((int)pos.X, (int)pos.Y);
-        var mapInfo = EditMapControl.GetMapInfo(screenPosition, _map.Layers);
 
-        if (mapInfo?.Layer?.Name != "SelectedLocation")
+        // 新規登録では最初のダブルクリック地点を店舗位置として設定する。
+        if (!_viewModel.ShopId.HasValue && e.ClickCount == 2)
+        {
+            SetLocationFromScreen(pos.X, pos.Y, true);
+            e.Handled = true;
             return;
+        }
 
-        _isDraggingLocation = true;
-        EditMapControl.CaptureMouse();
-        e.Handled = true;
+        // 既存のマーカー上で押した場合はドラッグを開始する。
+        if (HasLocationAt(pos.X, pos.Y))
+        {
+            _isDraggingLocation = true;
+            EditMapControl.CaptureMouse();
+            e.Handled = true;
+        }
     }
 
-    private void EditMapControl_MouseMove(object? sender, MouseEventArgs e)
+    private void EditMapControl_PreviewMouseMove(object? sender, MouseEventArgs e)
     {
         if (!_isDraggingLocation || _map is null)
             return;
 
         var pos = e.GetPosition(EditMapControl);
-        UpdateLocationFromScreen(pos.X, pos.Y);
+        SetLocationFromScreen(pos.X, pos.Y, false);
         e.Handled = true;
     }
 
-    private void EditMapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
+    private void EditMapControl_PreviewMouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
     {
         if (!_isDraggingLocation)
             return;
@@ -101,11 +102,21 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         _isDraggingLocation = false;
         EditMapControl.ReleaseMouseCapture();
         var pos = e.GetPosition(EditMapControl);
-        UpdateLocationFromScreen(pos.X, pos.Y);
+        SetLocationFromScreen(pos.X, pos.Y, false);
         e.Handled = true;
     }
 
-    private void UpdateLocationFromScreen(double x, double y)
+    private bool HasLocationAt(double x, double y)
+    {
+        if (_map is null || _locationLayer is null)
+            return false;
+
+        var screenPosition = new Mapsui.Manipulations.ScreenPosition((int)x, (int)y);
+        var mapInfo = EditMapControl.GetMapInfo(screenPosition, new[] { _locationLayer });
+        return mapInfo?.Feature is not null;
+    }
+
+    private void SetLocationFromScreen(double x, double y, bool recenter)
     {
         if (_map is null)
             return;
@@ -115,7 +126,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         var lonLat = SphericalMercator.ToLonLat(worldPosition);
 
         if (_viewModel.TrySetLocation(lonLat.Y, lonLat.X))
-            ShowLocation(lonLat.Y, lonLat.X, recenter: false);
+            ShowLocation(lonLat.Y, lonLat.X, recenter);
     }
 
     private void ShowLocation(double latitude, double longitude, bool recenter = false)
