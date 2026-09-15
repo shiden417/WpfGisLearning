@@ -16,12 +16,16 @@ public partial class ShopListViewModel : ObservableObject
 
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
+    private double? _nearbyLatitude;
+    private double? _nearbyLongitude;
 
     [ObservableProperty] private string searchKeyword = string.Empty;
     [ObservableProperty] private string selectedSort = "おすすめ";
     [ObservableProperty] private string selectedRamenType = "すべて";
     [ObservableProperty] private string selectedPriceFilter = "すべて";
+    [ObservableProperty] private string selectedNearbyRadius = "5km";
     [ObservableProperty] private bool favoriteOnly;
+    [ObservableProperty] private bool nearbyOnly;
     [ObservableProperty] private Shop? selectedShop;
 
     public string[] SortOptions { get; } = [
@@ -35,6 +39,8 @@ public partial class ShopListViewModel : ObservableObject
     public string[] PriceFilterOptions { get; } = [
         "すべて", "1000円以下", "1500円以下", "2000円以下"
     ];
+
+    public string[] NearbyRadiusOptions { get; } = ["1km", "3km", "5km", "10km", "20km"];
 
     public event EventHandler<Shop?>? SelectedShopChanged;
     public event EventHandler? ShopsChanged;
@@ -51,7 +57,9 @@ public partial class ShopListViewModel : ObservableObject
     partial void OnSearchKeywordChanged(string value) => ShopsView.Refresh();
     partial void OnSelectedRamenTypeChanged(string value) => ShopsView.Refresh();
     partial void OnSelectedPriceFilterChanged(string value) => ShopsView.Refresh();
+    partial void OnSelectedNearbyRadiusChanged(string value) => ShopsView.Refresh();
     partial void OnFavoriteOnlyChanged(bool value) => ShopsView.Refresh();
+    partial void OnNearbyOnlyChanged(bool value) => ShopsView.Refresh();
 
     partial void OnSelectedSortChanged(string value)
     {
@@ -102,13 +110,35 @@ public partial class ShopListViewModel : ObservableObject
                 "2000円以下" => 2000m,
                 _ => decimal.MaxValue
             };
-
             if (shop.Price > maxPrice)
+                return false;
+        }
+
+        if (NearbyOnly)
+        {
+            if (!_nearbyLatitude.HasValue || !_nearbyLongitude.HasValue)
+                return false;
+
+            var radiusKm = double.Parse(SelectedNearbyRadius.Replace("km", ""));
+            if (DistanceKm(_nearbyLatitude.Value, _nearbyLongitude.Value, shop.Latitude, shop.Longitude) > radiusKm)
                 return false;
         }
 
         return true;
     }
+
+    private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double earthRadiusKm = 6371.0;
+        var dLat = DegreesToRadians(lat2 - lat1);
+        var dLon = DegreesToRadians(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return earthRadiusKm * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+    }
+
+    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
 
     private void ReloadShops()
     {
@@ -159,12 +189,7 @@ public partial class ShopListViewModel : ObservableObject
         if (SelectedShop is null)
             return;
 
-        var result = MessageBox.Show(
-            $"「{SelectedShop.Name}」を削除しますか？",
-            "店舗削除の確認",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
+        var result = MessageBox.Show($"「{SelectedShop.Name}」を削除しますか？", "店舗削除の確認", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes)
             return;
 
@@ -180,6 +205,15 @@ public partial class ShopListViewModel : ObservableObject
         SelectedRamenType = "すべて";
         SelectedPriceFilter = "すべて";
         FavoriteOnly = false;
+        NearbyOnly = false;
+    }
+
+    public void SetNearbyLocation(double latitude, double longitude)
+    {
+        _nearbyLatitude = latitude;
+        _nearbyLongitude = longitude;
+        NearbyOnly = true;
+        ShopsView.Refresh();
     }
 
     public void SelectShopById(int shopId)
