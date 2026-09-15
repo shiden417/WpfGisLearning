@@ -16,6 +16,8 @@ namespace WpfGisLearning;
 public partial class MainWindow : Window
 {
     private Mapsui.Map? _map;
+    private MemoryLayer? _shopLayer;
+    private bool _isSelectingLocation;
 
     private double _minLon = double.MaxValue;
     private double _maxLon = double.MinValue;
@@ -46,6 +48,12 @@ public partial class MainWindow : Window
         _shopListViewModel.SelectedShopChanged +=
             ShopListViewModel_SelectedShopChanged;
 
+        _shopListViewModel.LocationSelectionRequested +=
+            ShopListViewModel_LocationSelectionRequested;
+
+        _shopListViewModel.ShopAdded +=
+            ShopListViewModel_ShopAdded;
+
         CommandBindings.Add(
             new CommandBinding(
                 AppCommands.SaveCommand,
@@ -68,21 +76,7 @@ public partial class MainWindow : Window
                     var lat = shop.Latitude;
                     var lon = shop.Longitude;
 
-                    if (double.IsNaN(lat) ||
-                        double.IsNaN(lon) ||
-                        double.IsInfinity(lat) ||
-                        double.IsInfinity(lon))
-                    {
-                        continue;
-                    }
-
-                    if (lat < -90 || lat > 90 ||
-                        lon < -180 || lon > 180)
-                    {
-                        continue;
-                    }
-
-                    if (lat == 0 && lon == 0)
+                    if (!IsValidCoordinate(lat, lon))
                     {
                         continue;
                     }
@@ -98,25 +92,7 @@ public partial class MainWindow : Window
                     if (lat < _minLat) _minLat = lat;
                     if (lat > _maxLat) _maxLat = lat;
 
-                    var feature = new PointFeature(mapPoint);
-
-                    feature["Name"] = shop.Name;
-                    feature["Address"] = shop.Address;
-                    feature["Id"] = shop.Id;
-
-                    feature.Styles.Add(
-                        new Mapsui.Styles.SymbolStyle
-                        {
-                            SymbolType = SymbolType.Ellipse,
-                            Fill = new Mapsui.Styles.Brush(
-                                Mapsui.Styles.Color.FromString("#B4552B")),
-                            Outline = new Mapsui.Styles.Pen(
-                                Mapsui.Styles.Color.White,
-                                2),
-                            SymbolScale = 1.5
-                        });
-
-                    features.Add(feature);
+                    features.Add(CreateShopFeature(shop, mapPoint));
                 }
                 catch
                 {
@@ -124,13 +100,13 @@ public partial class MainWindow : Window
                 }
             }
 
-            var memoryLayer = new MemoryLayer
+            _shopLayer = new MemoryLayer
             {
                 Name = "Shops",
                 Features = features
             };
 
-            map.Layers.Add(memoryLayer);
+            map.Layers.Add(_shopLayer);
             MapControl.Map = map;
 
             MapControl.MouseLeftButtonUp +=
@@ -276,6 +252,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ShopListViewModel_LocationSelectionRequested(
+        object? sender,
+        EventArgs e)
+    {
+        _isSelectingLocation = true;
+        InfoCardBorder.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShopListViewModel_ShopAdded(
+        object? sender,
+        Shop shop)
+    {
+        AddShopFeatureToMap(shop);
+        _isSelectingLocation = false;
+    }
+
     private void MapControl_MouseLeftButtonUp(
         object? sender,
         MouseButtonEventArgs e)
@@ -286,6 +278,22 @@ public partial class MainWindow : Window
             var screenPos = new Mapsui.Manipulations.ScreenPosition(
                 (int)pos.X,
                 (int)pos.Y);
+
+            if (_isSelectingLocation && _map is not null)
+            {
+                var worldPosition = _map.Navigator.Viewport
+                    .ScreenToWorld(screenPos);
+
+                var (lon, lat) = SphericalMercator.ToLonLat(worldPosition);
+
+                if (IsValidCoordinate(lat, lon))
+                {
+                    _shopListViewModel.SetNewShopLocation(lat, lon);
+                    _isSelectingLocation = false;
+                }
+
+                return;
+            }
 
             var mapInfo = MapControl.GetMapInfo(
                 screenPos,
@@ -309,6 +317,56 @@ public partial class MainWindow : Window
         {
             // クリック処理で例外が発生しても無視
         }
+    }
+
+    private void AddShopFeatureToMap(Shop shop)
+    {
+        if (_shopLayer is null || _map is null)
+            return;
+
+        if (!IsValidCoordinate(shop.Latitude, shop.Longitude))
+            return;
+
+        try
+        {
+            var mapPoint = SphericalMercator
+                .FromLonLat(shop.Longitude, shop.Latitude)
+                .ToMPoint();
+
+            var feature = CreateShopFeature(shop, mapPoint);
+            _shopLayer.Features = _shopLayer.Features
+                .Append(feature)
+                .ToList();
+
+            _map.RefreshGraphics();
+        }
+        catch
+        {
+            // 新規店舗のマーカー追加に失敗しても登録処理を妨げない
+        }
+    }
+
+    private static IFeature CreateShopFeature(Shop shop, MPoint mapPoint)
+    {
+        var feature = new PointFeature(mapPoint);
+
+        feature["Name"] = shop.Name;
+        feature["Address"] = shop.Address;
+        feature["Id"] = shop.Id;
+
+        feature.Styles.Add(
+            new Mapsui.Styles.SymbolStyle
+            {
+                SymbolType = SymbolType.Ellipse,
+                Fill = new Mapsui.Styles.Brush(
+                    Mapsui.Styles.Color.FromString("#B4552B")),
+                Outline = new Mapsui.Styles.Pen(
+                    Mapsui.Styles.Color.White,
+                    2),
+                SymbolScale = 1.5
+            });
+
+        return feature;
     }
 
     private static bool IsValidCoordinate(double lat, double lon)
