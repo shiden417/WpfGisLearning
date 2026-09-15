@@ -38,6 +38,12 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
 
     public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
+    public event EventHandler? LocationSelectionRequested;
+
+    public event EventHandler<Shop>? ShopAdded;
+
+    public event EventHandler<Shop?>? SelectedShopChanged;
+
     public System.Collections.IEnumerable? GetErrors(string? propertyName)
     {
         if (string.IsNullOrEmpty(propertyName))
@@ -86,6 +92,12 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     [ObservableProperty]
     private decimal newShopPrice = 0m;
 
+    [ObservableProperty]
+    private double? newShopLatitude;
+
+    [ObservableProperty]
+    private double? newShopLongitude;
+
     partial void OnNewShopNameChanged(string value)
     {
         ValidateNewShopName();
@@ -94,6 +106,16 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
     partial void OnNewShopPriceChanged(decimal value)
     {
         ValidateNewShopPrice();
+    }
+
+    partial void OnNewShopLatitudeChanged(double? value)
+    {
+        ValidateNewShopLocation();
+    }
+
+    partial void OnNewShopLongitudeChanged(double? value)
+    {
+        ValidateNewShopLocation();
     }
 
     private void ValidateNewShopName()
@@ -116,13 +138,48 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
         }
     }
 
+    private void ValidateNewShopLocation()
+    {
+        ClearErrors(nameof(NewShopLatitude));
+        ClearErrors(nameof(NewShopLongitude));
+
+        if (!NewShopLatitude.HasValue || !NewShopLongitude.HasValue)
+        {
+            AddError(nameof(NewShopLatitude), "地図上で店舗位置を指定してください。");
+            return;
+        }
+
+        if (NewShopLatitude is < -90 or > 90)
+        {
+            AddError(nameof(NewShopLatitude), "緯度が不正です。");
+        }
+
+        if (NewShopLongitude is < -180 or > 180)
+        {
+            AddError(nameof(NewShopLongitude), "経度が不正です。");
+        }
+    }
+
+    [RelayCommand]
+    private void SelectLocation()
+    {
+        LocationSelectionRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetNewShopLocation(double latitude, double longitude)
+    {
+        NewShopLatitude = latitude;
+        NewShopLongitude = longitude;
+    }
+
     [RelayCommand]
     private void Register()
     {
         ValidateNewShopName();
         ValidateNewShopPrice();
+        ValidateNewShopLocation();
 
-        if (HasErrors)
+        if (HasErrors || !NewShopLatitude.HasValue || !NewShopLongitude.HasValue)
         {
             return;
         }
@@ -131,21 +188,27 @@ public partial class ShopListViewModel : ObservableObject, INotifyDataErrorInfo
             ? Shops.Max(s => s.Id) + 1
             : 1;
 
-        Shops.Add(new Shop
+        var shop = new Shop
         {
             Id = nextId,
             Name = NewShopName,
-            Price = NewShopPrice
-        });
+            Price = NewShopPrice,
+            Latitude = NewShopLatitude.Value,
+            Longitude = NewShopLongitude.Value
+        };
+
+        Shops.Add(shop);
+        ShopAdded?.Invoke(this, shop);
 
         NewShopName = string.Empty;
         NewShopPrice = 0m;
+        NewShopLatitude = null;
+        NewShopLongitude = null;
+        SelectedShop = shop;
     }
 
     [ObservableProperty]
     private Shop? selectedShop;
-
-    public event EventHandler<Shop?>? SelectedShopChanged;
 
     partial void OnSelectedShopChanged(Shop? value)
     {
