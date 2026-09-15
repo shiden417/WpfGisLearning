@@ -20,11 +20,9 @@ public partial class MainWindow : Window
     private const string ShopLayerName = ShopMapLayerBuilder.LayerName;
     private const string CurrentLocationLayerName = "CurrentLocation";
     private const double InitialMapPaddingFactor = 1.2;
-    private const double SingleShopResolutionIndex = 12;
+    private const int SingleShopResolutionIndex = 12;
     private const double ZoomAmount = 500;
     private const double CurrentLocationAccuracyMeters = 50;
-    private const double SelectedMarkerScale = 1.4;
-    private const double DefaultMarkerScale = 1.15;
     private const double InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
@@ -198,10 +196,7 @@ public partial class MainWindow : Window
             && bounds.MinLatitude == bounds.MaxLatitude)
         {
             var resolutions = _map!.Navigator.Resolutions;
-            var index = Math.Min(
-                (int)SingleShopResolutionIndex,
-                resolutions.Count - 1);
-
+            var index = Math.Min(SingleShopResolutionIndex, resolutions.Count - 1);
             return resolutions[index];
         }
 
