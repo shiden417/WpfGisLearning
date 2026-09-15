@@ -329,12 +329,12 @@ public partial class MainWindow : Window
         try
         {
             var location = await _currentLocationService.GetCurrentLocationAsync();
-            if (location is null || _map is null)
+            if (location is null)
             {
                 if (showMessageOnFailure)
                 {
                     MessageBox.Show(
-                        "現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。",
+                        "現在地を取得できませんでした。位置情報の利用を許可しているか確認してください。",
                         "現在地",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -344,10 +344,14 @@ public partial class MainWindow : Window
             }
 
             ShowCurrentLocation(location.Latitude, location.Longitude);
-            _map.Navigator.CenterOn(
-                SphericalMercator
-                    .FromLonLat(location.Longitude, location.Latitude)
-                    .ToMPoint());
+
+            if (_map is not null)
+            {
+                _map.Navigator.CenterOn(
+                    SphericalMercator
+                        .FromLonLat(location.Longitude, location.Latitude)
+                        .ToMPoint());
+            }
         }
         catch (Exception ex)
         {
@@ -375,16 +379,10 @@ public partial class MainWindow : Window
             .FromLonLat(longitude, latitude)
             .ToMPoint();
         var feature = new PointFeature(point);
-        feature.Styles.Add(new SymbolStyle
-        {
-            SymbolType = SymbolType.Ellipse,
-            SymbolScale = 1.15,
-            Fill = new Mapsui.Styles.Brush(
-                Mapsui.Styles.Color.FromString("#4A90E2")),
-            Outline = new Mapsui.Styles.Pen(
-                Mapsui.Styles.Color.FromString("#FFFFFF"),
-                3)
-        });
+        feature.Styles.Add(ImageStyles.CreatePinStyle(
+            Mapsui.Styles.Color.FromString("#4A90E2"),
+            Mapsui.Styles.Color.FromString("#FFFFFF"),
+            1.15));
 
         _currentLocationLayer ??= new MemoryLayer
         {
@@ -407,9 +405,8 @@ public partial class MainWindow : Window
         _shopListViewModel.NearbyOnly = false;
         InfoCardBorder.Visibility = Visibility.Collapsed;
         RebuildShopLayer();
-
         _initialMapPositionSet = false;
-        SetInitialMapPosition();
+        MapControl_Loaded(sender, e);
     }
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e)
@@ -422,76 +419,49 @@ public partial class MainWindow : Window
         _map?.Navigator.ZoomOut(ZoomAmount);
     }
 
-    private void InfoCardDetail_Click(object sender, RoutedEventArgs e)
+    private void MapControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (_selectedShopId.HasValue)
+        if (e.ClickCount == 2)
         {
-            _navigationService.NavigateToDetail(_selectedShopId.Value);
+            e.Handled = true;
         }
     }
 
-    private void InfoCardEdit_Click(object sender, RoutedEventArgs e)
+    private void ShowMapError(string message, Exception ex)
     {
-        if (!_selectedShopId.HasValue)
-        {
-            return;
-        }
-
-        _navigationService.NavigateToShopEdit(_selectedShopId.Value);
-        RefreshShopData();
-    }
-
-    private void InfoCardClose_Click(object sender, RoutedEventArgs e)
-    {
-        InfoCardBorder.Visibility = Visibility.Collapsed;
-        InfoCardBorder.Opacity = 0;
-    }
-
-    public void RefreshShopData()
-    {
-        _shopListViewModel.RefreshFromService();
-    }
-
-    private void ShowMapError(string message, Exception exception)
-    {
-        MapStatusText.Text = $"{message}\n{exception.Message}";
+        MapStatusText.Text = $"{message}\n{ex.Message}";
         MapStatusText.Visibility = Visibility.Visible;
     }
 
-    private static ImageSource CreateRameniaIcon()
+    private static BitmapImage CreateRameniaIcon()
     {
-        var visual = new DrawingVisual();
+        var drawing = new System.Windows.Media.DrawingGroup();
+        using var context = drawing.Open();
+        context.DrawEllipse(
+            System.Windows.Media.Brushes.Transparent,
+            null,
+            new System.Windows.Point(RameniaIconSize / 2.0, RameniaIconSize / 2.0),
+            RameniaIconSize / 2.0,
+            RameniaIconSize / 2.0);
 
-        using (var context = visual.RenderOpen())
-        {
-            var formattedText = new FormattedText(
-                "🍜",
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                new Typeface(
-                    new FontFamily("Segoe UI Emoji"),
-                    FontStyles.Normal,
-                    FontWeights.Normal,
-                    FontStretches.Normal),
-                RameniaIconFontSize,
-                Brushes.Black,
-                1.0);
+        var formattedText = new System.Windows.Media.FormattedText(
+            "🍜",
+            System.Globalization.CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface("Segoe UI Emoji"),
+            RameniaIconFontSize,
+            System.Windows.Media.Brushes.Black,
+            VisualTreeHelper.GetDpi(Application.Current.MainWindow).PixelsPerDip);
+        context.DrawText(
+            formattedText,
+            new System.Windows.Point(RameniaIconOffset, RameniaIconOffset));
 
-            context.DrawText(
-                formattedText,
-                new System.Windows.Point(
-                    RameniaIconOffset,
-                    RameniaIconOffset));
-        }
-
-        var bitmap = new RenderTargetBitmap(
-            RameniaIconSize,
-            RameniaIconSize,
-            96,
-            96,
-            System.Windows.Media.PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-
+        var image = new System.Windows.Media.Imaging.DrawingImage(drawing);
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.StreamSource = new MemoryStream();
+        bitmap.EndInit();
         return bitmap;
     }
 }
