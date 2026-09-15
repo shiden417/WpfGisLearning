@@ -15,12 +15,12 @@ namespace WpfGisLearning.Views;
 
 public partial class ShopEditView : System.Windows.Controls.UserControl
 {
-    private const double InitialShopLocationResolution = 500;
+    private const long InitialShopLocationResolution = 500;
     private const double JapanOverviewLongitude = 138.0;
     private const double JapanOverviewLatitude = 36.0;
-    private const double JapanOverviewResolution = 6000;
+    private const long JapanOverviewResolution = 6000;
     private const double LocationMarkerScale = 1.15;
-    private const double ZoomAmount = 500;
+    private const long ZoomAmount = 500;
 
     private readonly ShopEditViewModel _viewModel;
     private readonly ICurrentLocationService _currentLocationService;
