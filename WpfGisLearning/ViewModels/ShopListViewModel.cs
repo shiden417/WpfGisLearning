@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
+using System.Windows;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 
@@ -16,21 +17,23 @@ public partial class ShopListViewModel : ObservableObject
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
 
-    [ObservableProperty]
-    private string searchKeyword = string.Empty;
+    [ObservableProperty] private string searchKeyword = string.Empty;
+    [ObservableProperty] private string selectedSort = "おすすめ";
+    [ObservableProperty] private string selectedRamenType = "すべて";
+    [ObservableProperty] private string selectedPriceFilter = "すべて";
+    [ObservableProperty] private bool favoriteOnly;
+    [ObservableProperty] private Shop? selectedShop;
 
-    [ObservableProperty]
-    private string selectedSort = "おすすめ";
+    public string[] SortOptions { get; } = [
+        "おすすめ", "店舗名: A → Z", "価格: 安い順", "価格: 高い順", "評価: 高い順"
+    ];
 
-    [ObservableProperty]
-    private Shop? selectedShop;
+    public string[] RamenTypeOptions { get; } = [
+        "すべて", "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"
+    ];
 
-    public string[] SortOptions { get; } =
-    [
-        "おすすめ",
-        "店舗名: A → Z",
-        "価格: 安い順",
-        "価格: 高い順"
+    public string[] PriceFilterOptions { get; } = [
+        "すべて", "1000円以下", "1500円以下", "2000円以下"
     ];
 
     public event EventHandler<Shop?>? SelectedShopChanged;
@@ -40,18 +43,19 @@ public partial class ShopListViewModel : ObservableObject
     {
         _shopService = shopService;
         _navigationService = navigationService;
-
         ReloadShops();
         ShopsView = CollectionViewSource.GetDefaultView(Shops);
         ShopsView.Filter = FilterShop;
     }
 
     partial void OnSearchKeywordChanged(string value) => ShopsView.Refresh();
+    partial void OnSelectedRamenTypeChanged(string value) => ShopsView.Refresh();
+    partial void OnSelectedPriceFilterChanged(string value) => ShopsView.Refresh();
+    partial void OnFavoriteOnlyChanged(bool value) => ShopsView.Refresh();
 
     partial void OnSelectedSortChanged(string value)
     {
         ShopsView.SortDescriptions.Clear();
-
         switch (value)
         {
             case "店舗名: A → Z":
@@ -63,8 +67,10 @@ public partial class ShopListViewModel : ObservableObject
             case "価格: 高い順":
                 ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Descending));
                 break;
+            case "評価: 高い順":
+                ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending));
+                break;
         }
-
         ShopsView.Refresh();
     }
 
@@ -73,12 +79,35 @@ public partial class ShopListViewModel : ObservableObject
         if (item is not Shop shop)
             return false;
 
-        if (string.IsNullOrWhiteSpace(SearchKeyword))
-            return true;
-
         var keyword = SearchKeyword.Trim();
-        return shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-               shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(keyword) &&
+            !shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+            !shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+            !shop.RamenType.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+            !shop.RecommendedMenu.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (SelectedRamenType != "すべて" && shop.RamenType != SelectedRamenType)
+            return false;
+
+        if (FavoriteOnly && !shop.IsFavorite)
+            return false;
+
+        if (SelectedPriceFilter != "すべて")
+        {
+            var maxPrice = SelectedPriceFilter switch
+            {
+                "1000円以下" => 1000m,
+                "1500円以下" => 1500m,
+                "2000円以下" => 2000m,
+                _ => decimal.MaxValue
+            };
+
+            if (shop.Price > maxPrice)
+                return false;
+        }
+
+        return true;
     }
 
     private void ReloadShops()
@@ -113,7 +142,44 @@ public partial class ShopListViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ClearSearch() => SearchKeyword = string.Empty;
+    private void ToggleSelectedFavorite()
+    {
+        if (SelectedShop is null)
+            return;
+
+        _shopService.ToggleFavorite(SelectedShop.Id);
+        ShopsView.Refresh();
+        ShopsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void DeleteSelectedShop()
+    {
+        if (SelectedShop is null)
+            return;
+
+        var result = MessageBox.Show(
+            $"「{SelectedShop.Name}」を削除しますか？",
+            "店舗削除の確認",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        _shopService.DeleteShop(SelectedShop.Id);
+        SelectedShop = null;
+        RefreshFromService();
+    }
+
+    [RelayCommand]
+    private void ClearSearch()
+    {
+        SearchKeyword = string.Empty;
+        SelectedRamenType = "すべて";
+        SelectedPriceFilter = "すべて";
+        FavoriteOnly = false;
+    }
 
     public void SelectShopById(int shopId)
     {
