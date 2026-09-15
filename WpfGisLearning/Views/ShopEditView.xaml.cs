@@ -15,7 +15,6 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     private readonly ShopEditViewModel _viewModel;
     private Mapsui.Map? _map;
     private MemoryLayer? _locationLayer;
-    private MemoryLayer? _currentLocationLayer;
     private bool _isDraggingLocation;
 
     public ShopEditView(ShopEditViewModel viewModel)
