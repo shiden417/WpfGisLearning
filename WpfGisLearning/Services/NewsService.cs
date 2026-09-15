@@ -13,10 +13,9 @@ public class NewsService
 
     public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(DateTime date, CancellationToken cancellationToken = default)
     {
-        // Google News の after/before は境界が厳密なため、前後1日を含めて取得し、
-        // 最後に公開日時を日本時間へ変換して指定日だけに絞り込む。
-        var start = date.Date.AddDays(-1);
-        var end = date.Date.AddDays(2);
+        // 指定日以前のニュースを十分な期間から取得し、公開日時の新しい順に最大20件返す。
+        var end = date.Date.AddDays(1);
+        var start = date.Date.AddDays(-30);
         var query = $"ラーメン after:{start:yyyy-MM-dd} before:{end:yyyy-MM-dd}";
         var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
 
@@ -27,14 +26,23 @@ public class NewsService
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
 
-        return document.Descendants("item")
+        var items = document.Descendants("item")
             .Select(ParseItem)
             .Where(x => x is not null)
             .Select(x => x!)
-            .Where(x => x.PublishedAt.Date == date.Date)
+            .Where(x => x.PublishedAt.Date <= date.Date)
             .OrderByDescending(x => x.PublishedAt)
             .Take(20)
             .ToList();
+
+        // RSSに画像が含まれない場合は、記事ページのメタ情報から画像を補完する。
+        foreach (var item in items)
+        {
+            if (!string.IsNullOrWhiteSpace(item.ImageUrl)) continue;
+            item.ImageUrl = await TryGetArticleImageUrlAsync(item.SourceUrl, cancellationToken);
+        }
+
+        return items;
     }
 
     private static NewsItem? ParseItem(XElement item)
@@ -68,18 +76,16 @@ public class NewsService
 
     private static string ExtractImageUrl(XElement item, string description)
     {
-        // RSS に media:content / media:thumbnail / enclosure があれば優先して利用する。
         var mediaImage = item.Elements()
             .Where(x => x.Name.LocalName is "content" or "thumbnail")
             .Select(x => x.Attribute("url")?.Value?.Trim())
-            .FirstOrDefault(x => IsImageUrl(x));
+            .FirstOrDefault(IsImageUrl);
 
         if (IsImageUrl(mediaImage)) return mediaImage!;
 
         var enclosureImage = item.Element("enclosure")?.Attribute("url")?.Value?.Trim();
         if (IsImageUrl(enclosureImage)) return enclosureImage!;
 
-        // フィードによっては description 内の <img src="..."> に画像が入る。
         var match = Regex.Match(
             description,
             "<img[^>]+src=[\"'](?<url>[^\"']+)[\"']",
@@ -90,6 +96,45 @@ public class NewsService
             : string.Empty;
 
         return IsImageUrl(descriptionImage) ? descriptionImage : string.Empty;
+    }
+
+    private static async Task<string> TryGetArticleImageUrlAsync(string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36");
+            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode) return string.Empty;
+
+            var html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            var imageUrl = FindMetaContent(html, "property", "og:image")
+                ?? FindMetaContent(html, "name", "twitter:image")
+                ?? FindMetaContent(html, "property", "og:image:url");
+
+            return IsImageUrl(imageUrl) ? imageUrl! : string.Empty;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            // 個別記事の画像取得失敗はニュース一覧全体には影響させない。
+            return string.Empty;
+        }
+    }
+
+    private static string? FindMetaContent(string html, string attributeName, string attributeValue)
+    {
+        var pattern = $"<meta[^>]+{Regex.Escape(attributeName)}=[\\\"']{Regex.Escape(attributeValue)}[\\\"'][^>]+content=[\\\"'](?<content>[^\\\"']+)[\\\"']";
+        var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+        if (match.Success) return WebUtility.HtmlDecode(match.Groups["content"].Value.Trim());
+
+        pattern = $"<meta[^>]+content=[\\\"'](?<content>[^\\\"']+)[\\\"'][^>]+{Regex.Escape(attributeName)}=[\\\"']{Regex.Escape(attributeValue)}[\\\"']";
+        match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+        return match.Success ? WebUtility.HtmlDecode(match.Groups["content"].Value.Trim()) : null;
     }
 
     private static bool IsImageUrl(string? url)
