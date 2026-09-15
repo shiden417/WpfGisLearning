@@ -156,7 +156,7 @@ public partial class MainWindow : Window
 
     private void InfoCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ClickCount != 2 || e.OriginalSource is Button || !_selectedShopId.HasValue) return;
+        if (e.ClickCount != 2 || e.OriginalSource is System.Windows.Controls.Button || !_selectedShopId.HasValue) return;
         _navigationService.NavigateToDetail(_selectedShopId.Value);
         e.Handled = true;
     }
