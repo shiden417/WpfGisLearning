@@ -23,7 +23,6 @@ public partial class MainWindow : Window
     private const double InitialMapPaddingFactor = 1.2;
     private const int SingleShopResolutionIndex = 12;
     private const long ZoomAmount = 500;
-    private const uint CurrentLocationAccuracyMeters = 50;
     private const double InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
@@ -39,6 +38,7 @@ public partial class MainWindow : Window
     private readonly ShopListViewModel _shopListViewModel;
     private readonly IShopService _shopService;
     private readonly INavigationService _navigationService;
+    private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
 
     public MainWindow(
@@ -47,6 +47,7 @@ public partial class MainWindow : Window
         MessageView messageView,
         IShopService shopService,
         INavigationService navigationService,
+        ICurrentLocationService currentLocationService,
         NewsView newsView)
     {
         InitializeComponent();
@@ -58,6 +59,7 @@ public partial class MainWindow : Window
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
         _navigationService = navigationService;
+        _currentLocationService = currentLocationService;
         _newsView = newsView;
 
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
@@ -329,13 +331,13 @@ public partial class MainWindow : Window
     {
         try
         {
-            var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync();
-            if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed)
+            var location = await _currentLocationService.GetCurrentLocationAsync();
+            if (location is null || _map is null)
             {
                 if (showMessageOnFailure)
                 {
                     MessageBox.Show(
-                        "現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。",
+                        "現在地へのアクセスが許可されていないか、位置情報を取得できませんでした。Windowsの位置情報設定を確認してください。",
                         "現在地",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -344,28 +346,15 @@ public partial class MainWindow : Window
                 return;
             }
 
-            var geolocator = new Windows.Devices.Geolocation.Geolocator
-            {
-                DesiredAccuracyInMeters = CurrentLocationAccuracyMeters
-            };
-            var position = await geolocator.GetGeopositionAsync();
-            var latitude = position.Coordinate.Point.Position.Latitude;
-            var longitude = position.Coordinate.Point.Position.Longitude;
-
-            if (_map is null || !MapCoordinateValidator.IsValid(latitude, longitude))
-            {
-                return;
-            }
-
             if (filterNearby)
             {
-                _shopListViewModel.SetNearbyLocation(latitude, longitude);
+                _shopListViewModel.SetNearbyLocation(location.Latitude, location.Longitude);
             }
 
-            ShowCurrentLocation(latitude, longitude);
+            ShowCurrentLocation(location.Latitude, location.Longitude);
             _map.Navigator.CenterOn(
                 SphericalMercator
-                    .FromLonLat(longitude, latitude)
+                    .FromLonLat(location.Longitude, location.Latitude)
                     .ToMPoint());
         }
         catch (Exception ex)
