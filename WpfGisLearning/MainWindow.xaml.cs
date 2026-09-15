@@ -32,6 +32,7 @@ public partial class MainWindow : Window
 
     private Mapsui.Map? _map;
     private MemoryLayer? _currentLocationLayer;
+    private ShopMapLayerResult? _shopMapLayerResult;
     private bool _initialMapPositionSet;
     private bool _initialLocationRequested;
     private int? _selectedShopId;
@@ -134,11 +135,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        var result = ShopMapLayerBuilder.Build(
+        _shopMapLayerResult = ShopMapLayerBuilder.Build(
             _shopService.GetShops(),
             _selectedShopId);
 
-        ReplaceShopLayer(result.Layer);
+        ReplaceShopLayer(_shopMapLayerResult.Layer);
     }
 
     private void ReplaceShopLayer(MemoryLayer newLayer)
@@ -165,18 +166,14 @@ public partial class MainWindow : Window
             return;
         }
 
-        var result = ShopMapLayerBuilder.Build(
-            _shopService.GetShops(),
-            _selectedShopId);
-
-        if (!result.Bounds.HasValidCoordinates)
+        var bounds = _shopMapLayerResult?.Bounds;
+        if (bounds is null || !bounds.HasValidCoordinates)
         {
             return;
         }
 
         try
         {
-            var bounds = result.Bounds;
             var center = MapViewportCalculator.CalculateCenter(bounds);
             var resolution = MapViewportCalculator.CalculateResolution(
                 bounds,
