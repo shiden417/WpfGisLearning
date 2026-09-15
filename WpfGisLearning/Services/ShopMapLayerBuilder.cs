@@ -26,28 +26,22 @@ public static class ShopMapLayerBuilder
 {
     public const string LayerName = "Shops";
 
+    private const double OverlapOffsetMeters = 12;
+    private const double NormalMarkerScale = 1.15;
+    private const double SelectedMarkerScale = 1.4;
+
     public static ShopMapLayerResult Build(IEnumerable<Shop> shops, int? selectedShopId)
     {
-        var features = new List<IFeature>();
-        var minLongitude = double.MaxValue;
-        var maxLongitude = double.MinValue;
-        var minLatitude = double.MaxValue;
-        var maxLatitude = double.MinValue;
+        var validShops = shops
+            .Where(shop => MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
+            .ToList();
 
-        foreach (var shop in shops)
-        {
-            if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
-            {
-                continue;
-            }
+        var features = validShops
+            .GroupBy(shop => (shop.Latitude, shop.Longitude))
+            .SelectMany(group => CreateFeatures(group.ToList(), selectedShopId))
+            .ToList<IFeature>();
 
-            minLongitude = Math.Min(minLongitude, shop.Longitude);
-            maxLongitude = Math.Max(maxLongitude, shop.Longitude);
-            minLatitude = Math.Min(minLatitude, shop.Latitude);
-            maxLatitude = Math.Max(maxLatitude, shop.Latitude);
-            features.Add(CreateFeature(shop, shop.Id == selectedShopId));
-        }
-
+        var bounds = CalculateBounds(validShops);
         var layer = new MemoryLayer
         {
             Name = LayerName,
@@ -55,20 +49,45 @@ public static class ShopMapLayerBuilder
             Features = features
         };
 
-        var bounds = new ShopMapBounds(
-            minLongitude,
-            maxLongitude,
-            minLatitude,
-            maxLatitude);
-
         return new ShopMapLayerResult(layer, bounds);
     }
 
-    private static IFeature CreateFeature(Shop shop, bool selected)
+    private static IEnumerable<IFeature> CreateFeatures(IReadOnlyList<Shop> shops, int? selectedShopId)
+    {
+        if (shops.Count == 1)
+        {
+            yield return CreateFeature(shops[0], selectedShopId == shops[0].Id, 0, 1);
+            yield break;
+        }
+
+        for (var index = 0; index < shops.Count; index++)
+        {
+            var shop = shops[index];
+            var angle = 2 * Math.PI * index / shops.Count;
+            var offsetX = Math.Cos(angle) * OverlapOffsetMeters;
+            var offsetY = Math.Sin(angle) * OverlapOffsetMeters;
+            yield return CreateFeature(
+                shop,
+                selectedShopId == shop.Id,
+                index,
+                shops.Count,
+                offsetX,
+                offsetY);
+        }
+    }
+
+    private static IFeature CreateFeature(
+        Shop shop,
+        bool selected,
+        int overlapIndex,
+        int overlapCount,
+        double offsetX = 0,
+        double offsetY = 0)
     {
         var point = SphericalMercator
             .FromLonLat(shop.Longitude, shop.Latitude)
             .ToMPoint();
+        point = new MPoint(point.X + offsetX, point.Y + offsetY);
 
         var feature = new PointFeature(point)
         {
@@ -78,10 +97,46 @@ public static class ShopMapLayerBuilder
         };
 
         feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Color.FromString(selected ? "#C56B4D" : "#343A40"),
-            Color.FromString("#343A40"),
-            selected ? 1.4 : 1.15));
+            Color.FromString(selected ? "#C56B4D" : "#4A90E2"),
+            Color.White,
+            selected ? SelectedMarkerScale : NormalMarkerScale));
+
+        if (overlapCount > 1)
+        {
+            feature.Styles.Add(new LabelStyle
+            {
+                Text = $"{overlapIndex + 1}/{overlapCount}",
+                Font = new Font { Size = 10, Bold = true },
+                ForeColor = Color.White,
+                BackColor = new Brush(Color.FromString("#CC343A40")),
+                BorderColor = Color.White,
+                BorderThickness = 1,
+                CornerRounding = 6,
+                HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
+                VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Bottom,
+                Offset = new Offset(0, -18),
+                CollisionDetection = false
+            });
+        }
 
         return feature;
+    }
+
+    private static ShopMapBounds CalculateBounds(IReadOnlyList<Shop> shops)
+    {
+        if (shops.Count == 0)
+        {
+            return new ShopMapBounds(
+                double.MaxValue,
+                double.MinValue,
+                double.MaxValue,
+                double.MinValue);
+        }
+
+        return new ShopMapBounds(
+            shops.Min(shop => shop.Longitude),
+            shops.Max(shop => shop.Longitude),
+            shops.Min(shop => shop.Latitude),
+            shops.Max(shop => shop.Latitude));
     }
 }
