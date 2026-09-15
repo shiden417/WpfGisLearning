@@ -80,8 +80,15 @@ public class NewsService
         if (IsImageUrl(enclosureImage)) return enclosureImage!;
 
         // フィードによっては description 内の <img src="..."> に画像が入る。
-        var match = Regex.Match(description, @"<img[^>]+src=[\"'](?<url>[^\"']+)[\"']", RegexOptions.IgnoreCase);
-        var descriptionImage = match.Success ? WebUtility.HtmlDecode(match.Groups["url"].Value.Trim()) : string.Empty;
+        var match = Regex.Match(
+            description,
+            "<img[^>]+src=[\"'](?<url>[^\"']+)[\"']",
+            RegexOptions.IgnoreCase);
+
+        var descriptionImage = match.Success
+            ? WebUtility.HtmlDecode(match.Groups["url"].Value.Trim())
+            : string.Empty;
+
         return IsImageUrl(descriptionImage) ? descriptionImage : string.Empty;
     }
 
