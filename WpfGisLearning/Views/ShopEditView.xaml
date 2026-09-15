@@ -19,7 +19,7 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid Margin="24">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="360" />
+                    <ColumnDefinition Width="380" />
                     <ColumnDefinition Width="20" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
@@ -28,21 +28,36 @@
                     <StackPanel>
                         <TextBlock Text="店舗情報" FontSize="18" FontWeight="Bold" Foreground="#FF332925" />
 
-                        <TextBlock Text="店舗名" Margin="0,22,0,5" Foreground="#FF765E55" />
+                        <TextBlock Text="店舗名" Margin="0,18,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
 
-                        <TextBlock Text="価格" Margin="0,14,0,5" Foreground="#FF765E55" />
+                        <TextBlock Text="価格" Margin="0,12,0,5" Foreground="#FF765E55" />
                         <TextBox Text="{Binding ShopPrice, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
 
-                        <TextBlock Text="住所" Margin="0,14,0,5" Foreground="#FF765E55" />
-                        <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="70" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
+                        <TextBlock Text="ラーメンの種類" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <ComboBox ItemsSource="{Binding RamenTypes}" SelectedItem="{Binding RamenType}" Height="36" Padding="8,4" />
 
-                        <TextBlock Text="位置" Margin="0,18,0,5" Foreground="#FF765E55" />
+                        <TextBlock Text="おすすめメニュー" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding RecommendedMenu, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="営業時間" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding OpeningHours, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="定休日" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding ClosedDay, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="評価" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding Rating, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" />
+
+                        <TextBlock Text="住所" Margin="0,12,0,5" Foreground="#FF765E55" />
+                        <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="60" FontSize="14" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
+
+                        <TextBlock Text="位置" Margin="0,16,0,5" Foreground="#FF765E55" />
                         <Border Background="#FFFFF5EE" CornerRadius="10" Padding="12">
                             <StackPanel>
                                 <TextBlock Text="{Binding ShopLatitude, StringFormat=緯度: {0:F6}}" Foreground="#FF493D38" />
                                 <TextBlock Text="{Binding ShopLongitude, StringFormat=経度: {0:F6}}" Foreground="#FF493D38" Margin="0,4,0,0" />
-                                <TextBlock Text="地図をクリックして位置を変更できます" FontSize="11" Foreground="#FF98786B" Margin="0,8,0,0" />
+                                <TextBlock Text="右側の地図をクリックして位置を指定できます" FontSize="11" Foreground="#FF98786B" Margin="0,8,0,0" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
