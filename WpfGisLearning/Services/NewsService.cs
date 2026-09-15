@@ -8,15 +8,19 @@ namespace WpfGisLearning.Services;
 
 public class NewsService
 {
-    private const string FeedUrl = "https://news.google.com/rss/search?q=%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3+when%3A7d&hl=ja&gl=JP&ceid=JP%3Aja";
+    private const string FeedBaseUrl = "https://news.google.com/rss/search";
     private static readonly HttpClient HttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(10)
     };
 
-    public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(DateTime date, CancellationToken cancellationToken = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, FeedUrl);
+        var nextDate = date.Date.AddDays(1);
+        var query = $"ラーメン after:{date:yyyy-MM-dd} before:{nextDate:yyyy-MM-dd}";
+        var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
         request.Headers.UserAgent.ParseAdd("Ramenia/1.0");
 
         using var response = await HttpClient.SendAsync(request, cancellationToken);
@@ -29,6 +33,7 @@ public class NewsService
             .Select(ParseItem)
             .Where(x => x is not null)
             .Select(x => x!)
+            .Where(x => x.PublishedAt.Date == date.Date)
             .OrderByDescending(x => x.PublishedAt)
             .Take(20)
             .ToList();
@@ -43,7 +48,7 @@ public class NewsService
         var source = item.Element("source")?.Value?.Trim();
 
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link)) return null;
-        if (!DateTimeOffset.TryParse(publishedText, out var publishedAt)) publishedAt = DateTimeOffset.Now;
+        if (!DateTimeOffset.TryParse(publishedText, out var publishedAt)) return null;
 
         var cleanTitle = title;
         if (!string.IsNullOrWhiteSpace(source) && cleanTitle.EndsWith($" - {source}", StringComparison.OrdinalIgnoreCase))
