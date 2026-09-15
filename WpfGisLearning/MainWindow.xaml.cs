@@ -18,6 +18,7 @@ public partial class MainWindow : Window
 {
     private Mapsui.Map? _map;
     private MemoryLayer? _shopLayer;
+    private MemoryLayer? _currentLocationLayer;
     private double _minLon = double.MaxValue;
     private double _maxLon = double.MinValue;
     private double _minLat = double.MaxValue;
@@ -154,8 +155,8 @@ public partial class MainWindow : Window
         feature["Address"] = shop.Address;
         feature["Id"] = shop.Id;
         feature.Styles.Add(ImageStyles.CreatePinStyle(
-            Mapsui.Styles.Color.FromString(selected ? "#F28C28" : "#B83D2E"),
-            Mapsui.Styles.Color.White,
+            Mapsui.Styles.Color.FromString(selected ? "#6F8A6A" : "#596B58"),
+            Mapsui.Styles.Color.FromString("#596B58"),
             selected ? 1.35 : 1.15));
         return feature;
     }
@@ -190,6 +191,7 @@ public partial class MainWindow : Window
                 MessageBox.Show("現在地へのアクセスが許可されていません。Windowsの位置情報設定を確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+
             var locator = new Windows.Devices.Geolocation.Geolocator { DesiredAccuracyInMeters = 50 };
             var position = await locator.GetGeopositionAsync();
             var latitude = position.Coordinate.Point.Position.Latitude;
@@ -198,6 +200,7 @@ public partial class MainWindow : Window
                 return;
 
             _shopListViewModel.SetNearbyLocation(latitude, longitude);
+            ShowCurrentLocation(latitude, longitude);
             var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
             var resolution = _map.Navigator.Resolutions.Count > 12 ? _map.Navigator.Resolutions[12] : _map.Navigator.Resolutions[^1];
             _map.Navigator.CenterOnAndZoomTo(point, resolution);
@@ -208,11 +211,32 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ShowCurrentLocation(double latitude, double longitude)
+    {
+        if (_map is null)
+            return;
+
+        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
+        var feature = new PointFeature(point);
+        feature.Styles.Add(ImageStyles.CreatePinStyle(
+            Mapsui.Styles.Color.FromString("#4A90E2"),
+            Mapsui.Styles.Color.FromString("#4A90E2"),
+            1.0));
+
+        _currentLocationLayer ??= new MemoryLayer { Name = "CurrentLocation" };
+        _currentLocationLayer.Features = new[] { feature };
+        if (!_map.Layers.Contains(_currentLocationLayer))
+            _map.Layers.Add(_currentLocationLayer);
+        MapControl.Refresh();
+    }
+
     private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e)
     {
         _selectedShopId = null;
         _shopListViewModel.NearbyOnly = false;
         InfoCardBorder.Visibility = Visibility.Collapsed;
+        if (_map is not null && _currentLocationLayer is not null)
+            _map.Layers.Remove(_currentLocationLayer);
         RebuildShopLayer();
         _initialMapPositionSet = false;
         MapControl_Loaded(sender, e);
