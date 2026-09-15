@@ -12,7 +12,7 @@
 
     <Window.Resources>
         <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFF7F5F2" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#FFB4552B" /> <!-- 暖色系アクセント -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#FFB4552B" />
         <SolidColorBrush x:Key="CardBackground" Color="White" />
 
         <Style TargetType="Button">
@@ -53,15 +53,11 @@
     </Window.Resources>
 
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-        <!-- Mapsui namespace -->
-        <!-- Note: Mapsui.UI.Wpf assembly provides MapControl -->
-        <!-- xmlns:mapsui をファイル先頭で宣言するため既存の xmlns 行を編集 -->
         <Grid.RowDefinitions>
             <RowDefinition Height="64" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <Border Grid.Row="0" Background="Transparent">
             <Grid Margin="16,8">
                 <Grid.ColumnDefinitions>
@@ -78,14 +74,12 @@
             </Grid>
         </Border>
 
-        <!-- Body -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar -->
             <StackPanel Grid.Column="0" Margin="12" VerticalAlignment="Stretch">
                 <Border Style="{StaticResource Card}" Padding="12">
                     <StackPanel>
@@ -97,30 +91,27 @@
                 </Border>
             </StackPanel>
 
-            <!-- Main content area -->
             <Grid Grid.Column="1" Margin="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Shop list (ContentControl に既存のビューを注入する) -->
                 <Border Grid.Column="0" Style="{StaticResource Card}">
                     <ContentControl x:Name="MainContent" />
                 </Border>
 
-                <!-- Right: Map -->
                 <Border Grid.Column="1" Style="{StaticResource Card}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid>
-                        <!-- Mapsui MapControl を配置 -->
                         <mapsui:MapControl x:Name="MapControl" />
 
-                        <!-- 店舗情報カード（地図上に重ねて表示） -->
+                        <!-- 選択中店舗の詳細情報カード -->
                         <Border x:Name="InfoCardBorder"
                                 Background="White"
-                                CornerRadius="8"
-                                Padding="8"
-                                Width="260"
+                                CornerRadius="10"
+                                Padding="12"
+                                Width="280"
+                                MaxHeight="220"
                                 Visibility="Collapsed"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Bottom"
@@ -128,17 +119,95 @@
                                 BorderBrush="#FFE0E0E0"
                                 BorderThickness="1">
                             <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock x:Name="InfoCardName" FontWeight="SemiBold" FontSize="14" Text="店名" />
-                                    <TextBlock x:Name="InfoCardAddress" FontSize="12" Text="住所" TextWrapping="Wrap" />
-                                </StackPanel>
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="0"
+                                           Grid.ColumnSpan="2"
+                                           x:Name="InfoCardName"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#FF2F2F2F"
+                                           Text="店舗名" />
 
-                                <Button Grid.Column="1" Content="×" Width="28" Height="28" VerticalAlignment="Top" HorizontalAlignment="Right" Click="InfoCardClose_Click" />
+                                <Button Grid.Row="0"
+                                        Grid.Column="2"
+                                        Content="×"
+                                        Width="28"
+                                        Height="28"
+                                        Margin="0"
+                                        VerticalAlignment="Top"
+                                        Click="InfoCardClose_Click" />
+
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="0"
+                                           Text="住所"
+                                           FontSize="11"
+                                           Foreground="#FF888888"
+                                           Margin="0,10,10,0" />
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="1"
+                                           Grid.ColumnSpan="2"
+                                           x:Name="InfoCardAddress"
+                                           FontSize="12"
+                                           Text="住所"
+                                           TextWrapping="Wrap"
+                                           Margin="0,10,0,0" />
+
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="0"
+                                           Text="価格"
+                                           FontSize="11"
+                                           Foreground="#FF888888"
+                                           Margin="0,6,10,0" />
+                                <TextBlock Grid.Row="2"
+                                           Grid.Column="1"
+                                           Grid.ColumnSpan="2"
+                                           x:Name="InfoCardPrice"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FFB4552B"
+                                           Text="-"
+                                           Margin="0,6,0,0" />
+
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="0"
+                                           Text="緯度"
+                                           FontSize="11"
+                                           Foreground="#FF888888"
+                                           Margin="0,6,10,0" />
+                                <TextBlock Grid.Row="3"
+                                           Grid.Column="1"
+                                           Grid.ColumnSpan="2"
+                                           x:Name="InfoCardLatitude"
+                                           FontSize="11"
+                                           Text="-"
+                                           Margin="0,6,0,0" />
+
+                                <TextBlock Grid.Row="4"
+                                           Grid.Column="0"
+                                           Text="経度"
+                                           FontSize="11"
+                                           Foreground="#FF888888"
+                                           Margin="0,6,10,0" />
+                                <TextBlock Grid.Row="4"
+                                           Grid.Column="1"
+                                           Grid.ColumnSpan="2"
+                                           x:Name="InfoCardLongitude"
+                                           FontSize="11"
+                                           Text="-"
+                                           Margin="0,6,0,0" />
                             </Grid>
                         </Border>
                     </Grid>
