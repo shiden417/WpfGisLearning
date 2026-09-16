@@ -211,6 +211,11 @@ public class ShopListViewModelTests
             var shop = Shops.FirstOrDefault(x => x.Id == id);
             if (shop is not null) shop.IsFavorite = !shop.IsFavorite;
         }
+        public void ReplaceAll(IEnumerable<Shop> shops)
+        {
+            Shops.Clear();
+            Shops.AddRange(shops);
+        }
     }
 
     private sealed class FakeNavigationService : INavigationService
