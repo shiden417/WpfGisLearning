@@ -32,6 +32,7 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string openingHoursMode = "未設定";
     [ObservableProperty] private string openingTime = "11:00";
     [ObservableProperty] private string closingTime = "21:00";
+    [ObservableProperty] private string closedDay = string.Empty;
     [ObservableProperty] private bool closedSunday;
     [ObservableProperty] private bool closedMonday;
     [ObservableProperty] private bool closedTuesday;
@@ -44,6 +45,7 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string shopNameError = string.Empty;
     [ObservableProperty] private string shopPriceError = string.Empty;
     [ObservableProperty] private string ratingError = string.Empty;
+    [ObservableProperty] private string openingHoursError = string.Empty;
     [ObservableProperty] private string locationError = string.Empty;
 
     public ShopEditViewModel(IShopService shopService, IPhotoService photoService)
@@ -169,6 +171,7 @@ public partial class ShopEditViewModel : ObservableObject
     {
         ClearErrors();
         ValidateRequiredFields();
+        ValidateOpeningHours();
         if (!TryGetValidLocation(out var latitude, out var longitude))
             LocationError = "有効な緯度・経度を地図上で指定してください。";
         if (HasValidationErrors()) return;
@@ -202,6 +205,12 @@ public partial class ShopEditViewModel : ObservableObject
         if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
     }
 
+    private void ValidateOpeningHours()
+    {
+        if (OpeningHoursMode == "時間指定" && string.Equals(OpeningTime, ClosingTime, StringComparison.Ordinal))
+            OpeningHoursError = "開始時刻と終了時刻は異なる時刻を選択してください。24時間営業の場合は「24時間営業」を選択してください。";
+    }
+
     private bool TryGetValidLocation(out double latitude, out double longitude)
     {
         latitude = ShopLatitude.GetValueOrDefault();
@@ -212,6 +221,7 @@ public partial class ShopEditViewModel : ObservableObject
     private bool HasValidationErrors() => !string.IsNullOrEmpty(ShopNameError)
         || !string.IsNullOrEmpty(ShopPriceError)
         || !string.IsNullOrEmpty(RatingError)
+        || !string.IsNullOrEmpty(OpeningHoursError)
         || !string.IsNullOrEmpty(LocationError);
 
     private Shop? FindExistingShop() => ShopId.HasValue
@@ -289,7 +299,7 @@ public partial class ShopEditViewModel : ObservableObject
         OpeningHours = OpeningHoursMode switch
         {
             BusinessHoursStatusCalculator.Open24Hours => BusinessHoursStatusCalculator.Open24Hours,
-            "時間指定" => OpeningTime == ClosingTime ? OpeningTime + "-" + ClosingTime : $"{OpeningTime}-{ClosingTime}",
+            "時間指定" => $"{OpeningTime}-{ClosingTime}",
             _ => string.Empty
         };
     }
@@ -379,6 +389,7 @@ public partial class ShopEditViewModel : ObservableObject
         ShopNameError = string.Empty;
         ShopPriceError = string.Empty;
         RatingError = string.Empty;
+        OpeningHoursError = string.Empty;
         LocationError = string.Empty;
     }
 
