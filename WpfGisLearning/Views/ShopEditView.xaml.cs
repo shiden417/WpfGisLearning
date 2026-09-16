@@ -1,11 +1,12 @@
 using Microsoft.Win32;
 using Mapsui;
+using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
+using Mapsui.Styles;
 using Mapsui.Tiling;
 using System.Windows;
 using System.Windows.Input;
-using WpfGisLearning.Map;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
@@ -83,8 +84,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             var latitude = _viewModel.ShopLatitude.Value;
             var longitude = _viewModel.ShopLongitude.Value;
             ShowLocation(latitude, longitude);
-            var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
-            _map.Navigator.CenterOnAndZoomTo(point, InitialShopLocationResolution);
+            var (x, y) = SphericalMercator.FromLonLat(longitude, latitude);
+            _map.Navigator.CenterOnAndZoomTo(new MPoint(x, y), InitialShopLocationResolution);
             return;
         }
         SetJapanOverview();
@@ -148,8 +149,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void SetJapanOverview()
     {
-        var point = SphericalMercator.FromLonLat(JapanOverviewLongitude, JapanOverviewLatitude).ToMPoint();
-        _map?.Navigator.CenterOnAndZoomTo(point, JapanOverviewResolution);
+        var (x, y) = SphericalMercator.FromLonLat(JapanOverviewLongitude, JapanOverviewLatitude);
+        _map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), JapanOverviewResolution);
     }
 
     private async void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
@@ -200,10 +201,10 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     {
         if (_map is null) return false;
         var screenPosition = new Mapsui.Manipulations.ScreenPosition((int)x, (int)y);
-        var worldPosition = _map.Navigator.Viewport.ScreenToWorld(screenPosition);
-        var lonLat = SphericalMercator.ToLonLat(worldPosition);
-        if (!_viewModel.TrySetLocation(lonLat.Y, lonLat.X)) return false;
-        ShowLocation(lonLat.Y, lonLat.X, recenter);
+        var worldPosition = _map.Navigator.Viewport.ScreenToWorldXY(screenPosition.X, screenPosition.Y);
+        var (lon, lat) = SphericalMercator.ToLonLat(worldPosition.worldX, worldPosition.worldY);
+        if (!_viewModel.TrySetLocation(lat, lon)) return false;
+        ShowLocation(lat, lon, recenter);
         return true;
     }
 
