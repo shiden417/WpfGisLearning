@@ -25,7 +25,7 @@ public class NavigationService : INavigationService
             Background = (Brush)Application.Current.FindResource("WindowBackgroundBrush")
         };
         content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(72) });
-        content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+        content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
         var header = new Border
         {
