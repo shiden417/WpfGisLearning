@@ -62,7 +62,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
-        if (Validation.GetHasError(ShopPriceTextBox) || Validation.GetHasError(RatingTextBox))
+        if (System.Windows.Controls.Validation.GetHasError(ShopPriceTextBox) ||
+            System.Windows.Controls.Validation.GetHasError(RatingTextBox))
             return;
 
         _viewModel.SaveCommand.Execute(null);
