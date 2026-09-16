@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Input;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
 namespace WpfGisLearning.Views;
@@ -94,7 +95,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             e.Handled = true;
             return;
         }
-        if (HasLocationAt(position.X, position.Y))
+        if (HasLocationAt(position.X, position.Y)
+        )
         {
             _isDraggingLocation = true;
             EditMapControl.CaptureMouse();
