@@ -219,6 +219,6 @@ public class ShopListViewModelTests
         public void NavigateToDetail(int id) => DetailShopId = id;
         public void NavigateToShopEdit(int? id = null) { }
         public void NavigateToShopList() { }
-        public void NavigateToShopPage() { }
+        public void NavigateToShopPageFrame() { }
     }
 }
