@@ -49,6 +49,9 @@ public partial class MainWindow : Window
 
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
         _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
+        shopListView.DownloadExcelTemplateRequested += DownloadExcelTemplateButton_Click;
+        shopListView.ExportExcelRequested += ExportExcelButton_Click;
+        shopListView.ImportExcelRequested += ImportExcelButton_Click;
         _newsView.RequestBack += NewsView_RequestBack;
         Loaded += MainWindow_Loaded;
 
@@ -228,7 +231,7 @@ public partial class MainWindow : Window
         SetInitialMapPosition();
     }
 
-    private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e)
+    private void DownloadExcelTemplateButton_Click(object? sender, EventArgs e)
     {
         var dialog = new SaveFileDialog
         {
@@ -260,7 +263,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ExportExcelButton_Click(object sender, RoutedEventArgs e)
+    private void ExportExcelButton_Click(object? sender, EventArgs e)
     {
         var dialog = new SaveFileDialog
         {
@@ -292,7 +295,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ImportExcelButton_Click(object sender, RoutedEventArgs e)
+    private void ImportExcelButton_Click(object? sender, EventArgs e)
     {
         var dialog = new OpenFileDialog
         {
