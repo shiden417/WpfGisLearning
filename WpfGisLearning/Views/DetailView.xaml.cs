@@ -172,8 +172,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
             Stretch = Stretch.Fill,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0),
-            RenderTransformOrigin = new Point(0.5, 0.5)
+            Margin = new Thickness(0)
         };
 
         return new Button
@@ -218,7 +217,6 @@ public partial class DetailView : System.Windows.Controls.UserControl
     {
         if (_viewModel.Shop is null) return;
         _navigationService.NavigateToShopEdit(_viewModel.Shop.Id);
-        Window.GetWindow(this)?.Close();
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
