@@ -16,7 +16,11 @@ public sealed class MapControlAdapter : IMapControlAdapter
     public Mapsui.Map? Map
     {
         get => _mapControl.Map;
-        set => _mapControl.Map = value;
+        set
+        {
+            if (value is not null)
+                _mapControl.Map = value;
+        }
     }
 
     public double ActualWidth => _mapControl.ActualWidth;
