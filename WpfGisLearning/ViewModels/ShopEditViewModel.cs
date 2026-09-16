@@ -10,6 +10,8 @@ namespace WpfGisLearning.ViewModels;
 
 public partial class ShopEditViewModel : ObservableObject
 {
+    public const int MaxPhotoCount = 10;
+
     private readonly IShopService _shopService;
     private readonly IPhotoService _photoService;
     private readonly List<ShopPhoto> _originalPhotos = [];
@@ -47,6 +49,7 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string ratingError = string.Empty;
     [ObservableProperty] private string openingHoursError = string.Empty;
     [ObservableProperty] private string locationError = string.Empty;
+    [ObservableProperty] private string photoCountError = string.Empty;
 
     public ShopEditViewModel(IShopService shopService, IPhotoService photoService)
     {
@@ -125,11 +128,18 @@ public partial class ShopEditViewModel : ObservableObject
 
     public void AddPhoto(string sourcePath)
     {
+        if (Photos.Count >= MaxPhotoCount)
+        {
+            PhotoCountError = $"写真は最大{MaxPhotoCount}枚まで登録できます。";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(sourcePath)
             || !File.Exists(sourcePath)
             || Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))) return;
 
         Photos.Add(new ShopPhoto { SourcePath = sourcePath, SortOrder = Photos.Count, IsMain = Photos.Count == 0 });
+        PhotoCountError = string.Empty;
         OnPropertyChanged(nameof(Photos));
     }
 
@@ -139,6 +149,7 @@ public partial class ShopEditViewModel : ObservableObject
         var wasMain = photo.IsMain;
         Photos.Remove(photo);
         if (wasMain && Photos.Count > 0) Photos[0].IsMain = true;
+        if (Photos.Count < MaxPhotoCount) PhotoCountError = string.Empty;
         NormalizePhotoOrder();
     }
 
@@ -222,7 +233,8 @@ public partial class ShopEditViewModel : ObservableObject
         || !string.IsNullOrEmpty(ShopPriceError)
         || !string.IsNullOrEmpty(RatingError)
         || !string.IsNullOrEmpty(OpeningHoursError)
-        || !string.IsNullOrEmpty(LocationError);
+        || !string.IsNullOrEmpty(LocationError)
+        || !string.IsNullOrEmpty(PhotoCountError);
 
     private Shop? FindExistingShop() => ShopId.HasValue
         ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value)
@@ -391,6 +403,7 @@ public partial class ShopEditViewModel : ObservableObject
         RatingError = string.Empty;
         OpeningHoursError = string.Empty;
         LocationError = string.Empty;
+        PhotoCountError = string.Empty;
     }
 
     [RelayCommand]
