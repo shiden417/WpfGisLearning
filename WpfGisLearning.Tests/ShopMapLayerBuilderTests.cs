@@ -65,32 +65,7 @@ public class ShopMapLayerBuilderTests
     }
 
     [TestMethod]
-    public void Build_OverlappingShopsAreSeparatedAndNumbered()
-    {
-        var shops = new[]
-        {
-            new Shop { Id = 1, Name = "Shop 1", Latitude = 35.0, Longitude = 139.0 },
-            new Shop { Id = 2, Name = "Shop 2", Latitude = 35.0, Longitude = 139.0 },
-            new Shop { Id = 3, Name = "Shop 3", Latitude = 35.0, Longitude = 139.0 }
-        };
-
-        var result = ShopMapLayerBuilder.Build(shops, selectedShopId: null, resolution: LowResolution);
-        var markerOffsets = result.Layer.Features
-            .SelectMany(feature => feature.Styles.OfType<ImageStyle>())
-            .Select(style => (style.Offset.X, style.Offset.Y))
-            .ToList();
-        var labels = result.Layer.Features
-            .Select(feature => feature.Styles.OfType<LabelStyle>().Single().GetLabelText(feature))
-            .OrderBy(text => text)
-            .ToList();
-
-        Assert.HasCount(3, markerOffsets);
-        Assert.HasCount(3, markerOffsets.Distinct().ToList());
-        CollectionAssert.AreEqual(new[] { "1/3", "2/3", "3/3" }, labels);
-    }
-
-    [TestMethod]
-    public void Build_DenseShopsAreClusteredAtLowZoom()
+    public void Build_OverlappingShopsAreClusteredAtLowZoom()
     {
         var shops = new[]
         {
