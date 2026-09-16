@@ -27,7 +27,7 @@ public static class ShopValidation
             return "評価は0～5の範囲で入力してください。";
 
         return Math.Abs(value * 10 - Math.Round(value * 10)) > 1e-9
-            ? "評価は小数第1位までで入力してください."
+            ? "評価は小数第1位までで入力してください。"
             : null;
     }
 
@@ -56,7 +56,7 @@ public static class ShopValidation
         if (!IsValidTime(openingTime) || !IsValidTime(closingTime))
             return "開始時刻・終了時刻は30分単位で入力してください。";
 
-        if (string.Equals(openingTime, closingTime, StringComparison.Ordinal))
+        if (string.Equals(openingTime?.Trim(), closingTime?.Trim(), StringComparison.Ordinal))
             return "開始時刻と終了時刻は異なる時刻を選択してください。24時間営業の場合は「24時間営業」を選択してください。";
 
         return null;
