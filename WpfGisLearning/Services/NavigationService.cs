@@ -2,8 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using WpfGisLearning.Services.Interfaces;
+using WpfGisLearning.Utilities;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
 
@@ -32,10 +32,7 @@ public class NavigationService : INavigationService
             Background = (Brush)Application.Current.FindResource("HeaderBrush")
         };
         var headerGrid = new Grid { Margin = new Thickness(24, 0, 24, 0) };
-        var headerStack = new StackPanel
-        {
-            VerticalAlignment = VerticalAlignment.Center
-        };
+        var headerStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         headerStack.Children.Add(new TextBlock
         {
             Text = "🍜 Ramenia",
@@ -69,7 +66,7 @@ public class NavigationService : INavigationService
             MinHeight = 700,
             Owner = Application.Current?.MainWindow,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Icon = CreateRameniaIcon()
+            Icon = RameniaIconFactory.Create()
         };
 
         window.ShowDialog();
@@ -93,7 +90,7 @@ public class NavigationService : INavigationService
             MinHeight = 700,
             Owner = Application.Current?.MainWindow,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Icon = CreateRameniaIcon()
+            Icon = RameniaIconFactory.Create()
         };
 
         window.ShowDialog();
@@ -101,7 +98,7 @@ public class NavigationService : INavigationService
 
     public void NavigateToShopPageFrame()
     {
-        var frame = new System.Windows.Controls.Frame();
+        var frame = new Frame();
         var shopPage = ActivatorUtilities.CreateInstance<Views.ShopPage>(_provider);
         frame.NavigationUIVisibility = System.Windows.Navigation.NavigationUIVisibility.Visible;
         frame.Navigate(shopPage);
@@ -112,7 +109,13 @@ public class NavigationService : INavigationService
             return;
         }
 
-        var window = new Window { Title = "Shop Page (Frame)", Content = frame, SizeToContent = SizeToContent.WidthAndHeight, Owner = Application.Current?.MainWindow };
+        var window = new Window
+        {
+            Title = "Shop Page (Frame)",
+            Content = frame,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            Owner = Application.Current?.MainWindow
+        };
         window.Show();
     }
 
@@ -125,26 +128,13 @@ public class NavigationService : INavigationService
             return;
         }
 
-        var window = new Window { Title = "Shop List", Content = view, SizeToContent = SizeToContent.WidthAndHeight, Owner = Application.Current?.MainWindow };
-        window.Show();
-    }
-
-    private static ImageSource CreateRameniaIcon()
-    {
-        const int size = 64;
-        var visual = new DrawingVisual();
-        using (var context = visual.RenderOpen())
+        var window = new Window
         {
-            var formattedText = new FormattedText(
-                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                48, Brushes.Black, 1.0);
-            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
-        }
-
-        var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-        bitmap.Freeze();
-        return bitmap;
+            Title = "Shop List",
+            Content = view,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            Owner = Application.Current?.MainWindow
+        };
+        window.Show();
     }
 }
