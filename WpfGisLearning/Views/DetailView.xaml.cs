@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
@@ -85,30 +87,29 @@ public partial class DetailView : System.Windows.Controls.UserControl
             Width = 1000,
             Height = 750,
             Owner = Window.GetWindow(this),
-            Background = System.Windows.Media.Brushes.Black,
+            Background = Brushes.Black,
             WindowStartupLocation = WindowStartupLocation.CenterOwner
         };
 
         var image = new System.Windows.Controls.Image
         {
-            Stretch = System.Windows.Media.Stretch.Uniform,
+            Stretch = Stretch.Uniform,
             Margin = new Thickness(48, 48, 48, 72),
             Focusable = true
         };
         var counter = new TextBlock
         {
-            Foreground = System.Windows.Media.Brushes.White,
+            Foreground = Brushes.White,
             FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Bottom,
             Margin = new Thickness(0, 0, 0, 22)
         };
-        var previousButton = CreatePhotoNavigationButton("‹", HorizontalAlignment.Left, new Thickness(12, 0, 0, 0));
-        var nextButton = CreatePhotoNavigationButton("›", HorizontalAlignment.Right, new Thickness(0, 0, 12, 0));
+        var previousButton = CreatePhotoNavigationButton(isPrevious: true);
+        var nextButton = CreatePhotoNavigationButton(isPrevious: false);
         var closeButton = new Button
         {
-            Content = "×",
-            FontSize = 24,
+            Content = CreateCloseIcon(),
             Width = 44,
             Height = 44,
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -156,18 +157,49 @@ public partial class DetailView : System.Windows.Controls.UserControl
         return window;
     }
 
-    private static Button CreatePhotoNavigationButton(string content, HorizontalAlignment alignment, Thickness margin) => new()
+    private static Button CreatePhotoNavigationButton(bool isPrevious)
     {
-        Content = content,
-        FontSize = 42,
-        Width = 56,
-        Height = 72,
-        HorizontalAlignment = alignment,
-        VerticalAlignment = VerticalAlignment.Center,
-        Margin = margin,
-        Padding = new Thickness(0),
-        HorizontalContentAlignment = HorizontalAlignment.Center,
-        VerticalContentAlignment = VerticalAlignment.Center
+        var path = new Path
+        {
+            Data = Geometry.Parse(isPrevious ? "M 9,2 L 2,9 L 9,16" : "M 2,2 L 9,9 L 2,16"),
+            Stroke = Brushes.DimGray,
+            StrokeThickness = 2.5,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+            StrokeLineJoin = PenLineJoin.Round,
+            Width = 14,
+            Height = 18,
+            Stretch = Stretch.Fill,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        return new Button
+        {
+            Content = path,
+            Width = 56,
+            Height = 72,
+            HorizontalAlignment = isPrevious ? HorizontalAlignment.Left : HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = isPrevious ? new Thickness(12, 0, 0, 0) : new Thickness(0, 0, 12, 0),
+            Padding = new Thickness(0),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+    }
+
+    private static Path CreateCloseIcon() => new()
+    {
+        Data = Geometry.Parse("M 4,4 L 16,16 M 16,4 L 4,16"),
+        Stroke = Brushes.DimGray,
+        StrokeThickness = 2.25,
+        StrokeStartLineCap = PenLineCap.Round,
+        StrokeEndLineCap = PenLineCap.Round,
+        Width = 20,
+        Height = 20,
+        Stretch = Stretch.Fill,
+        HorizontalAlignment = HorizontalAlignment.Center,
+        VerticalAlignment = VerticalAlignment.Center
     };
 
     private static BitmapImage LoadBitmap(string path)
