@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using WpfGisLearning.Models;
-using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
 
