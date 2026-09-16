@@ -79,9 +79,7 @@
         <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="2,0,2,8">
-                    <TextBlock Text="検索" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
-                </Grid>
+                <Grid Grid.Row="0" Margin="2,0,2,8"><TextBlock Text="検索" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></Grid>
                 <Grid Grid.Row="1">
                     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                     <Grid Grid.Row="0">
@@ -107,7 +105,6 @@
                             <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="76" />
                         </StackPanel>
                         <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" />
-                        <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" Style="{StaticResource FilterCheckBox}" />
                         <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" />
                         <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" />
                     </WrapPanel>
