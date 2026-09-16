@@ -171,7 +171,9 @@ public partial class DetailView : System.Windows.Controls.UserControl
             Height = 18,
             Stretch = Stretch.Fill,
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0),
+            RenderTransformOrigin = new Point(0.5, 0.5)
         };
 
         return new Button
@@ -199,7 +201,8 @@ public partial class DetailView : System.Windows.Controls.UserControl
         Height = 20,
         Stretch = Stretch.Fill,
         HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Center
+        VerticalAlignment = VerticalAlignment.Center,
+        Margin = new Thickness(0)
     };
 
     private static BitmapImage LoadBitmap(string path)
