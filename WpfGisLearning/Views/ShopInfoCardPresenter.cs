@@ -7,23 +7,52 @@ using WpfGisLearning.Services;
 
 namespace WpfGisLearning.Views;
 
+/// <summary>
+/// MainWindow上の店舗情報カードへShopの内容を反映し、表示アニメーションを担当するPresenterです。
+/// ViewModelからWPFコントロールを直接操作するのを避けるためのUI補助クラスです。
+/// </summary>
 public sealed class ShopInfoCardPresenter
 {
+    /// <summary>カード表示開始時に設定する縦横方向の移動量です。</summary>
     private const int InitialOffset = 18;
+
+    /// <summary>フェードインに使用するアニメーション時間（ミリ秒）です。</summary>
     private const int FadeDurationMilliseconds = 180;
+
+    /// <summary>スライドインに使用するアニメーション時間（ミリ秒）です。</summary>
     private const int SlideDurationMilliseconds = 220;
 
+    /// <summary>StaticResourceを検索するための基準要素です。</summary>
     private readonly FrameworkElement _resourceOwner;
+
+    /// <summary>店舗情報カード本体です。</summary>
     private readonly Border _card;
+
+    /// <summary>店舗名表示用TextBlockです。</summary>
     private readonly TextBlock _name;
+
+    /// <summary>ラーメン種別表示用TextBlockです。</summary>
     private readonly TextBlock _type;
+
+    /// <summary>住所表示用TextBlockです。</summary>
     private readonly TextBlock _address;
+
+    /// <summary>価格表示用TextBlockです。</summary>
     private readonly TextBlock _price;
+
+    /// <summary>評価表示用TextBlockです。</summary>
     private readonly TextBlock _rating;
+
+    /// <summary>お気に入り表示用TextBlockです。</summary>
     private readonly TextBlock _favorite;
+
+    /// <summary>営業時間バッジのBorderです。</summary>
     private readonly Border _businessHoursBadge;
+
+    /// <summary>営業時間状態の文字表示用TextBlockです。</summary>
     private readonly TextBlock _businessHoursStatus;
 
+    /// <summary>表示対象のWPFコントロールを受け取ってPresenterを構成します。</summary>
     public ShopInfoCardPresenter(
         FrameworkElement resourceOwner,
         Border card,
@@ -48,6 +77,9 @@ public sealed class ShopInfoCardPresenter
         _businessHoursStatus = businessHoursStatus;
     }
 
+    /// <summary>
+    /// 店舗情報をカードへ反映し、営業時間状態を判定した後に表示アニメーションを開始します。
+    /// </summary>
     public void Show(Shop shop)
     {
         _name.Text = shop.Name;
@@ -74,11 +106,13 @@ public sealed class ShopInfoCardPresenter
         Animate();
     }
 
+    /// <summary>店舗情報カードを非表示にします。</summary>
     public void Hide()
     {
         _card.Visibility = Visibility.Collapsed;
     }
 
+    /// <summary>営業時間の文字色・背景色・枠色をResourceDictionaryから取得して設定します。</summary>
     private void SetBusinessHoursStatus(string text, string foregroundKey, string backgroundKey, string borderKey)
     {
         _businessHoursStatus.Text = text;
@@ -87,6 +121,7 @@ public sealed class ShopInfoCardPresenter
         _businessHoursBadge.BorderBrush = (Brush)_resourceOwner.FindResource(borderKey);
     }
 
+    /// <summary>カードを右下方向からフェード＋スライドさせて表示します。</summary>
     private void Animate()
     {
         var transform = (TranslateTransform)_card.RenderTransform;
@@ -101,6 +136,7 @@ public sealed class ShopInfoCardPresenter
         storyboard.Begin();
     }
 
+    /// <summary>StoryboardへAnimationTimelineを追加し、対象DependencyObjectとDependencyPropertyを関連付けます。</summary>
     private static void AddAnimation(Storyboard storyboard, AnimationTimeline animation, DependencyObject target, DependencyProperty property)
     {
         Storyboard.SetTarget(animation, target);
