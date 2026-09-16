@@ -96,23 +96,28 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         rules.Range("A1:B1").Style.Font.Bold = true;
         rules.Range("A1:B1").Style.Font.FontColor = XLColor.White;
         rules.Range("A1:B1").Style.Fill.BackgroundColor = XLColor.FromHtml("#20252A");
-        rules.Range("A2:B13").Style.Border.SetInsideBorder(XLBorderStyleValues.Hair);
-        rules.Range("A2:B13").Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-        rules.Range("A2:B13").Values = new object[,]
+        var ruleRows = new (string Item, string Rule)[]
         {
-            { "ID", "1以上。空欄の場合は新規店舗として自動採番" },
-            { "店舗名", "必須" },
-            { "価格", "1円以上" },
-            { "住所", "任意" },
-            { "緯度", "-90～90" },
-            { "経度", "-180～180" },
-            { "ラーメンの種類", string.Join(" / ", RamenTypes) },
-            { "営業時間モード", string.Join(" / ", OpeningHoursModes) },
-            { "開始時刻", "営業時間モードが時間指定の場合に入力（例：11:00）" },
-            { "終了時刻", "営業時間モードが時間指定の場合に入力（例：21:00）" },
-            { "定休日", "複数指定は「日・月・火」のように区切る" },
-            { "評価", "0～5、小数第1位まで" }
+            ("ID", "1以上。空欄の場合は新規店舗として自動採番"),
+            ("店舗名", "必須"),
+            ("価格", "1円以上"),
+            ("住所", "任意"),
+            ("緯度", "-90～90"),
+            ("経度", "-180～180"),
+            ("ラーメンの種類", string.Join(" / ", RamenTypes)),
+            ("営業時間モード", string.Join(" / ", OpeningHoursModes)),
+            ("開始時刻", "営業時間モードが時間指定の場合に入力。30分単位（例：11:00）"),
+            ("終了時刻", "営業時間モードが時間指定の場合に入力。30分単位（例：21:00）"),
+            ("定休日", "複数指定は「日・月・火」のように区切る"),
+            ("評価", "0～5、小数第1位まで")
         };
+        for (var i = 0; i < ruleRows.Length; i++)
+        {
+            rules.Cell(i + 2, 1).Value = ruleRows[i].Item;
+            rules.Cell(i + 2, 2).Value = ruleRows[i].Rule;
+        }
+        rules.Range("A1:B13").Style.Border.SetInsideBorder(XLBorderStyleValues.Hair);
+        rules.Range("A1:B13").Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
         rules.Column(1).Width = 24;
         rules.Column(2).Width = 66;
         rules.Range("A1:B13").Style.Alignment.WrapText = true;
