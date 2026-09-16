@@ -1,3 +1,6 @@
+using WpfGisLearning.Models;
+using WpfGisLearning.Services.Interfaces;
+
 namespace WpfGisLearning.Services;
 
 public sealed class CurrentLocationService : ICurrentLocationService
@@ -8,9 +11,7 @@ public sealed class CurrentLocationService : ICurrentLocationService
     {
         var access = await Windows.Devices.Geolocation.Geolocator.RequestAccessAsync();
         if (access != Windows.Devices.Geolocation.GeolocationAccessStatus.Allowed)
-        {
             return null;
-        }
 
         var geolocator = new Windows.Devices.Geolocation.Geolocator
         {
