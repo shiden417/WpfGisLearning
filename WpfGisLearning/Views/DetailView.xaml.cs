@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using WpfImage = System.Windows.Controls.Image;
-using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
@@ -71,13 +70,6 @@ public partial class DetailView : System.Windows.Controls.UserControl
         {
             MessageBox.Show($"外部地図を開けませんでした。\n{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    private void CopyShopInfoButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_viewModel.Shop is null) return;
-        Clipboard.SetText(ShopInfoFormatter.Format(_viewModel.Shop));
-        MessageBox.Show("店舗情報をクリップボードにコピーしました。", "コピー完了", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
