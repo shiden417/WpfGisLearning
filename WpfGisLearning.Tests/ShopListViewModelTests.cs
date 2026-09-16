@@ -137,7 +137,7 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
-    public void RefreshFromService_ReloadsCurrentDataAndRaisesEvent()
+    public void RefreshFromService_ReloadsCurrentDataAndRaisesEventOnce()
     {
         var shopService = new FakeShopService(new Shop { Id = 1, Name = "A" });
         var viewModel = new ShopListViewModel(shopService, new FakeNavigationService());
@@ -152,7 +152,7 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
-    public void ClearSearch_RestoresDefaultFilters()
+    public void ClearSearch_RestoresDefaultFiltersAndRaisesEventOnce()
     {
         var viewModel = CreateViewModel(
             new Shop { Id = 1, Name = "A", RamenType = "醤油", Price = 900, IsFavorite = true },
@@ -164,7 +164,11 @@ public class ShopListViewModelTests
         viewModel.NearbyOnly = true;
         viewModel.SortByPrice = true;
         viewModel.SortByRating = true;
+        var eventCount = 0;
+        viewModel.ShopsChanged += (_, _) => eventCount++;
+
         viewModel.ClearSearchCommand.Execute(null);
+
         Assert.AreEqual(string.Empty, viewModel.SearchKeyword);
         Assert.AreEqual("すべて", viewModel.SelectedRamenType);
         Assert.AreEqual("すべて", viewModel.SelectedPriceFilter);
@@ -173,6 +177,7 @@ public class ShopListViewModelTests
         Assert.IsFalse(viewModel.SortByPrice);
         Assert.IsFalse(viewModel.SortByRating);
         Assert.HasCount(2, GetVisibleShops(viewModel));
+        Assert.AreEqual(1, eventCount);
     }
 
     private static ShopListViewModel CreateViewModel(params Shop[] shops) =>
