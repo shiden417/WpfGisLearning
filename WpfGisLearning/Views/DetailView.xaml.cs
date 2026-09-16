@@ -8,7 +8,6 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using WpfImage = System.Windows.Controls.Image;
 using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
@@ -17,7 +16,6 @@ namespace WpfGisLearning.Views;
 public partial class DetailView : System.Windows.Controls.UserControl
 {
     private const long ZoomAmount = 500;
-
     private readonly DetailViewModel _viewModel;
     private readonly INavigationService _navigationService;
     private readonly IShopService _shopService;
@@ -38,19 +36,12 @@ public partial class DetailView : System.Windows.Controls.UserControl
         _map = new Mapsui.Map();
         _map.Layers.Add(OpenStreetMap.CreateTileLayer());
         DetailMap.Map = _map;
-
         if (viewModel.Shop is null || !MapCoordinateValidator.IsValid(viewModel.Shop.Latitude, viewModel.Shop.Longitude)) return;
 
         var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
         var feature = new PointFeature(point);
         feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
-
-        _map.Layers.Add(new MemoryLayer
-        {
-            Name = "Shop",
-            Style = null,
-            Features = new[] { feature }
-        });
+        _map.Layers.Add(new MemoryLayer { Name = "Shop", Style = null, Features = new[] { feature } });
         _map.Navigator.CenterOnAndZoomTo(point, 500);
     }
 
@@ -60,7 +51,6 @@ public partial class DetailView : System.Windows.Controls.UserControl
     private void OpenExternalMapButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
-
         try
         {
             var url = ExternalMapLinkBuilder.CreateGoogleMapsUrl(_viewModel.Shop);
@@ -68,28 +58,79 @@ public partial class DetailView : System.Windows.Controls.UserControl
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"外部地図を開けませんでした。\n{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowErrorDialog("外部地図を開けませんでした。", ex);
         }
     }
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        var path = (sender as FrameworkElement)?.Tag as string;
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
-
-        var bitmap = new BitmapImage();
-        using (var stream = File.OpenRead(path))
+        if ((sender as FrameworkElement)?.Tag is not string path) return;
+        var startIndex = _viewModel.PhotoPaths.IndexOf(path);
+        if (startIndex < 0) return;
+        try
         {
-            bitmap.BeginInit();
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.StreamSource = stream;
-            bitmap.EndInit();
+            CreatePhotoViewerWindow(startIndex).ShowDialog();
         }
-        bitmap.Freeze();
+        catch (Exception ex)
+        {
+            ShowErrorDialog("写真を表示できませんでした。", ex);
+        }
+    }
 
-        var image = new WpfImage { Source = bitmap, Stretch = System.Windows.Media.Stretch.Uniform, Margin = new Thickness(20) };
-        var window = new Window { Title = "写真 - Ramenia", Content = image, Width = 1000, Height = 750, Owner = Window.GetWindow(this), Background = System.Windows.Media.Brushes.Black, WindowStartupLocation = WindowStartupLocation.CenterOwner };
-        window.ShowDialog();
+    private Window CreatePhotoViewerWindow(int startIndex)
+    {
+        var window = new Window
+        {
+            Title = $"写真 - {_viewModel.Shop?.Name ?? "店舗"}", Width = 1000, Height = 750,
+            Owner = Window.GetWindow(this), Background = System.Windows.Media.Brushes.Black,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        var image = new System.Windows.Controls.Image { Stretch = System.Windows.Media.Stretch.Uniform, Margin = new Thickness(48, 48, 48, 72), Focusable = true };
+        var counter = new TextBlock { Foreground = System.Windows.Media.Brushes.White, FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 22) };
+        var previousButton = new Button { Content = "‹", FontSize = 42, Width = 56, Height = 72, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
+        var nextButton = new Button { Content = "›", FontSize = 42, Width = 56, Height = 72, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
+        var closeButton = new Button { Content = "×", FontSize = 24, Width = 44, Height = 44, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 12, 12, 0) };
+
+        var grid = new Grid();
+        grid.Children.Add(image); grid.Children.Add(previousButton); grid.Children.Add(nextButton); grid.Children.Add(counter); grid.Children.Add(closeButton);
+        window.Content = grid;
+
+        var currentIndex = startIndex;
+        void UpdatePhoto()
+        {
+            if (_viewModel.PhotoPaths.Count == 0) { window.Close(); return; }
+            currentIndex = Math.Clamp(currentIndex, 0, _viewModel.PhotoPaths.Count - 1);
+            image.Source = LoadBitmap(_viewModel.PhotoPaths[currentIndex]);
+            counter.Text = $"{currentIndex + 1} / {_viewModel.PhotoPaths.Count}";
+            previousButton.Visibility = _viewModel.PhotoPaths.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            nextButton.Visibility = _viewModel.PhotoPaths.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        void Previous() { currentIndex = currentIndex == 0 ? _viewModel.PhotoPaths.Count - 1 : currentIndex - 1; UpdatePhoto(); }
+        void Next() { currentIndex = currentIndex == _viewModel.PhotoPaths.Count - 1 ? 0 : currentIndex + 1; UpdatePhoto(); }
+
+        previousButton.Click += (_, _) => Previous();
+        nextButton.Click += (_, _) => Next();
+        closeButton.Click += (_, _) => window.Close();
+        window.KeyDown += (_, args) =>
+        {
+            if (args.Key == System.Windows.Input.Key.Left) { Previous(); args.Handled = true; }
+            else if (args.Key == System.Windows.Input.Key.Right) { Next(); args.Handled = true; }
+            else if (args.Key == System.Windows.Input.Key.Escape) { window.Close(); args.Handled = true; }
+        };
+        UpdatePhoto();
+        window.Loaded += (_, _) => image.Focus();
+        return window;
+    }
+
+    private static BitmapImage LoadBitmap(string path)
+    {
+        if (!File.Exists(path)) throw new FileNotFoundException("写真ファイルが見つかりません。", path);
+        var bitmap = new BitmapImage();
+        using var stream = File.OpenRead(path);
+        bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze();
+        return bitmap;
     }
 
     private void EditButton_Click(object sender, RoutedEventArgs e)
@@ -104,9 +145,19 @@ public partial class DetailView : System.Windows.Controls.UserControl
         if (_viewModel.Shop is null) return;
         var result = MessageBox.Show($"「{_viewModel.Shop.Name}」を削除しますか？", "店舗削除の確認", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result != MessageBoxResult.Yes) return;
-        _shopService.DeleteShop(_viewModel.Shop.Id);
-        Window.GetWindow(this)?.Close();
+        try
+        {
+            _shopService.DeleteShop(_viewModel.Shop.Id);
+            Window.GetWindow(this)?.Close();
+        }
+        catch (Exception ex)
+        {
+            ShowErrorDialog("店舗を削除できませんでした。", ex);
+        }
     }
+
+    private static void ShowErrorDialog(string message, Exception ex) =>
+        MessageBox.Show($"{message}\n{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Window.GetWindow(this)?.Close();
 }
