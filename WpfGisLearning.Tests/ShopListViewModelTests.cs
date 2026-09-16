@@ -60,20 +60,41 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
-    public void Sort_ByRatingAndPriceAndNameUsesSelectedOrder()
+    public void Sort_ByRatingUsesDescendingOrder()
     {
         var viewModel = CreateViewModel(
-            new Shop { Id = 1, Name = "B", Price = 1000, Rating = 4.0 },
-            new Shop { Id = 2, Name = "A", Price = 1200, Rating = 4.5 },
-            new Shop { Id = 3, Name = "C", Price = 900, Rating = 4.5 });
+            new Shop { Id = 1, Name = "B", Rating = 4.0 },
+            new Shop { Id = 2, Name = "A", Rating = 4.5 },
+            new Shop { Id = 3, Name = "C", Rating = 3.5 });
 
         viewModel.SortByRating = true;
-        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 3, 1]));
+
+        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 1, 3]));
+    }
+
+    [TestMethod]
+    public void Sort_ByPriceUsesAscendingOrder()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "B", Price = 1000 },
+            new Shop { Id = 2, Name = "A", Price = 1200 },
+            new Shop { Id = 3, Name = "C", Price = 900 });
 
         viewModel.SortByPrice = true;
+
         Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([3, 1, 2]));
+    }
+
+    [TestMethod]
+    public void Sort_ByNameUsesAscendingOrder()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "B" },
+            new Shop { Id = 2, Name = "A" },
+            new Shop { Id = 3, Name = "C" });
 
         viewModel.SortByName = true;
+
         Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 1, 3]));
     }
 
