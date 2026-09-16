@@ -1,6 +1,5 @@
 using Microsoft.Win32;
 using System.IO;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -25,6 +24,7 @@ public partial class MainWindow : Window
     private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
     private readonly IShopService _shopService;
+    private readonly IExcelShopDataService _excelShopDataService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
     private bool _initialLocationRequested;
@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     public MainWindow(
         ShopListView shopListView,
         IShopService shopService,
+        IExcelShopDataService excelShopDataService,
         ICurrentLocationService currentLocationService,
         NewsView newsView)
     {
@@ -41,6 +42,7 @@ public partial class MainWindow : Window
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
+        _excelShopDataService = excelShopDataService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
         _mapController = new MapController(MapControl);
@@ -226,13 +228,13 @@ public partial class MainWindow : Window
         SetInitialMapPosition();
     }
 
-    private void ExportJsonButton_Click(object sender, RoutedEventArgs e)
+    private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new SaveFileDialog
         {
-            Title = "店舗データをJSONで保存",
-            Filter = "JSONファイル|*.json",
-            FileName = $"ramenia-shops-{DateTime.Now:yyyyMMdd-HHmmss}.json",
+            Title = "Excel入力テンプレートを保存",
+            Filter = "Excelファイル|*.xlsx",
+            FileName = "ramenia-shop-import-template.xlsx",
             AddExtension = true,
             OverwritePrompt = true
         };
@@ -241,31 +243,61 @@ public partial class MainWindow : Window
 
         try
         {
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            var json = JsonSerializer.Serialize(_shopService.GetShops(), options);
-            File.WriteAllText(dialog.FileName, json);
+            _excelShopDataService.CreateImportTemplate(dialog.FileName);
             MessageBox.Show(
-                $"店舗データを保存しました。\n\n保存先：\n{dialog.FileName}",
-                "JSONエクスポート",
+                $"Excel入力テンプレートを保存しました。\n\n保存先：\n{dialog.FileName}",
+                "Excelテンプレート",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"JSONの書き出しに失敗しました。\n\n{ex.Message}",
-                "JSONエクスポート",
+                $"Excelテンプレートの作成に失敗しました。\n\n{ex.Message}",
+                "Excelテンプレート",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
     }
 
-    private void ImportJsonButton_Click(object sender, RoutedEventArgs e)
+    private void ExportExcelButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "店舗データをExcelで保存",
+            Filter = "Excelファイル|*.xlsx",
+            FileName = $"ramenia-shops-{DateTime.Now:yyyyMMdd-HHmmss}.xlsx",
+            AddExtension = true,
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            _excelShopDataService.Export(dialog.FileName, _shopService.GetShops());
+            MessageBox.Show(
+                $"店舗データをExcelで保存しました。\n\n保存先：\n{dialog.FileName}",
+                "Excelエクスポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Excelの書き出しに失敗しました。\n\n{ex.Message}",
+                "Excelエクスポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void ImportExcelButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
         {
-            Title = "店舗データJSONを選択",
-            Filter = "JSONファイル|*.json|すべてのファイル|*.*",
+            Title = "店舗データExcelを選択",
+            Filter = "Excelファイル|*.xlsx|すべてのファイル|*.*",
             Multiselect = false
         };
 
@@ -273,20 +305,14 @@ public partial class MainWindow : Window
 
         try
         {
-            var json = File.ReadAllText(dialog.FileName);
-            var shops = JsonSerializer.Deserialize<List<Shop>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                AllowTrailingCommas = true
-            });
-
+            var shops = _excelShopDataService.Import(dialog.FileName);
             ValidateImportedShops(shops);
 
             var result = MessageBox.Show(
-                $"現在の店舗データを{shops!.Count}件のデータで置き換えます。\nこの操作は元に戻せません。\n\n実行しますか？",
-                "JSONインポートの確認",
+                $"Excelから{shops.Count}件の店舗データを読み込みます。\nIDが一致する店舗は更新し、IDが空欄だった店舗は新規登録します。\n\n実行しますか？",
+                "Excelインポートの確認",
                 MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                MessageBoxImage.Question);
 
             if (result != MessageBoxResult.Yes) return;
 
@@ -299,27 +325,27 @@ public partial class MainWindow : Window
             InfoCardBorder.Visibility = Visibility.Collapsed;
 
             MessageBox.Show(
-                $"店舗データを{shops.Count}件読み込みました。",
-                "JSONインポート",
+                $"Excelから{shops.Count}件の店舗データを読み込みました。",
+                "Excelインポート",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             MessageBox.Show(
-                $"JSONの読み込みに失敗しました。\n\n{ex.Message}",
-                "JSONインポート",
+                $"Excelの読み込みに失敗しました。\n\n{ex.Message}",
+                "Excelインポート",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
     }
 
-    private static void ValidateImportedShops(List<Shop>? shops)
+    private static void ValidateImportedShops(List<Shop> shops)
     {
-        if (shops is null)
-            throw new InvalidDataException("JSONから店舗データを読み込めませんでした。");
+        var duplicateId = shops
+            .GroupBy(shop => shop.Id)
+            .FirstOrDefault(group => group.Key <= 0 || group.Count() > 1);
 
-        var duplicateId = shops.GroupBy(shop => shop.Id).FirstOrDefault(group => group.Key <= 0 || group.Count() > 1);
         if (duplicateId is not null)
             throw new InvalidDataException($"店舗IDが不正または重複しています。ID: {duplicateId.Key}");
 
@@ -327,13 +353,37 @@ public partial class MainWindow : Window
         {
             if (shop.Id <= 0) throw new InvalidDataException("店舗IDは1以上で指定してください。");
             if (string.IsNullOrWhiteSpace(shop.Name)) throw new InvalidDataException("店舗名が空のデータがあります。");
-            if (shop.Price <= 0) throw new InvalidDataException($"「{shop.Name}」の価格が不正です。");
+            if (shop.Price <= 0) throw new InvalidDataException($"「{shop.Name}」の価格が不正です。1円以上で入力してください。");
             if (shop.Rating < 0 || shop.Rating > 5 || Math.Abs(shop.Rating * 10 - Math.Round(shop.Rating * 10)) > 1e-9)
-                throw new InvalidDataException($"「{shop.Name}」の評価が0～5、小数第1位の範囲外です。");
+                throw new InvalidDataException($"「{shop.Name}」の評価が不正です。0～5、小数第1位までで入力してください。");
             if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
                 throw new InvalidDataException($"「{shop.Name}」の位置情報が不正です。");
+            if (!IsValidRamenType(shop.RamenType))
+                throw new InvalidDataException($"「{shop.Name}」のラーメンの種類が不正です。");
+            ValidateOpeningHours(shop);
             shop.Photos ??= [];
         }
+    }
+
+    private static bool IsValidRamenType(string value) =>
+        new[] { "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他" }
+            .Contains(value, StringComparer.Ordinal);
+
+    private static void ValidateOpeningHours(Shop shop)
+    {
+        if (string.Equals(shop.OpeningHours, BusinessHoursStatusCalculator.Open24Hours, StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(shop.OpeningHours))
+            return;
+
+        var match = System.Text.RegularExpressions.Regex.Match(
+            shop.OpeningHours,
+            @"^(?<start>\d{1,2}:\d{2})-(?<end>\d{1,2}:\d{2})$");
+
+        if (!match.Success)
+            throw new InvalidDataException($"「{shop.Name}」の営業時間が不正です。");
+
+        if (string.Equals(match.Groups["start"].Value, match.Groups["end"].Value, StringComparison.Ordinal))
+            throw new InvalidDataException($"「{shop.Name}」の開始時刻と終了時刻は異なる時刻にしてください。");
     }
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomIn();
