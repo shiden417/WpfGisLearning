@@ -60,6 +60,64 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
+    public void Sort_ByRatingAndPriceAndNameUsesSelectedOrder()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "B", Price = 1000, Rating = 4.0 },
+            new Shop { Id = 2, Name = "A", Price = 1200, Rating = 4.5 },
+            new Shop { Id = 3, Name = "C", Price = 900, Rating = 4.5 });
+
+        viewModel.SortByRating = true;
+        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 3, 1]));
+
+        viewModel.SortByPrice = true;
+        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([3, 1, 2]));
+
+        viewModel.SortByName = true;
+        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 1, 3]));
+    }
+
+    [TestMethod]
+    public void ToggleFavorite_UpdatesShopAndRaisesShopsChanged()
+    {
+        var viewModel = CreateViewModel(new Shop { Id = 1, Name = "A", IsFavorite = false });
+        var eventRaised = false;
+        viewModel.ShopsChanged += (_, _) => eventRaised = true;
+
+        viewModel.ToggleFavoriteCommand.Execute(viewModel.Shops[0]);
+
+        Assert.IsTrue(viewModel.Shops[0].IsFavorite);
+        Assert.IsTrue(eventRaised);
+    }
+
+    [TestMethod]
+    public void SelectShopById_SelectsExistingShopAndRaisesEvent()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "A" },
+            new Shop { Id = 2, Name = "B" });
+        Shop? selected = null;
+        viewModel.SelectedShopChanged += (_, shop) => selected = shop;
+
+        viewModel.SelectShopById(2);
+
+        Assert.AreEqual(2, viewModel.SelectedShop?.Id);
+        Assert.AreEqual(2, selected?.Id);
+    }
+
+    [TestMethod]
+    public void OpenSelectedShop_NavigatesToSelectedShopDetail()
+    {
+        var navigation = new FakeNavigationService();
+        var viewModel = CreateViewModel(navigation, new Shop { Id = 42, Name = "A" });
+        viewModel.SelectedShop = viewModel.Shops[0];
+
+        viewModel.OpenSelectedShopCommand.Execute(null);
+
+        Assert.AreEqual(42, navigation.DetailShopId);
+    }
+
+    [TestMethod]
     public void ClearSearch_RestoresDefaultFilters()
     {
         var viewModel = CreateViewModel(
@@ -81,8 +139,14 @@ public class ShopListViewModelTests
         Assert.HasCount(2, GetVisibleShops(viewModel));
     }
 
-    private static ShopListViewModel CreateViewModel(params Shop[] shops) => new(new FakeShopService(shops), new FakeNavigationService());
-    private static List<Shop> GetVisibleShops(ShopListViewModel viewModel) => viewModel.ShopsView.Cast<Shop>().ToList();
+    private static ShopListViewModel CreateViewModel(params Shop[] shops) =>
+        CreateViewModel(new FakeNavigationService(), shops);
+
+    private static ShopListViewModel CreateViewModel(FakeNavigationService navigation, params Shop[] shops) =>
+        new(new FakeShopService(shops), navigation);
+
+    private static List<Shop> GetVisibleShops(ShopListViewModel viewModel) =>
+        viewModel.ShopsView.Cast<Shop>().ToList();
 
     private sealed class FakeShopService : IShopService
     {
@@ -102,7 +166,8 @@ public class ShopListViewModelTests
 
     private sealed class FakeNavigationService : INavigationService
     {
-        public void NavigateToDetail(int id) { }
+        public int? DetailShopId { get; private set; }
+        public void NavigateToDetail(int id) => DetailShopId = id;
         public void NavigateToShopEdit(int? id = null) { }
         public void NavigateToShopList() { }
         public void NavigateToShopPageFrame() { }
