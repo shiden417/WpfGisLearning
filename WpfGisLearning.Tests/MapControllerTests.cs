@@ -25,7 +25,7 @@ public class MapControllerTests
     {
         var adapter = new FakeMapControlAdapter { Map = new Mapsui.Map() };
         var controller = new MapController(adapter);
-        var shops =
+        IEnumerable<Models.Shop> shops =
         [
             new Models.Shop
             {
@@ -45,7 +45,7 @@ public class MapControllerTests
             .Where(layer => layer.Name == ShopMapLayerBuilder.LayerName)
             .ToList();
 
-        Assert.AreEqual(1, shopLayers.Count);
+        Assert.HasCount(1, shopLayers);
         Assert.AreEqual(2, adapter.RefreshCount);
     }
 
@@ -62,7 +62,7 @@ public class MapControllerTests
             .Where(layer => layer.Name == "CurrentLocation")
             .ToList();
 
-        Assert.AreEqual(1, currentLocationLayers.Count);
+        Assert.HasCount(1, currentLocationLayers);
         Assert.AreEqual(2, adapter.RefreshCount);
     }
 
