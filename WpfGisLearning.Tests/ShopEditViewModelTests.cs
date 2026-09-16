@@ -178,6 +178,11 @@ public class ShopEditViewModelTests
         }
         public void DeleteShop(int id) { }
         public void ToggleFavorite(int id) { }
+        public void ReplaceAll(IEnumerable<Shop> shops)
+        {
+            Shops.Clear();
+            Shops.AddRange(shops);
+        }
     }
 
     private sealed class TestPhotoService : IPhotoService
