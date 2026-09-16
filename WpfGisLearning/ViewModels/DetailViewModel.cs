@@ -34,8 +34,17 @@ public partial class DetailViewModel : ObservableObject
         _shopService = shopService;
         _photoService = photoService;
         ServiceInstanceId = shopService.GetHashCode().ToString();
-        Shop = shopService.GetShops().FirstOrDefault(shop => shop.Id == id);
+        Reload();
+    }
+
+    public void Reload()
+    {
+        Shop = _shopService.GetShops().FirstOrDefault(shop => shop.Id == Id);
         IsFavorite = Shop?.IsFavorite ?? false;
+        OnPropertyChanged(nameof(Shop));
+        OnPropertyChanged(nameof(HasOpeningHours));
+        OnPropertyChanged(nameof(IsCurrentlyOpen));
+        OnPropertyChanged(nameof(BusinessHoursStatus));
         LoadPhotoPaths();
     }
 
