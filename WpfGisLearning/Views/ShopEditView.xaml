@@ -10,11 +10,7 @@
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Validation.ErrorTemplate">
-                <Setter.Value>
-                    <ControlTemplate>
-                        <AdornedElementPlaceholder />
-                    </ControlTemplate>
-                </Setter.Value>
+                <Setter.Value><ControlTemplate><AdornedElementPlaceholder /></ControlTemplate></Setter.Value>
             </Setter>
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
@@ -32,9 +28,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="IsEnabled" Value="False" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding OpeningHoursMode}" Value="時間指定">
-                    <Setter Property="IsEnabled" Value="True" />
-                </DataTrigger>
+                <DataTrigger Binding="{Binding OpeningHoursMode}" Value="時間指定"><Setter Property="IsEnabled" Value="True" /></DataTrigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="MainPhotoButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
@@ -49,13 +43,15 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="SavingText" TargetType="TextBlock">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSaving}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
         <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" Padding="24,18">
             <StackPanel>
                 <TextBlock Text="🍜 Ramenia" Foreground="{StaticResource SurfaceBrush}" FontSize="15" FontWeight="SemiBold" />
@@ -63,11 +59,7 @@
             </StackPanel>
         </Border>
         <Grid Grid.Row="1" Margin="24">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="400" /><ColumnDefinition Width="20" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     <Border Background="{StaticResource SurfaceBrush}" CornerRadius="16" Padding="22" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
@@ -80,9 +72,7 @@
                             <TextBox x:Name="ShopPriceTextBox" Height="36" FontSize="14">
                                 <TextBox.Text>
                                     <Binding Path="ShopPrice" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
-                                        <Binding.ValidationRules>
-                                            <validation:DecimalPositiveValidationRule ValidationStep="RawProposedValue" />
-                                        </Binding.ValidationRules>
+                                        <Binding.ValidationRules><validation:DecimalPositiveValidationRule ValidationStep="RawProposedValue" /></Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
@@ -92,11 +82,7 @@
                             <TextBlock Text="営業時間" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <ComboBox ItemsSource="{Binding OpeningHoursModes}" SelectedItem="{Binding OpeningHoursMode}" Height="36" Padding="8,0" />
                             <Grid Margin="0,6,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                                 <ComboBox Grid.Column="0" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding OpeningTime}" Height="36" Padding="8,0" Style="{StaticResource OpeningTimeComboBox}" />
                                 <TextBlock Grid.Column="1" Text="～" VerticalAlignment="Center" Margin="8,0" Foreground="{StaticResource MutedBrush}" />
                                 <ComboBox Grid.Column="2" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding ClosingTime}" Height="36" Padding="8,0" Style="{StaticResource OpeningTimeComboBox}" />
@@ -104,21 +90,13 @@
                             <TextBlock Text="{Binding OpeningHoursError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
                             <TextBlock Text="定休日（複数選択可）" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <WrapPanel>
-                                <CheckBox Content="日" IsChecked="{Binding ClosedSunday}" Margin="0,0,12,0" />
-                                <CheckBox Content="月" IsChecked="{Binding ClosedMonday}" Margin="0,0,12,0" />
-                                <CheckBox Content="火" IsChecked="{Binding ClosedTuesday}" Margin="0,0,12,0" />
-                                <CheckBox Content="水" IsChecked="{Binding ClosedWednesday}" Margin="0,0,12,0" />
-                                <CheckBox Content="木" IsChecked="{Binding ClosedThursday}" Margin="0,0,12,0" />
-                                <CheckBox Content="金" IsChecked="{Binding ClosedFriday}" Margin="0,0,12,0" />
-                                <CheckBox Content="土" IsChecked="{Binding ClosedSaturday}" />
+                                <CheckBox Content="日" IsChecked="{Binding ClosedSunday}" Margin="0,0,12,0" /><CheckBox Content="月" IsChecked="{Binding ClosedMonday}" Margin="0,0,12,0" /><CheckBox Content="火" IsChecked="{Binding ClosedTuesday}" Margin="0,0,12,0" /><CheckBox Content="水" IsChecked="{Binding ClosedWednesday}" Margin="0,0,12,0" /><CheckBox Content="木" IsChecked="{Binding ClosedThursday}" Margin="0,0,12,0" /><CheckBox Content="金" IsChecked="{Binding ClosedFriday}" Margin="0,0,12,0" /><CheckBox Content="土" IsChecked="{Binding ClosedSaturday}" />
                             </WrapPanel>
                             <TextBlock Text="評価" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <TextBox x:Name="RatingTextBox" Height="36">
                                 <TextBox.Text>
                                     <Binding Path="Rating" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
-                                        <Binding.ValidationRules>
-                                            <validation:DoubleRangeValidationRule Minimum="0" Maximum="5" ValidationStep="RawProposedValue" />
-                                        </Binding.ValidationRules>
+                                        <Binding.ValidationRules><validation:DoubleRangeValidationRule Minimum="0" Maximum="5" ValidationStep="RawProposedValue" /></Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
@@ -126,93 +104,34 @@
                             <TextBlock Text="住所" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
                             <TextBlock Text="位置" Margin="0,16,0,5" Foreground="{StaticResource LabelBrush}" />
-                            <Border Background="{StaticResource PanelBrush}" CornerRadius="10" Padding="12">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding ShopLatitude, StringFormat=緯度: {0:F6}}" />
-                                    <TextBlock Text="{Binding ShopLongitude, StringFormat=経度: {0:F6}}" Margin="0,4,0,0" />
-                                    <TextBlock Text="地図をダブルクリックで場所を指定できます。既存のマーカーはドラッグできます。" FontSize="11" Foreground="#FF7B858C" Margin="0,8,0,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
-                            <TextBlock Text="{Binding LocationError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" />
-                            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap" />
+                            <Border Background="{StaticResource PanelBrush}" CornerRadius="10" Padding="12"><StackPanel><TextBlock Text="{Binding ShopLatitude, StringFormat=緯度: {0:F6}}" /><TextBlock Text="{Binding ShopLongitude, StringFormat=経度: {0:F6}}" Margin="0,4,0,0" /><TextBlock Text="地図をダブルクリックで場所を指定できます。既存のマーカーはドラッグできます。" FontSize="11" Foreground="#FF7B858C" Margin="0,8,0,0" TextWrapping="Wrap" /></StackPanel></Border>
+                            <TextBlock Text="{Binding LocationError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" /><TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
                     <Border Background="{StaticResource SurfaceBrush}" CornerRadius="16" Padding="18" Margin="0,16,0,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                         <StackPanel>
-                            <DockPanel>
-                                <TextBlock Text="店舗写真" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
-                                <Button DockPanel.Dock="Right" Content="＋ 写真を追加" Click="AddPhotoButton_Click" Style="{StaticResource AccentButton}" BorderThickness="0" IsEnabled="{Binding CanEdit}" />
-                            </DockPanel>
+                            <DockPanel><TextBlock Text="店舗写真" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" /><Button DockPanel.Dock="Right" Content="＋ 写真を追加" Click="AddPhotoButton_Click" Style="{StaticResource AccentButton}" BorderThickness="0" IsEnabled="{Binding CanEdit}" /></DockPanel>
                             <TextBlock Text="複数選択できます。「メインにする」を押した写真が店舗の代表写真になります。最大10枚まで登録できます。" FontSize="11" Foreground="#FF7B858C" Margin="0,5,0,12" TextWrapping="Wrap" />
                             <TextBlock Text="{Binding PhotoCountError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,-6,0,10" TextWrapping="Wrap" />
-                            <ItemsControl ItemsSource="{Binding Photos}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Width="150" Height="168" Margin="0,0,10,10" CornerRadius="10" BorderThickness="2" ClipToBounds="True">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMain}" Value="True">
-                                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                                            <Setter Property="BorderThickness" Value="3" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <Grid>
-                                                <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="44" /></Grid.RowDefinitions>
-                                                <Image Grid.Row="0" Stretch="UniformToFill" Source="{Binding SourcePath, Converter={StaticResource ImagePathConverter}}" />
-                                                <Border Grid.Row="1" Background="#F7F4F0">
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Button Content="☆ メインにする" Height="30" Click="SetMainPhotoButton_Click" Tag="{Binding}" Style="{StaticResource MainPhotoButton}" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                                        <Button Content="削除" Height="30" Padding="7,0" Click="RemovePhotoButton_Click" Tag="{Binding}" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                                    </StackPanel>
-                                                </Border>
-                                                <Border HorizontalAlignment="Left" VerticalAlignment="Top" Background="#DDC56B4D" CornerRadius="7" Padding="5,2" Margin="5">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <TextBlock Text="MAIN" Foreground="{StaticResource SurfaceBrush}" FontSize="9" FontWeight="Bold" />
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <ItemsControl ItemsSource="{Binding Photos}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
+                                <Border Width="150" Height="168" Margin="0,0,10,10" CornerRadius="10" BorderThickness="2" ClipToBounds="True"><Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" /><Style.Triggers><DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" /><Setter Property="BorderThickness" Value="3" /></DataTrigger></Style.Triggers></Style></Border.Style>
+                                    <Grid><Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="44" /></Grid.RowDefinitions><Image Grid.Row="0" Stretch="UniformToFill" Source="{Binding SourcePath, Converter={StaticResource ImagePathConverter}}" /><Border Grid.Row="1" Background="#F7F4F0"><StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"><Button Content="☆ メインにする" Height="30" Click="SetMainPhotoButton_Click" Tag="{Binding}" Style="{StaticResource MainPhotoButton}" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" /><Button Content="削除" Height="30" Padding="7,0" Click="RemovePhotoButton_Click" Tag="{Binding}" IsEnabled="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=UserControl}}" /></StackPanel></Border><Border HorizontalAlignment="Left" VerticalAlignment="Top" Background="#DDC56B4D" CornerRadius="7" Padding="5,2" Margin="5"><Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock Text="MAIN" Foreground="{StaticResource SurfaceBrush}" FontSize="9" FontWeight="Bold" /></Border></Grid>
+                                </Border>
+                            </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
                             <TextBlock Text="写真なしでも登録できます。" FontSize="11" Foreground="{StaticResource SubtleTextBrush}" Margin="0,4,0,0" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
             <Border Grid.Column="2" Background="{StaticResource SurfaceBrush}" CornerRadius="16" Padding="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                <Grid>
-                    <mapsui:MapControl x:Name="EditMapControl" />
-                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#F8FFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="4" Panel.ZIndex="100">
-                        <StackPanel>
-                            <Button Content="◎  現在地" Click="CurrentLocationButton_Click" Padding="10,6" FontWeight="SemiBold" Margin="1" IsEnabled="{Binding CanEdit}" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3,0,0">
-                                <Button Content="＋" Click="ZoomInButton_Click" Style="{StaticResource MapControlButton}" ToolTip="拡大" />
-                                <Button Content="−" Click="ZoomOutButton_Click" Style="{StaticResource MapControlButton}" ToolTip="縮小" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                <Grid><mapsui:MapControl x:Name="EditMapControl" /><Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#F8FFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="4" Panel.ZIndex="100"><StackPanel><Button Content="◎  現在地" Click="CurrentLocationButton_Click" Padding="10,6" FontWeight="SemiBold" Margin="1" IsEnabled="{Binding CanEdit}" /><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3,0,0"><Button Content="＋" Click="ZoomInButton_Click" Style="{StaticResource MapControlButton}" ToolTip="拡大" /><Button Content="−" Click="ZoomOutButton_Click" Style="{StaticResource MapControlButton}" ToolTip="縮小" /></StackPanel></StackPanel></Border></Grid>
             </Border>
         </Grid>
         <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="18">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
-                    <TextBlock Text="保存中..." Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" Visibility="{Binding IsSaving, Converter={x:Static BooleanToVisibilityConverter.Instance}}" />
-                    <TextBlock Text="{Binding SaveSuccessMessage}" Foreground="{StaticResource AccentDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,0" />
+                    <TextBlock Text="保存中..." Style="{StaticResource SavingText}" Foreground="{StaticResource AccentBrush}" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding SaveSuccessMessage}" Foreground="{StaticResource AccentDarkBrush}" FontSize="12" FontWeight="SemiBold" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="キャンセル" Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,8,0" IsEnabled="{Binding CanEdit}" />
