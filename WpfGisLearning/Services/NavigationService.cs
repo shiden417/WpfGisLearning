@@ -32,14 +32,26 @@ public class NavigationService : INavigationService
             Background = (Brush)Application.Current.FindResource("HeaderBrush")
         };
         var headerGrid = new Grid { Margin = new Thickness(24, 0, 24, 0) };
-        headerGrid.Children.Add(new TextBlock
+        var headerStack = new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        headerStack.Children.Add(new TextBlock
         {
             Text = "🍜 Ramenia",
             Foreground = (Brush)Application.Current.FindResource("SurfaceBrush"),
-            FontSize = 28,
-            FontWeight = FontWeights.Bold,
-            VerticalAlignment = VerticalAlignment.Center
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold
         });
+        headerStack.Children.Add(new TextBlock
+        {
+            Text = "店舗詳細",
+            Foreground = (Brush)Application.Current.FindResource("SurfaceBrush"),
+            FontSize = 26,
+            FontWeight = FontWeights.Bold,
+            Margin = new Thickness(0, 4, 0, 0)
+        });
+        headerGrid.Children.Add(headerStack);
         header.Child = headerGrid;
         Grid.SetRow(header, 0);
         content.Children.Add(header);
