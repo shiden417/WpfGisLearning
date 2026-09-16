@@ -44,7 +44,8 @@ public class NewsViewModelTests
     [TestMethod]
     public async Task RefreshAsync_WhenServiceFailsSetsErrorMessageAndClearsLoading()
     {
-        var viewModel = new NewsViewModel(new FakeNewsService(exception: new InvalidOperationException("network error")));
+        var viewModel = new NewsViewModel(
+            new FakeNewsService([], new InvalidOperationException("network error")));
 
         await viewModel.RefreshCommand.ExecuteAsync(null);
 
