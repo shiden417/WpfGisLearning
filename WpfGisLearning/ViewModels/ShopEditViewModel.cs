@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
 
@@ -114,33 +115,23 @@ public partial class ShopEditViewModel : ObservableObject
 
     public void RemovePhoto(ShopPhoto? photo)
     {
-        if (photo is null)
-        {
-            return;
-        }
+        if (photo is null) return;
 
         var wasMain = photo.IsMain;
         Photos.Remove(photo);
 
         if (wasMain && Photos.Count > 0)
-        {
             Photos[0].IsMain = true;
-        }
 
         NormalizePhotoOrder();
     }
 
     public void SetMainPhoto(ShopPhoto? photo)
     {
-        if (photo is null)
-        {
-            return;
-        }
+        if (photo is null) return;
 
         foreach (var item in Photos)
-        {
             item.IsMain = item == photo;
-        }
 
         RefreshPhotoCollection();
     }
@@ -149,19 +140,14 @@ public partial class ShopEditViewModel : ObservableObject
     {
         var photos = Photos.ToList();
         Photos.Clear();
-
         foreach (var photo in photos)
-        {
             Photos.Add(photo);
-        }
     }
 
     public bool TrySetLocation(double latitude, double longitude)
     {
-        if (!IsValidCoordinate(latitude, longitude))
-        {
+        if (!MapCoordinateValidator.IsValid(latitude, longitude))
             return false;
-        }
 
         ShopLatitude = latitude;
         ShopLongitude = longitude;
@@ -177,14 +163,9 @@ public partial class ShopEditViewModel : ObservableObject
         ValidateRequiredFields();
 
         if (!TryGetValidLocation(out var latitude, out var longitude))
-        {
             LocationError = "有効な緯度・経度を地図上で指定してください。";
-        }
 
-        if (HasValidationErrors())
-        {
-            return;
-        }
+        if (HasValidationErrors()) return;
 
         var existing = FindExistingShop();
         if (ShopId.HasValue && existing is null)
@@ -211,81 +192,52 @@ public partial class ShopEditViewModel : ObservableObject
 
     private void ValidateRequiredFields()
     {
-        if (string.IsNullOrWhiteSpace(ShopName))
-        {
-            ShopNameError = "店舗名を入力してください。";
-        }
-
-        if (ShopPrice <= 0)
-        {
-            ShopPriceError = "価格は1円以上で入力してください。";
-        }
-
-        if (Rating < 0 || Rating > 5)
-        {
-            RatingError = "評価は0～5の範囲で入力してください。";
-        }
+        if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
+        if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
+        if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
     }
 
     private bool TryGetValidLocation(out double latitude, out double longitude)
     {
         latitude = ShopLatitude.GetValueOrDefault();
         longitude = ShopLongitude.GetValueOrDefault();
-
-        return ShopLatitude.HasValue
-            && ShopLongitude.HasValue
-            && IsValidCoordinate(latitude, longitude);
+        return ShopLatitude.HasValue && ShopLongitude.HasValue && MapCoordinateValidator.IsValid(latitude, longitude);
     }
 
-    private bool HasValidationErrors()
-    {
-        return !string.IsNullOrEmpty(ShopNameError)
-            || !string.IsNullOrEmpty(ShopPriceError)
-            || !string.IsNullOrEmpty(RatingError)
-            || !string.IsNullOrEmpty(LocationError);
-    }
+    private bool HasValidationErrors() => !string.IsNullOrEmpty(ShopNameError)
+        || !string.IsNullOrEmpty(ShopPriceError)
+        || !string.IsNullOrEmpty(RatingError)
+        || !string.IsNullOrEmpty(LocationError);
 
-    private Shop? FindExistingShop()
-    {
-        return ShopId.HasValue
-            ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value)
-            : null;
-    }
+    private Shop? FindExistingShop() => ShopId.HasValue
+        ? _shopService.GetShops().FirstOrDefault(x => x.Id == ShopId.Value)
+        : null;
 
-    private Shop CreateShop(double latitude, double longitude, Shop? existing)
+    private Shop CreateShop(double latitude, double longitude, Shop? existing) => new()
     {
-        return new Shop
+        Id = GetShopId(),
+        Name = ShopName.Trim(),
+        Price = ShopPrice,
+        Address = ShopAddress.Trim(),
+        Latitude = latitude,
+        Longitude = longitude,
+        RamenType = RamenType,
+        OpeningHours = OpeningHours.Trim(),
+        ClosedDay = ClosedDay.Trim(),
+        Rating = Rating,
+        IsFavorite = existing?.IsFavorite ?? false,
+        Photos = Photos.Select((photo, index) => new ShopPhoto
         {
-            Id = GetShopId(),
-            Name = ShopName.Trim(),
-            Price = ShopPrice,
-            Address = ShopAddress.Trim(),
-            Latitude = latitude,
-            Longitude = longitude,
-            RamenType = RamenType,
-            OpeningHours = OpeningHours.Trim(),
-            ClosedDay = ClosedDay.Trim(),
-            Rating = Rating,
-            IsFavorite = existing?.IsFavorite ?? false,
-            Photos = Photos.Select((photo, index) => new ShopPhoto
-            {
-                Id = string.IsNullOrWhiteSpace(photo.Id)
-                    ? Guid.NewGuid().ToString("N")
-                    : photo.Id,
-                FileName = photo.FileName,
-                IsMain = photo.IsMain,
-                SortOrder = index
-            }).ToList()
-        };
-    }
+            Id = string.IsNullOrWhiteSpace(photo.Id) ? Guid.NewGuid().ToString("N") : photo.Id,
+            FileName = photo.FileName,
+            IsMain = photo.IsMain,
+            SortOrder = index
+        }).ToList()
+    };
 
     private int GetShopId()
     {
-        if (ShopId.HasValue)
-        {
-            return ShopId.Value;
-        }
-
+        if (ShopId.HasValue) return ShopId.Value;
         var shops = _shopService.GetShops().ToList();
         return shops.Count > 0 ? shops.Max(x => x.Id) + 1 : 1;
     }
@@ -305,19 +257,14 @@ public partial class ShopEditViewModel : ObservableObject
     private void DeleteRemovedPhotos(Shop shop)
     {
         foreach (var original in _originalPhotos.Where(photo => Photos.All(x => x.Id != photo.Id)))
-        {
             _photoService.DeletePhoto(shop, original);
-        }
     }
 
     private void SavePhotos(Shop shop)
     {
         var newPhotos = Photos
             .Where(photo => File.Exists(photo.SourcePath)
-                && !string.Equals(
-                    Path.GetFullPath(photo.SourcePath),
-                    Path.GetFullPath(_photoService.GetPhotoPath(shop, photo)),
-                    StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(Path.GetFullPath(photo.SourcePath), Path.GetFullPath(_photoService.GetPhotoPath(shop, photo)), StringComparison.OrdinalIgnoreCase))
             .Select(photo => (photo.SourcePath, Photo: photo))
             .ToList();
 
@@ -329,25 +276,13 @@ public partial class ShopEditViewModel : ObservableObject
         foreach (var photo in shop.Photos)
         {
             var source = Photos.FirstOrDefault(x => x.Id == photo.Id);
-            if (source is not null)
-            {
-                photo.FileName = source.FileName;
-            }
+            if (source is not null) photo.FileName = source.FileName;
         }
-    }
-
-    private static bool IsValidCoordinate(double latitude, double longitude)
-    {
-        return MapCoordinateValidator.IsValid(latitude, longitude);
     }
 
     private void NormalizePhotoOrder()
     {
-        for (var i = 0; i < Photos.Count; i++)
-        {
-            Photos[i].SortOrder = i;
-        }
-
+        for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i;
         OnPropertyChanged(nameof(Photos));
     }
 
