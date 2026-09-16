@@ -18,6 +18,8 @@ public partial class ShopEditViewModel : ObservableObject
     public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
     public string[] RamenTypes { get; } = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
+    public string[] OpeningHoursModes { get; } = ["未設定", "時間指定", BusinessHoursStatusCalculator.Open24Hours];
+    public string[] TimeOptions { get; } = CreateTimeOptions();
     public ObservableCollection<ShopPhoto> Photos { get; } = new();
 
     [ObservableProperty] private string shopName = string.Empty;
@@ -27,7 +29,16 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private double? shopLongitude;
     [ObservableProperty] private string ramenType = "醤油";
     [ObservableProperty] private string openingHours = string.Empty;
-    [ObservableProperty] private string closedDay = string.Empty;
+    [ObservableProperty] private string openingHoursMode = "未設定";
+    [ObservableProperty] private string openingTime = "11:00";
+    [ObservableProperty] private string closingTime = "21:00";
+    [ObservableProperty] private bool closedSunday;
+    [ObservableProperty] private bool closedMonday;
+    [ObservableProperty] private bool closedTuesday;
+    [ObservableProperty] private bool closedWednesday;
+    [ObservableProperty] private bool closedThursday;
+    [ObservableProperty] private bool closedFriday;
+    [ObservableProperty] private bool closedSaturday;
     [ObservableProperty] private double rating;
     [ObservableProperty] private string errorMessage = string.Empty;
     [ObservableProperty] private string shopNameError = string.Empty;
@@ -40,6 +51,17 @@ public partial class ShopEditViewModel : ObservableObject
         _shopService = shopService;
         _photoService = photoService;
     }
+
+    partial void OnOpeningHoursModeChanged(string value) => UpdateOpeningHours();
+    partial void OnOpeningTimeChanged(string value) => UpdateOpeningHours();
+    partial void OnClosingTimeChanged(string value) => UpdateOpeningHours();
+    partial void OnClosedSundayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedMondayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedTuesdayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedWednesdayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedThursdayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedFridayChanged(bool value) => UpdateClosedDay();
+    partial void OnClosedSaturdayChanged(bool value) => UpdateClosedDay();
 
     public void Load(int? shopId)
     {
@@ -54,6 +76,10 @@ public partial class ShopEditViewModel : ObservableObject
         {
             ShopLatitude = null;
             ShopLongitude = null;
+            OpeningHoursMode = "未設定";
+            OpeningTime = "11:00";
+            ClosingTime = "21:00";
+            ClearClosedDays();
             return;
         }
 
@@ -70,8 +96,8 @@ public partial class ShopEditViewModel : ObservableObject
         ShopLatitude = shop.Latitude;
         ShopLongitude = shop.Longitude;
         RamenType = shop.RamenType;
-        OpeningHours = shop.OpeningHours;
-        ClosedDay = shop.ClosedDay;
+        SetOpeningHoursFromStoredValue(shop.OpeningHours);
+        SetClosedDaysFromStoredValue(shop.ClosedDay);
         Rating = shop.Rating;
 
         foreach (var photo in shop.Photos.OrderBy(x => x.SortOrder))
@@ -99,40 +125,25 @@ public partial class ShopEditViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(sourcePath)
             || !File.Exists(sourcePath)
-            || Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase)))
-        {
-            return;
-        }
+            || Photos.Any(x => string.Equals(x.SourcePath, sourcePath, StringComparison.OrdinalIgnoreCase))) return;
 
-        Photos.Add(new ShopPhoto
-        {
-            SourcePath = sourcePath,
-            SortOrder = Photos.Count,
-            IsMain = Photos.Count == 0
-        });
+        Photos.Add(new ShopPhoto { SourcePath = sourcePath, SortOrder = Photos.Count, IsMain = Photos.Count == 0 });
         OnPropertyChanged(nameof(Photos));
     }
 
     public void RemovePhoto(ShopPhoto? photo)
     {
         if (photo is null) return;
-
         var wasMain = photo.IsMain;
         Photos.Remove(photo);
-
-        if (wasMain && Photos.Count > 0)
-            Photos[0].IsMain = true;
-
+        if (wasMain && Photos.Count > 0) Photos[0].IsMain = true;
         NormalizePhotoOrder();
     }
 
     public void SetMainPhoto(ShopPhoto? photo)
     {
         if (photo is null) return;
-
-        foreach (var item in Photos)
-            item.IsMain = item == photo;
-
+        foreach (var item in Photos) item.IsMain = item == photo;
         RefreshPhotoCollection();
     }
 
@@ -140,15 +151,12 @@ public partial class ShopEditViewModel : ObservableObject
     {
         var photos = Photos.ToList();
         Photos.Clear();
-        foreach (var photo in photos)
-            Photos.Add(photo);
+        foreach (var photo in photos) Photos.Add(photo);
     }
 
     public bool TrySetLocation(double latitude, double longitude)
     {
-        if (!MapCoordinateValidator.IsValid(latitude, longitude))
-            return false;
-
+        if (!MapCoordinateValidator.IsValid(latitude, longitude)) return false;
         ShopLatitude = latitude;
         ShopLongitude = longitude;
         LocationError = string.Empty;
@@ -161,10 +169,8 @@ public partial class ShopEditViewModel : ObservableObject
     {
         ClearErrors();
         ValidateRequiredFields();
-
         if (!TryGetValidLocation(out var latitude, out var longitude))
             LocationError = "有効な緯度・経度を地図上で指定してください。";
-
         if (HasValidationErrors()) return;
 
         var existing = FindExistingShop();
@@ -175,7 +181,6 @@ public partial class ShopEditViewModel : ObservableObject
         }
 
         var shop = CreateShop(latitude, longitude, existing);
-
         try
         {
             SaveShop(shop);
@@ -244,12 +249,7 @@ public partial class ShopEditViewModel : ObservableObject
 
     private void SaveShop(Shop shop)
     {
-        if (_isEdit)
-        {
-            DeleteRemovedPhotos(shop);
-            return;
-        }
-
+        if (_isEdit) { DeleteRemovedPhotos(shop); return; }
         _shopService.AddShop(shop);
     }
 
@@ -266,7 +266,6 @@ public partial class ShopEditViewModel : ObservableObject
                 && !string.Equals(Path.GetFullPath(photo.SourcePath), Path.GetFullPath(_photoService.GetPhotoPath(shop, photo)), StringComparison.OrdinalIgnoreCase))
             .Select(photo => (photo.SourcePath, Photo: photo))
             .ToList();
-
         _photoService.SavePhotos(shop, newPhotos);
     }
 
@@ -281,10 +280,97 @@ public partial class ShopEditViewModel : ObservableObject
 
     private void NormalizePhotoOrder()
     {
-        for (var i = 0; i < Photos.Count; i++)
-            Photos[i].SortOrder = i;
-
+        for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i;
         OnPropertyChanged(nameof(Photos));
+    }
+
+    private void UpdateOpeningHours()
+    {
+        OpeningHours = OpeningHoursMode switch
+        {
+            BusinessHoursStatusCalculator.Open24Hours => BusinessHoursStatusCalculator.Open24Hours,
+            "時間指定" => OpeningTime == ClosingTime ? OpeningTime + "-" + ClosingTime : $"{OpeningTime}-{ClosingTime}",
+            _ => string.Empty
+        };
+    }
+
+    private void SetOpeningHoursFromStoredValue(string? value)
+    {
+        if (string.Equals(value?.Trim(), BusinessHoursStatusCalculator.Open24Hours, StringComparison.Ordinal))
+        {
+            OpeningHoursMode = BusinessHoursStatusCalculator.Open24Hours;
+            return;
+        }
+
+        var match = System.Text.RegularExpressions.Regex.Match(
+            value ?? string.Empty,
+            @"^(?<start>\d{1,2}:\d{2})\s*(?:-|ー|−|–|〜|~)\s*(?<end>\d{1,2}:\d{2})$");
+
+        if (match.Success && TimeOptions.Contains(match.Groups["start"].Value) && TimeOptions.Contains(match.Groups["end"].Value))
+        {
+            OpeningTime = match.Groups["start"].Value;
+            ClosingTime = match.Groups["end"].Value;
+            OpeningHoursMode = "時間指定";
+            return;
+        }
+
+        OpeningHoursMode = string.IsNullOrWhiteSpace(value) ? "未設定" : "時間指定";
+        if (!string.IsNullOrWhiteSpace(value) && !match.Success)
+        {
+            OpeningTime = "11:00";
+            ClosingTime = "21:00";
+        }
+    }
+
+    private void UpdateClosedDay()
+    {
+        ClosedDay = string.Join("・", new[]
+        {
+            (Enabled: ClosedSunday, Name: "日"),
+            (Enabled: ClosedMonday, Name: "月"),
+            (Enabled: ClosedTuesday, Name: "火"),
+            (Enabled: ClosedWednesday, Name: "水"),
+            (Enabled: ClosedThursday, Name: "木"),
+            (Enabled: ClosedFriday, Name: "金"),
+            (Enabled: ClosedSaturday, Name: "土")
+        }.Where(x => x.Enabled).Select(x => x.Name));
+    }
+
+    private void SetClosedDaysFromStoredValue(string? value)
+    {
+        ClearClosedDays();
+        var normalized = value ?? string.Empty;
+        ClosedSunday = normalized.Contains("日", StringComparison.Ordinal);
+        ClosedMonday = normalized.Contains("月", StringComparison.Ordinal);
+        ClosedTuesday = normalized.Contains("火", StringComparison.Ordinal);
+        ClosedWednesday = normalized.Contains("水", StringComparison.Ordinal);
+        ClosedThursday = normalized.Contains("木", StringComparison.Ordinal);
+        ClosedFriday = normalized.Contains("金", StringComparison.Ordinal);
+        ClosedSaturday = normalized.Contains("土", StringComparison.Ordinal);
+        UpdateClosedDay();
+    }
+
+    private void ClearClosedDays()
+    {
+        ClosedSunday = false;
+        ClosedMonday = false;
+        ClosedTuesday = false;
+        ClosedWednesday = false;
+        ClosedThursday = false;
+        ClosedFriday = false;
+        ClosedSaturday = false;
+        ClosedDay = string.Empty;
+    }
+
+    private static string[] CreateTimeOptions()
+    {
+        var values = new List<string>();
+        for (var hour = 0; hour < 24; hour++)
+        {
+            values.Add($"{hour:00}:00");
+            values.Add($"{hour:00}:30");
+        }
+        return [.. values];
     }
 
     private void ClearErrors()
