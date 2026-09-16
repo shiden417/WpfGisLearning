@@ -10,6 +10,10 @@ public partial class ShopListView : UserControl
 {
     private readonly ShopListViewModel _viewModel;
 
+    public event EventHandler? DownloadExcelTemplateRequested;
+    public event EventHandler? ExportExcelRequested;
+    public event EventHandler? ImportExcelRequested;
+
     public ShopListView(ShopListViewModel viewModel)
     {
         InitializeComponent();
@@ -27,6 +31,15 @@ public partial class ShopListView : UserControl
 
         Dispatcher.BeginInvoke(() => ShopListBox.ScrollIntoView(shop));
     }
+
+    private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e) =>
+        DownloadExcelTemplateRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ExportExcelButton_Click(object sender, RoutedEventArgs e) =>
+        ExportExcelRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ImportExcelButton_Click(object sender, RoutedEventArgs e) =>
+        ImportExcelRequested?.Invoke(this, EventArgs.Empty);
 
     private void ShopListItem_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
