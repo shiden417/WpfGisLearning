@@ -1,5 +1,5 @@
 using WpfGisLearning.Models;
-using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
 namespace WpfGisLearning.Tests;
@@ -79,25 +79,18 @@ public class ShopEditViewModelTests
         Assert.AreEqual("second", viewModel.Photos[1].Id);
     }
 
-    private static ShopEditViewModel CreateViewModel(TestShopService shopService)
-    {
-        return new ShopEditViewModel(shopService, new TestPhotoService());
-    }
+    private static ShopEditViewModel CreateViewModel(TestShopService shopService) => new(shopService, new TestPhotoService());
 
     private sealed class TestShopService : IShopService
     {
         public List<Shop> Shops { get; } = [];
-
         public string GetWelcomeMessage() => string.Empty;
         public IEnumerable<Shop> GetShops() => Shops;
         public void AddShop(Shop shop) => Shops.Add(shop);
         public void UpdateShop(Shop shop)
         {
             var index = Shops.FindIndex(x => x.Id == shop.Id);
-            if (index >= 0)
-            {
-                Shops[index] = shop;
-            }
+            if (index >= 0) Shops[index] = shop;
         }
         public void DeleteShop(int id) { }
         public void ToggleFavorite(int id) { }
