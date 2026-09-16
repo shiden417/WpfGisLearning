@@ -112,6 +112,25 @@ public sealed class MapController
         _map.Navigator.CenterOn(point);
     }
 
+    public int? GetShopIdAt(Point position)
+    {
+        var mapInfo = _mapControl.GetMapInfo(
+            new Mapsui.Manipulations.ScreenPosition((int)position.X, (int)position.Y),
+            _mapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
+
+        if (mapInfo?.Layer?.Name != ShopMapLayerBuilder.LayerName || mapInfo.Feature is not PointFeature pointFeature)
+            return null;
+
+        var isCluster = bool.TryParse(mapInfo.Feature["IsCluster"]?.ToString(), out var parsed) && parsed;
+        if (isCluster)
+        {
+            ZoomIntoCluster(pointFeature.Point);
+            return null;
+        }
+
+        return int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId) ? shopId : null;
+    }
+
     public MapFeatureSelection? GetFeatureAt(Point position)
     {
         var mapInfo = _mapControl.GetMapInfo(
