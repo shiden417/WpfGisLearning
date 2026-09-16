@@ -15,9 +15,11 @@ public static class BusinessHoursStatusCalculator
     {
         if (!HasOpeningHours(openingHours)) return false;
         if (IsClosedDay(closedDay, dateTime.DayOfWeek)) return false;
-        if (string.Equals(openingHours.Trim(), Open24Hours, StringComparison.Ordinal)) return true;
 
-        foreach (var (start, end) in ParseTimeRanges(openingHours))
+        var normalizedOpeningHours = openingHours!.Trim();
+        if (string.Equals(normalizedOpeningHours, Open24Hours, StringComparison.Ordinal)) return true;
+
+        foreach (var (start, end) in ParseTimeRanges(normalizedOpeningHours))
         {
             var startTime = dateTime.Date.Add(start);
             var endTime = dateTime.Date.Add(end);
@@ -37,10 +39,8 @@ public static class BusinessHoursStatusCalculator
         return normalized.Contains(DayNames[(int)dayOfWeek], StringComparison.Ordinal);
     }
 
-    private static IEnumerable<(TimeSpan Start, TimeSpan End)> ParseTimeRanges(string? openingHours)
+    private static IEnumerable<(TimeSpan Start, TimeSpan End)> ParseTimeRanges(string openingHours)
     {
-        if (string.IsNullOrWhiteSpace(openingHours)) yield break;
-
         var matches = Regex.Matches(
             openingHours,
             @"(?<start>\d{1,2}:\d{2})\s*(?:-|ー|−|–|〜|~)\s*(?<end>\d{1,2}:\d{2})",
