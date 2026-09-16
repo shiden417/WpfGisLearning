@@ -26,7 +26,7 @@ public class NewsServiceTests
         Assert.AreEqual("新店", items[0].Category);
         Assert.AreEqual("東京", items[0].Region);
         Assert.AreEqual("https://example.com/images/1.jpg", items[0].ImageUrl);
-        Assert.AreEqual(2, handler.Requests.Count);
+        Assert.HasCount(2, handler.Requests);
     }
 
     [TestMethod]
@@ -48,7 +48,7 @@ public class NewsServiceTests
 
         Assert.HasCount(1, items);
         Assert.AreEqual("昨日のラーメン", items[0].Title);
-        Assert.AreEqual(2, handler.Requests.Count);
+        Assert.HasCount(2, handler.Requests);
     }
 
     [TestMethod]
@@ -61,7 +61,7 @@ public class NewsServiceTests
         var items = await service.GetNewsAsync(new DateTime(2026, 9, 16));
 
         Assert.IsEmpty(items);
-        Assert.AreEqual(1, handler.Requests.Count);
+        Assert.HasCount(1, handler.Requests);
     }
 
     [TestMethod]
