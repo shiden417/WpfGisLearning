@@ -1,24 +1,19 @@
-using System.IO;
-using System.Text.Json;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.Services;
 
-public class ShopService : IShopService
+public sealed class ShopService : IShopService
 {
-    private readonly string _dataPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Ramenia",
-        "shops.json");
-
     private readonly IPhotoService _photoService;
+    private readonly IShopDataStore _dataStore;
     private readonly List<Shop> _shops;
 
-    public ShopService(IPhotoService photoService)
+    public ShopService(IPhotoService photoService, IShopDataStore dataStore)
     {
         _photoService = photoService;
-        _shops = Load();
+        _dataStore = dataStore;
+        _shops = _dataStore.Load();
 
         if (_shops.Count == 0)
         {
@@ -86,39 +81,7 @@ public class ShopService : IShopService
             : _photoService.GetPhotoPath(shop, mainPhoto);
     }
 
-    private List<Shop> Load()
-    {
-        try
-        {
-            if (!File.Exists(_dataPath))
-                return [];
-
-            return JsonSerializer.Deserialize<List<Shop>>(File.ReadAllText(_dataPath)) ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
-    private void Save()
-    {
-        try
-        {
-            var directory = Path.GetDirectoryName(_dataPath);
-            if (!string.IsNullOrWhiteSpace(directory))
-                Directory.CreateDirectory(directory);
-
-            var json = JsonSerializer.Serialize(
-                _shops,
-                new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_dataPath, json);
-        }
-        catch
-        {
-            // データ保存に失敗してもUI操作自体は継続できるようにする。
-        }
-    }
+    private void Save() => _dataStore.Save(_shops);
 
     private static IEnumerable<Shop> CreateInitialShops() =>
     [
