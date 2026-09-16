@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using WpfImage = System.Windows.Controls.Image;
 using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
 namespace WpfGisLearning.Views;
