@@ -96,11 +96,12 @@
                             <TextBox x:Name="RatingTextBox" Height="36">
                                 <TextBox.Text>
                                     <Binding Path="Rating" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
-                                        <Binding.ValidationRules><validation:DoubleRangeValidationRule Minimum="0" Maximum="5" ValidationStep="RawProposedValue" /></Binding.ValidationRules>
+                                        <Binding.ValidationRules><validation:DoubleRangeValidationRule Minimum="0" Maximum="5" DecimalPlaces="1" ValidationStep="RawProposedValue" /></Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
                             <TextBlock Text="{Binding RatingError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" />
+                            <TextBlock Text="0.0～5.0の範囲で、小数第1位まで入力できます。" Foreground="{StaticResource SubtleTextBrush}" FontSize="11" Margin="0,2,0,0" />
                             <TextBlock Text="住所" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <TextBox Text="{Binding ShopAddress, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" Padding="8" />
                             <TextBlock Text="位置" Margin="0,16,0,5" Foreground="{StaticResource LabelBrush}" />
