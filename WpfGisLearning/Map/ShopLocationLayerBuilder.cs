@@ -2,7 +2,6 @@ using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
-using WpfGisLearning. Models;
 
 namespace WpfGisLearning.Map;
 
