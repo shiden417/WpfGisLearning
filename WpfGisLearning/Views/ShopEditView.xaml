@@ -38,7 +38,7 @@
                         <TextBlock Text="店舗情報" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
                         <TextBlock Text="店舗名" Margin="0,18,0,5" Foreground="{StaticResource LabelBrush}" /><TextBox Text="{Binding ShopName, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" /><TextBlock Text="{Binding ShopNameError}" Foreground="{StaticResource ErrorBrush}" FontSize="12" Margin="0,4,0,0" />
                         <TextBlock Text="価格" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
-                        <TextBox Height="36" FontSize="14">
+                        <TextBox x:Name="ShopPriceTextBox" Height="36" FontSize="14">
                             <TextBox.Text>
                                 <Binding Path="ShopPrice" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
                                     <Binding.ValidationRules>
@@ -69,7 +69,7 @@
                             <CheckBox Content="土" IsChecked="{Binding ClosedSaturday}" />
                         </WrapPanel>
                         <TextBlock Text="評価" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
-                        <TextBox Height="36">
+                        <TextBox x:Name="RatingTextBox" Height="36">
                             <TextBox.Text>
                                 <Binding Path="Rating" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
                                     <Binding.ValidationRules>
@@ -87,6 +87,6 @@
             </ScrollViewer>
             <Border Grid.Column="2" Background="{StaticResource SurfaceBrush}" CornerRadius="16" Padding="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"><Grid><mapsui:MapControl x:Name="EditMapControl" /><Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Background="#F8FFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="4" Panel.ZIndex="100"><StackPanel><Button Content="◎  現在地" Click="CurrentLocationButton_Click" Padding="10,6" FontWeight="SemiBold" Margin="1" /><StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,3,0,0"><Button Content="＋" Click="ZoomInButton_Click" Style="{StaticResource MapControlButton}" ToolTip="拡大" /><Button Content="−" Click="ZoomOutButton_Click" Style="{StaticResource MapControlButton}" ToolTip="縮小" /></StackPanel></StackPanel></Border></Grid></Border>
         </Grid>
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="18"><Grid><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="キャンセル" Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,8,0" /><Button Content="保存" Command="{Binding SaveCommand}" Style="{StaticResource AccentButton}" Padding="22,9" BorderThickness="0" FontWeight="SemiBold" /></StackPanel><TextBlock Text="入力内容を確認して保存してください。エラーがある場合は各項目の下に表示されます。" Foreground="{StaticResource ErrorBrush}" FontSize="11" HorizontalAlignment="Left" VerticalAlignment="Center" /></Grid></Border>
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="18"><Grid><StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button Content="キャンセル" Command="{Binding CancelCommand}" Padding="18,9" Margin="0,0,8,0" /><Button Content="保存" Click="SaveButton_Click" Style="{StaticResource AccentButton}" Padding="22,9" BorderThickness="0" FontWeight="SemiBold" /></StackPanel><TextBlock Text="入力内容を確認して保存してください。エラーがある場合は各項目の下に表示されます。" Foreground="{StaticResource ErrorBrush}" FontSize="11" HorizontalAlignment="Left" VerticalAlignment="Center" /></Grid></Border>
     </Grid>
 </UserControl>
