@@ -28,10 +28,10 @@ public class ValidationRuleTests
     }
 
     [TestMethod]
-    public void DoubleRangeValidationRule_RejectsValueOutsideRange()
+    public void DoubleRangeValidationRule_RejectsZeroOutsideBusinessMinimum()
     {
         var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
-        var result = rule.Validate("5.1", Culture);
+        var result = rule.Validate("-0.1", Culture);
         Assert.IsFalse(result.IsValid);
     }
 
@@ -56,6 +56,22 @@ public class ValidationRuleTests
     {
         var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
         var result = rule.Validate("5", Culture);
+        Assert.IsTrue(result.IsValid);
+    }
+
+    [TestMethod]
+    public void DoubleRangeValidationRule_AcceptsTrailingDecimalSeparatorDuringTyping()
+    {
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
+        var result = rule.Validate("4.", Culture);
+        Assert.IsTrue(result.IsValid);
+    }
+
+    [TestMethod]
+    public void DoubleRangeValidationRule_AcceptsDecimalSeparatorAsFirstCharacterDuringTyping()
+    {
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
+        var result = rule.Validate(".", Culture);
         Assert.IsTrue(result.IsValid);
     }
 
