@@ -1,13 +1,12 @@
 using Microsoft.Win32;
-using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
+using WpfGisLearning.Utilities;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
 
@@ -18,8 +17,6 @@ public partial class MainWindow : Window
     private const int InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
-    private const int RameniaIconSize = 64;
-    private const int RameniaIconFontSize = 48;
 
     private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
@@ -37,7 +34,7 @@ public partial class MainWindow : Window
         NewsView newsView)
     {
         InitializeComponent();
-        Icon = CreateRameniaIcon();
+        Icon = RameniaIconFactory.Create();
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
@@ -179,23 +176,23 @@ public partial class MainWindow : Window
         if (!BusinessHoursStatusCalculator.HasOpeningHours(shop.OpeningHours))
         {
             InfoCardBusinessHoursStatus.Text = "営業時間未登録";
-            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush");
-            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("PanelBrush");
-            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush");
+            InfoCardBusinessHoursStatus.Foreground = (Brush)FindResource("MutedBrush");
+            InfoCardBusinessHoursBadge.Background = (Brush)FindResource("PanelBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (Brush)FindResource("BorderBrush");
         }
         else if (BusinessHoursStatusCalculator.IsOpen(shop.OpeningHours, shop.ClosedDay, DateTime.Now))
         {
             InfoCardBusinessHoursStatus.Text = "● 営業中";
-            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("AccentDarkBrush");
-            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("AccentSoftBrush");
-            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
+            InfoCardBusinessHoursStatus.Foreground = (Brush)FindResource("AccentDarkBrush");
+            InfoCardBusinessHoursBadge.Background = (Brush)FindResource("AccentSoftBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (Brush)FindResource("AccentBrush");
         }
         else
         {
             InfoCardBusinessHoursStatus.Text = "● 営業時間外";
-            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush");
-            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("PanelBrush");
-            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush");
+            InfoCardBusinessHoursStatus.Foreground = (Brush)FindResource("MutedBrush");
+            InfoCardBusinessHoursBadge.Background = (Brush)FindResource("PanelBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (Brush)FindResource("BorderBrush");
         }
 
         InfoCardBorder.Visibility = Visibility.Visible;
@@ -353,7 +350,6 @@ public partial class MainWindow : Window
         try
         {
             var shops = _excelShopDataService.Import(dialog.FileName);
-            ValidateImportedShops(shops);
 
             var result = MessageBox.Show(
                 $"Excelから{shops.Count}件の店舗データを読み込みます。\nIDが一致する店舗は更新し、IDが空欄だった店舗は新規登録します。\n\n実行しますか？",
@@ -385,52 +381,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private static void ValidateImportedShops(List<Shop> shops)
-    {
-        var duplicateId = shops
-            .GroupBy(shop => shop.Id)
-            .FirstOrDefault(group => group.Key <= 0 || group.Count() > 1);
-
-        if (duplicateId is not null)
-            throw new InvalidDataException($"店舗IDが不正または重複しています。ID: {duplicateId.Key}");
-
-        foreach (var shop in shops)
-        {
-            if (shop.Id <= 0) throw new InvalidDataException("店舗IDは1以上で指定してください。");
-            if (string.IsNullOrWhiteSpace(shop.Name)) throw new InvalidDataException("店舗名が空のデータがあります。");
-            if (shop.Price <= 0) throw new InvalidDataException($"「{shop.Name}」の価格が不正です。1円以上で入力してください。");
-            if (shop.Rating < 0 || shop.Rating > 5 || Math.Abs(shop.Rating * 10 - Math.Round(shop.Rating * 10)) > 1e-9)
-                throw new InvalidDataException($"「{shop.Name}」の評価が不正です。0～5、小数第1位までで入力してください。");
-            if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
-                throw new InvalidDataException($"「{shop.Name}」の位置情報が不正です。");
-            if (!IsValidRamenType(shop.RamenType))
-                throw new InvalidDataException($"「{shop.Name}」のラーメンの種類が不正です。");
-            ValidateOpeningHours(shop);
-            shop.Photos ??= [];
-        }
-    }
-
-    private static bool IsValidRamenType(string value) =>
-        new[] { "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他" }
-            .Contains(value, StringComparer.Ordinal);
-
-    private static void ValidateOpeningHours(Shop shop)
-    {
-        if (string.Equals(shop.OpeningHours, BusinessHoursStatusCalculator.Open24Hours, StringComparison.Ordinal) ||
-            string.IsNullOrWhiteSpace(shop.OpeningHours))
-            return;
-
-        var match = System.Text.RegularExpressions.Regex.Match(
-            shop.OpeningHours,
-            @"^(?<start>\d{1,2}:\d{2})-(?<end>\d{1,2}:\d{2})$");
-
-        if (!match.Success)
-            throw new InvalidDataException($"「{shop.Name}」の営業時間が不正です。");
-
-        if (string.Equals(match.Groups["start"].Value, match.Groups["end"].Value, StringComparison.Ordinal))
-            throw new InvalidDataException($"「{shop.Name}」の開始時刻と終了時刻は異なる時刻にしてください。");
-    }
-
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomIn();
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomOut();
 
@@ -438,24 +388,6 @@ public partial class MainWindow : Window
     {
         if (e.ClickCount != 2) return;
         e.Handled = true;
-    }
-
-    private static ImageSource CreateRameniaIcon()
-    {
-        var visual = new DrawingVisual();
-        using (var context = visual.RenderOpen())
-        {
-            var formattedText = new FormattedText(
-                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                RameniaIconFontSize, Brushes.Black, 1.0);
-            context.DrawText(formattedText, new Point((RameniaIconSize - formattedText.Width) / 2, (RameniaIconSize - formattedText.Height) / 2));
-        }
-
-        var bitmap = new RenderTargetBitmap(RameniaIconSize, RameniaIconSize, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-        bitmap.Freeze();
-        return bitmap;
     }
 
     private void ShowMapError(string message, Exception exception)
