@@ -132,8 +132,6 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             if (_hostWindow is null) return;
         }
 
-        if (_viewModel.IsSaving) return;
-
         if (_viewModel.IsDirty)
         {
             var result = MessageBox.Show(
