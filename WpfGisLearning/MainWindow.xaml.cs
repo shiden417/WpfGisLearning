@@ -183,6 +183,29 @@ public partial class MainWindow : Window
         InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
         InfoCardPrice.Text = $"¥{shop.Price:N0}";
         InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
+
+        if (!BusinessHoursStatusCalculator.HasOpeningHours(shop.OpeningHours))
+        {
+            InfoCardBusinessHoursStatus.Text = "営業時間未登録";
+            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush");
+            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("PanelBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush");
+        }
+        else if (BusinessHoursStatusCalculator.IsOpen(shop.OpeningHours, shop.ClosedDay, DateTime.Now))
+        {
+            InfoCardBusinessHoursStatus.Text = "● 営業中";
+            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("AccentDarkBrush");
+            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("AccentSoftBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
+        }
+        else
+        {
+            InfoCardBusinessHoursStatus.Text = "● 営業時間外";
+            InfoCardBusinessHoursStatus.Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush");
+            InfoCardBusinessHoursBadge.Background = (System.Windows.Media.Brush)FindResource("PanelBrush");
+            InfoCardBusinessHoursBadge.BorderBrush = (System.Windows.Media.Brush)FindResource("BorderBrush");
+        }
+
         InfoCardBorder.Visibility = Visibility.Visible;
         AnimateInfoCard();
     }
@@ -421,35 +444,31 @@ public partial class MainWindow : Window
 
     private void MapControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ClickCount == 2) e.Handled = true;
-    }
-
-    private void ShowMapError(string message, Exception ex)
-    {
-        MapStatusText.Text = $"{message}\n{ex.Message}";
-        MapStatusText.Visibility = Visibility.Visible;
+        if (e.ClickCount != 2) return;
+        e.Handled = true;
     }
 
     private static ImageSource CreateRameniaIcon()
     {
-        const int size = RameniaIconSize;
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
             var formattedText = new FormattedText(
-                "🍜",
-                System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
+                "🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
                 new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-                RameniaIconFontSize,
-                Brushes.Black,
-                1.0);
-            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
+                RameniaIconFontSize, Brushes.Black, 1.0);
+            context.DrawText(formattedText, new Point((RameniaIconSize - formattedText.Width) / 2, (RameniaIconSize - formattedText.Height) / 2));
         }
 
-        var bitmap = new RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        var bitmap = new RenderTargetBitmap(RameniaIconSize, RameniaIconSize, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
         return bitmap;
+    }
+
+    private void ShowMapError(string message, Exception exception)
+    {
+        MapStatusText.Text = $"{message}\n{exception.Message}";
+        MapStatusText.Visibility = Visibility.Visible;
     }
 }
