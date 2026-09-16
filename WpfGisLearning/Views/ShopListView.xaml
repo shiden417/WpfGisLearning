@@ -47,6 +47,9 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="SortCheckBox" TargetType="CheckBox" BasedOn="{StaticResource FilterCheckBox}">
+            <Setter Property="Foreground" Value="{StaticResource LabelBrush}" />
+        </Style>
         <Style x:Key="ShopCard" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" /><Setter Property="CornerRadius" Value="14" /><Setter Property="Padding" Value="10" /><Setter Property="Margin" Value="0,0,0,8" /><Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="RenderTransformOrigin" Value="0.5,0.5" /><Setter Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1" ScaleY="1" /></Setter.Value></Setter>
             <Style.Triggers><DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True"><Setter Property="Background" Value="#FFFFF3ED" /><Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" /><Setter Property="BorderThickness" Value="2" /></DataTrigger></Style.Triggers>
@@ -78,36 +81,30 @@
         </Border>
         <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" Margin="2,0,2,8"><TextBlock Text="検索" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /></Grid>
                 <Grid Grid.Row="1">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <Grid Grid.Column="0">
-                            <TextBox x:Name="SearchTextBox" Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="12,6" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SurfaceBrush}" VerticalContentAlignment="Center" />
-                            <TextBlock Text="店舗名・住所・ジャンルで検索" Foreground="#FFA0A6AB" VerticalAlignment="Center" Margin="12,0,8,0" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding SearchKeyword}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
-                        </Grid>
-                        <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" Height="38" />
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <TextBox x:Name="SearchTextBox" Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="12,6" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource SurfaceBrush}" VerticalContentAlignment="Center" />
+                        <TextBlock Text="店舗名・住所・ジャンルで検索" Foreground="#FFA0A6AB" VerticalAlignment="Center" Margin="12,0,8,0" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding SearchKeyword}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
                     </Grid>
-                    <WrapPanel Grid.Row="1" Margin="0,10,0,0">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
-                            <TextBlock Text="ジャンル" Style="{StaticResource FilterLabel}" />
-                            <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="88" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
-                            <TextBlock Text="価格" Style="{StaticResource FilterLabel}" />
-                            <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="112" />
-                        </StackPanel>
-                        <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
-                            <TextBlock Text="距離" Style="{StaticResource FilterLabel}" />
-                            <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="76" />
-                        </StackPanel>
+                    <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" Height="38" />
+                </Grid>
+                <Grid Grid.Row="2" Margin="0,10,0,0">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <WrapPanel Grid.Row="0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6"><TextBlock Text="ジャンル" Style="{StaticResource FilterLabel}" /><ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="88" /></StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6"><TextBlock Text="価格" Style="{StaticResource FilterLabel}" /><ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="112" /></StackPanel>
                         <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" />
-                        <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" />
-                        <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6"><TextBlock Text="距離" Style="{StaticResource FilterLabel}" /><ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="76" /></StackPanel>
+                        <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" />
                     </WrapPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="並べ替え" Style="{StaticResource FilterLabel}" Margin="0,0,8,0" />
+                        <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource SortCheckBox}" />
+                        <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource SortCheckBox}" />
+                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
