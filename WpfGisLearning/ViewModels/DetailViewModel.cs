@@ -21,7 +21,9 @@ public partial class DetailViewModel : ObservableObject
     [ObservableProperty]
     private bool isFavorite;
 
-    public bool IsCurrentlyOpen => Shop is not null &&
+    public bool HasOpeningHours => BusinessHoursStatusCalculator.HasOpeningHours(Shop?.OpeningHours);
+
+    public bool IsCurrentlyOpen => HasOpeningHours && Shop is not null &&
         BusinessHoursStatusCalculator.IsOpen(Shop.OpeningHours, Shop.ClosedDay, DateTime.Now);
 
     public string BusinessHoursStatus => IsCurrentlyOpen ? "営業中" : "営業時間外";
