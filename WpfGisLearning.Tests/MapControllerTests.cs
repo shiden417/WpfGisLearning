@@ -23,8 +23,9 @@ public class MapControllerTests
     [TestMethod]
     public void RebuildShopLayer_ReplacesShopLayerAndRefreshesMap()
     {
-        var adapter = new FakeMapControlAdapter { Map = new Mapsui.Map() };
+        var adapter = new FakeMapControlAdapter();
         var controller = new MapController(adapter);
+        controller.Initialize();
         IEnumerable<Models.Shop> shops =
         [
             new Models.Shop
@@ -52,8 +53,9 @@ public class MapControllerTests
     [TestMethod]
     public void ShowCurrentLocation_AddsAndReusesCurrentLocationLayer()
     {
-        var adapter = new FakeMapControlAdapter { Map = new Mapsui.Map() };
+        var adapter = new FakeMapControlAdapter();
         var controller = new MapController(adapter);
+        controller.Initialize();
 
         controller.ShowCurrentLocation(35.681236, 139.767125);
         controller.ShowCurrentLocation(35.682000, 139.768000);
