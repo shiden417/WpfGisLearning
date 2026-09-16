@@ -48,4 +48,42 @@ public partial class ShopListView : UserControl
         viewModel.OpenSelectedShopCommand.Execute(null);
         e.Handled = true;
     }
+
+    private void ShopContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ContextMenu contextMenu || contextMenu.PlacementTarget is not FrameworkElement target)
+        {
+            return;
+        }
+
+        if (target.DataContext is Shop shop)
+        {
+            _viewModel.SelectedShop = shop;
+            contextMenu.DataContext = _viewModel;
+        }
+    }
+
+    private void ShopListView_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.F)
+        {
+            SearchTextBox.Focus();
+            SearchTextBox.SelectAll();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape)
+        {
+            _viewModel.ClearSearchCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter && SearchTextBox.IsKeyboardFocusWithin)
+        {
+            _viewModel.SearchCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
 }
