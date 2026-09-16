@@ -73,6 +73,13 @@ public partial class DetailView : System.Windows.Controls.UserControl
         }
     }
 
+    private void CopyShopInfoButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Shop is null) return;
+        Clipboard.SetText(ShopInfoFormatter.Format(_viewModel.Shop));
+        MessageBox.Show("店舗情報をクリップボードにコピーしました。", "コピー完了", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var path = (sender as FrameworkElement)?.Tag as string;
