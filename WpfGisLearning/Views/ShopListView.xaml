@@ -119,11 +119,17 @@
                            Margin="2,0,0,6" />
                 <WrapPanel Grid.Row="1">
                     <Button Style="{StaticResource DataManagementButton}"
-                            Click="DownloadExcelTemplateButton_Click"
-                            ToolTip="Excel入力テンプレートをダウンロード">
+                            Click="ExcelMenuButton_Click"
+                            ToolTip="Excel関連の操作を選択">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="📋 テンプレートをダウンロード" Click="DownloadExcelTemplateButton_Click" />
+                                <MenuItem Header="📥 一括登録" Click="ImportExcelButton_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📋" FontSize="15" Margin="0,0,6,0" />
-                            <TextBlock Text="テンプレート" VerticalAlignment="Center" />
+                            <TextBlock Text="Excel ▼" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource DataManagementButton}"
@@ -132,14 +138,6 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="📤" FontSize="15" Margin="0,0,6,0" />
                             <TextBlock Text="出力" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource DataManagementButton}"
-                            Click="ImportExcelButton_Click"
-                            ToolTip="Excelから店舗データを一括登録">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📥" FontSize="15" Margin="0,0,6,0" />
-                            <TextBlock Text="一括登録" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource DataManagementButton}"
@@ -154,7 +152,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
