@@ -19,7 +19,7 @@
         <Grid Grid.Row="1">
             <Grid x:Name="MainArea" Margin="14">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="480" MinWidth="340" /><ColumnDefinition Width="8" /><ColumnDefinition Width="*" MinWidth="300" /></Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" CornerRadius="16" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" ClipToBounds="True"><ContentControl x:Name="MainContent" /></Border>
+                <Border Grid.Column="0" Background="{StaticResource WindowBackgroundBrush}" CornerRadius="0" BorderBrush="Transparent" BorderThickness="0" ClipToBounds="True"><ContentControl x:Name="MainContent" /></Border>
                 <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" ShowsPreview="False" />
                 <Border Grid.Column="2" Background="{StaticResource SurfaceBrush}" CornerRadius="16" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" ClipToBounds="True">
                     <Grid>
