@@ -89,12 +89,12 @@
                     <DataTemplate DataType="{x:Type models:Shop}">
                         <Border Style="{StaticResource ShopCard}">
                             <Border.ContextMenu>
-                                <ContextMenu Opened="ShopContextMenu_Opened">
-                                    <MenuItem Header="詳細" Command="{Binding OpenSelectedShopCommand}" />
-                                    <MenuItem Header="編集" Command="{Binding EditSelectedShopCommand}" />
+                                <ContextMenu>
+                                    <MenuItem Header="詳細" Click="ShopContextMenu_Detail_Click" />
+                                    <MenuItem Header="編集" Click="ShopContextMenu_Edit_Click" />
                                     <Separator />
-                                    <MenuItem Header="お気に入り切替" Command="{Binding ToggleFavoriteCommand}" CommandParameter="{Binding}" />
-                                    <MenuItem Header="削除" Command="{Binding DeleteSelectedShopCommand}" />
+                                    <MenuItem Header="お気に入り切替" Click="ShopContextMenu_Favorite_Click" />
+                                    <MenuItem Header="削除" Click="ShopContextMenu_Delete_Click" />
                                 </ContextMenu>
                             </Border.ContextMenu>
                             <Grid>
