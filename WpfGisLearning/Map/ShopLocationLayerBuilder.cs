@@ -1,5 +1,4 @@
 using Mapsui;
-using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
 
@@ -17,7 +16,8 @@ public static class ShopLocationLayerBuilder
         string layerName = DefaultLayerName,
         bool selected = false)
     {
-        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
+        var (x, y) = SphericalMercator.FromLonLat(longitude, latitude);
+        var point = new MPoint(x, y);
         var feature = new PointFeature(point);
         feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected));
 
