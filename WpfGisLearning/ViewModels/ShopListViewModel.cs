@@ -160,6 +160,9 @@ public partial class ShopListViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void Search() => RefreshFilteredShops();
+
+    [RelayCommand]
     private void ClearSearch()
     {
         SearchKeyword = string.Empty;
