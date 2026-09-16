@@ -67,6 +67,15 @@ public sealed class ShopService : IShopService
         Save();
     }
 
+    public void ReplaceAll(IEnumerable<Shop> shops)
+    {
+        var importedShops = shops.ToList();
+        _shops.Clear();
+        _shops.AddRange(importedShops);
+        RefreshPhotoPaths();
+        Save();
+    }
+
     private void RefreshPhotoPaths()
     {
         foreach (var shop in _shops)
