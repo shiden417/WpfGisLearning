@@ -33,6 +33,11 @@ public class ShopEditViewModelTests
         viewModel.ShopLongitude = 139.7671;
         viewModel.RamenType = "醤油";
         viewModel.Rating = 4.5;
+        viewModel.OpeningHoursMode = "時間指定";
+        viewModel.OpeningTime = "11:00";
+        viewModel.ClosingTime = "21:30";
+        viewModel.ClosedMonday = true;
+        viewModel.ClosedTuesday = true;
 
         viewModel.SaveCommand.Execute(null);
 
@@ -43,6 +48,42 @@ public class ShopEditViewModelTests
         Assert.AreEqual(35.6812, shop.Latitude);
         Assert.AreEqual(139.7671, shop.Longitude);
         Assert.AreEqual(4.5, shop.Rating);
+        Assert.AreEqual("11:00-21:30", shop.OpeningHours);
+        Assert.AreEqual("月・火", shop.ClosedDay);
+    }
+
+    [TestMethod]
+    public void Save_With24HourBusiness_Saves24HourValue()
+    {
+        var shopService = new TestShopService();
+        var viewModel = CreateViewModel(shopService);
+        viewModel.ShopName = "24時間店舗";
+        viewModel.ShopPrice = 1000;
+        viewModel.ShopLatitude = 35.6812;
+        viewModel.ShopLongitude = 139.7671;
+        viewModel.OpeningHoursMode = "24時間営業";
+
+        viewModel.SaveCommand.Execute(null);
+
+        Assert.HasCount(1, shopService.Shops);
+        Assert.AreEqual("24時間営業", shopService.Shops[0].OpeningHours);
+    }
+
+    [TestMethod]
+    public void Save_WithValidValues_WithoutBusinessHoursLeavesHoursEmpty()
+    {
+        var shopService = new TestShopService();
+        var viewModel = CreateViewModel(shopService);
+        viewModel.ShopName = "営業時間未設定店舗";
+        viewModel.ShopPrice = 1000;
+        viewModel.ShopLatitude = 35.6812;
+        viewModel.ShopLongitude = 139.7671;
+        viewModel.OpeningHoursMode = "未設定";
+
+        viewModel.SaveCommand.Execute(null);
+
+        Assert.HasCount(1, shopService.Shops);
+        Assert.AreEqual(string.Empty, shopService.Shops[0].OpeningHours);
     }
 
     [TestMethod]
