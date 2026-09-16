@@ -2,13 +2,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using WpfGisLearning.Models;
-using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
 
 public partial class NewsViewModel : ObservableObject
 {
-    private readonly NewsService _newsService;
+    private readonly INewsService _newsService;
 
     public ObservableCollection<NewsItem> News { get; } = new();
 
@@ -19,10 +19,7 @@ public partial class NewsViewModel : ObservableObject
 
     public IEnumerable<NewsItem> FeaturedNews => News.Where(x => x.IsFeatured).Take(2);
 
-    public NewsViewModel(NewsService newsService)
-    {
-        _newsService = newsService;
-    }
+    public NewsViewModel(INewsService newsService) => _newsService = newsService;
 
     [RelayCommand]
     private async Task RefreshAsync()
