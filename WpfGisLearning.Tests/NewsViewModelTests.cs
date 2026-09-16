@@ -23,9 +23,9 @@ public class NewsViewModelTests
         Assert.IsTrue(viewModel.News[1].IsFeatured);
         Assert.IsFalse(viewModel.News[2].IsFeatured);
         Assert.HasCount(2, viewModel.FeaturedNews);
-        Assert.AreEqual("2026/09/16以前：3件のニュースを取得しました。", viewModel.StatusMessage);
+        Assert.AreEqual($"{viewModel.SelectedDate:yyyy/MM/dd}以前：3件のニュースを取得しました。", viewModel.StatusMessage);
         Assert.IsFalse(viewModel.IsLoading);
-        Assert.AreEqual(DateTime.Today, service.RequestedDate.Date);
+        Assert.AreEqual(viewModel.SelectedDate.Date, service.RequestedDate.Date);
     }
 
     [TestMethod]
@@ -37,7 +37,7 @@ public class NewsViewModelTests
 
         Assert.HasCount(0, viewModel.News);
         Assert.HasCount(0, viewModel.FeaturedNews);
-        Assert.AreEqual("2026/09/16以前のニュースが見つかりませんでした。", viewModel.StatusMessage);
+        Assert.AreEqual($"{viewModel.SelectedDate:yyyy/MM/dd}以前のニュースが見つかりませんでした。", viewModel.StatusMessage);
         Assert.IsFalse(viewModel.IsLoading);
     }
 
