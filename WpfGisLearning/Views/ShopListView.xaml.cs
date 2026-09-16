@@ -49,18 +49,52 @@ public partial class ShopListView : UserControl
         e.Handled = true;
     }
 
-    private void ShopContextMenu_Opened(object sender, RoutedEventArgs e)
+    private static Shop? GetShopFromContextMenu(object sender)
     {
-        if (sender is not ContextMenu contextMenu || contextMenu.PlacementTarget is not FrameworkElement target)
+        if (sender is not MenuItem menuItem ||
+            menuItem.Parent is not ContextMenu contextMenu ||
+            contextMenu.PlacementTarget is not FrameworkElement target)
         {
-            return;
+            return null;
         }
 
-        if (target.DataContext is Shop shop)
-        {
-            _viewModel.SelectedShop = shop;
-            contextMenu.DataContext = _viewModel;
-        }
+        return target.DataContext as Shop;
+    }
+
+    private void ShopContextMenu_Detail_Click(object sender, RoutedEventArgs e)
+    {
+        var shop = GetShopFromContextMenu(sender);
+        if (shop is null) return;
+
+        _viewModel.SelectedShop = shop;
+        _viewModel.OpenSelectedShopCommand.Execute(null);
+    }
+
+    private void ShopContextMenu_Edit_Click(object sender, RoutedEventArgs e)
+    {
+        var shop = GetShopFromContextMenu(sender);
+        if (shop is null) return;
+
+        _viewModel.SelectedShop = shop;
+        _viewModel.EditSelectedShopCommand.Execute(null);
+    }
+
+    private void ShopContextMenu_Favorite_Click(object sender, RoutedEventArgs e)
+    {
+        var shop = GetShopFromContextMenu(sender);
+        if (shop is null) return;
+
+        _viewModel.SelectedShop = shop;
+        _viewModel.ToggleFavoriteCommand.Execute(shop);
+    }
+
+    private void ShopContextMenu_Delete_Click(object sender, RoutedEventArgs e)
+    {
+        var shop = GetShopFromContextMenu(sender);
+        if (shop is null) return;
+
+        _viewModel.SelectedShop = shop;
+        _viewModel.DeleteSelectedShopCommand.Execute(null);
     }
 
     private void ShopListView_PreviewKeyDown(object sender, KeyEventArgs e)
