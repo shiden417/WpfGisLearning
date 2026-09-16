@@ -27,7 +27,6 @@ public partial class ShopListViewModel : ObservableObject
     [ObservableProperty] private string selectedNearbyRadius = "5km";
     [ObservableProperty] private bool favoriteOnly;
     [ObservableProperty] private bool nearbyOnly;
-    [ObservableProperty] private bool sortByName;
     [ObservableProperty] private bool sortByPrice;
     [ObservableProperty] private bool sortByRating;
     [ObservableProperty] private Shop? selectedShop;
@@ -58,7 +57,6 @@ public partial class ShopListViewModel : ObservableObject
     partial void OnSelectedNearbyRadiusChanged(string value) => RefreshFilteredShops();
     partial void OnFavoriteOnlyChanged(bool value) => RefreshFilteredShops();
     partial void OnNearbyOnlyChanged(bool value) => RefreshFilteredShops();
-    partial void OnSortByNameChanged(bool value) => ApplySort();
     partial void OnSortByPriceChanged(bool value) => ApplySort();
     partial void OnSortByRatingChanged(bool value) => ApplySort();
 
@@ -83,8 +81,6 @@ public partial class ShopListViewModel : ObservableObject
             ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Rating), ListSortDirection.Descending));
         if (SortByPrice)
             ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Price), ListSortDirection.Ascending));
-        if (SortByName)
-            ShopsView.SortDescriptions.Add(new SortDescription(nameof(Shop.Name), ListSortDirection.Ascending));
 
         RefreshFilteredShops();
     }
@@ -177,7 +173,6 @@ public partial class ShopListViewModel : ObservableObject
         SelectedPriceFilter = ShopFilter.AllFilter;
         FavoriteOnly = false;
         NearbyOnly = false;
-        SortByName = false;
         SortByPrice = false;
         SortByRating = false;
     }
