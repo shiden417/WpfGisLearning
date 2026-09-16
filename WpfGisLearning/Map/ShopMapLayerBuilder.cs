@@ -69,17 +69,7 @@ public static class ShopMapLayerBuilder
         {
             var groupShops = group.ToList();
 
-            if (groupShops.Count < MinimumClusterSize)
-            {
-                foreach (var shop in groupShops)
-                {
-                    yield return CreateShopFeature(shop, selectedShopId == shop.Id, 0, 1);
-                }
-
-                continue;
-            }
-
-            if (groupShops.Any(shop => shop.Id == selectedShopId) && groupShops.Count == 2)
+            if (groupShops.Count < MinimumClusterSize || groupShops.Any(shop => shop.Id == selectedShopId))
             {
                 foreach (var shop in groupShops)
                 {
