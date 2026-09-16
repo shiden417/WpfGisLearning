@@ -102,6 +102,7 @@ public class ValidationRuleTests
         public void UpdateShop(Shop shop) { }
         public void DeleteShop(int id) { }
         public void ToggleFavorite(int id) { }
+        public void ReplaceAll(IEnumerable<Shop> shops) { }
     }
 
     private sealed class TestPhotoService : IPhotoService
