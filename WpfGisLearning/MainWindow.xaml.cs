@@ -1,3 +1,5 @@
+using Microsoft.Win32;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -21,6 +23,7 @@ public partial class MainWindow : Window
 
     private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
+    private readonly IShopService _shopService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
     private bool _initialLocationRequested;
@@ -28,6 +31,7 @@ public partial class MainWindow : Window
 
     public MainWindow(
         ShopListView shopListView,
+        IShopService shopService,
         ICurrentLocationService currentLocationService,
         NewsView newsView)
     {
@@ -35,6 +39,7 @@ public partial class MainWindow : Window
         Icon = CreateRameniaIcon();
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
+        _shopService = shopService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
         _mapController = new MapController(MapControl);
@@ -218,6 +223,116 @@ public partial class MainWindow : Window
         RebuildShopLayer();
         _mapController.InitialMapPositionSet = false;
         SetInitialMapPosition();
+    }
+
+    private void ExportJsonButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "店舗データをJSONで保存",
+            Filter = "JSONファイル|*.json",
+            FileName = $"ramenia-shops-{DateTime.Now:yyyyMMdd-HHmmss}.json",
+            AddExtension = true,
+            OverwritePrompt = true
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            var json = JsonSerializer.Serialize(_shopService.GetShops(), options);
+            File.WriteAllText(dialog.FileName, json);
+            MessageBox.Show(
+                $"店舗データを保存しました。\n\n保存先：\n{dialog.FileName}",
+                "JSONエクスポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"JSONの書き出しに失敗しました。\n\n{ex.Message}",
+                "JSONエクスポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private void ImportJsonButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "店舗データJSONを選択",
+            Filter = "JSONファイル|*.json|すべてのファイル|*.*",
+            Multiselect = false
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var json = File.ReadAllText(dialog.FileName);
+            var shops = JsonSerializer.Deserialize<List<Shop>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true
+            });
+
+            ValidateImportedShops(shops);
+
+            var result = MessageBox.Show(
+                $"現在の店舗データを{shops!.Count}件のデータで置き換えます。\nこの操作は元に戻せません。\n\n実行しますか？",
+                "JSONインポートの確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            _shopService.ReplaceAll(shops);
+            _selectedShopId = null;
+            _shopListViewModel.FavoriteOnly = false;
+            _shopListViewModel.NearbyOnly = false;
+            _shopListViewModel.RefreshFromService();
+            RebuildShopLayer();
+            InfoCardBorder.Visibility = Visibility.Collapsed;
+
+            MessageBox.Show(
+                $"店舗データを{shops.Count}件読み込みました。",
+                "JSONインポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"JSONの読み込みに失敗しました。\n\n{ex.Message}",
+                "JSONインポート",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
+
+    private static void ValidateImportedShops(List<Shop>? shops)
+    {
+        if (shops is null)
+            throw new InvalidDataException("JSONから店舗データを読み込めませんでした。");
+
+        var duplicateId = shops.GroupBy(shop => shop.Id).FirstOrDefault(group => group.Key <= 0 || group.Count() > 1);
+        if (duplicateId is not null)
+            throw new InvalidDataException($"店舗IDが不正または重複しています。ID: {duplicateId.Key}");
+
+        foreach (var shop in shops)
+        {
+            if (shop.Id <= 0) throw new InvalidDataException("店舗IDは1以上で指定してください。");
+            if (string.IsNullOrWhiteSpace(shop.Name)) throw new InvalidDataException("店舗名が空のデータがあります。");
+            if (shop.Price <= 0) throw new InvalidDataException($"「{shop.Name}」の価格が不正です。");
+            if (shop.Rating < 0 || shop.Rating > 5 || Math.Abs(shop.Rating * 10 - Math.Round(shop.Rating * 10)) > 1e-9)
+                throw new InvalidDataException($"「{shop.Name}」の評価が0～5、小数第1位の範囲外です。");
+            if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
+                throw new InvalidDataException($"「{shop.Name}」の位置情報が不正です。");
+            shop.Photos ??= [];
+        }
     }
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomIn();
