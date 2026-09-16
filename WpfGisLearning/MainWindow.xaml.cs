@@ -27,7 +27,6 @@ public partial class MainWindow : Window
     private readonly IExcelShopDataService _excelShopDataService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
-    private bool _initialLocationRequested;
     private int? _selectedShopId;
 
     public MainWindow(
@@ -53,16 +52,8 @@ public partial class MainWindow : Window
         shopListView.ExportExcelRequested += ExportExcelButton_Click;
         shopListView.ImportExcelRequested += ImportExcelButton_Click;
         _newsView.RequestBack += NewsView_RequestBack;
-        Loaded += MainWindow_Loaded;
 
         InitializeMap();
-    }
-
-    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-    {
-        if (_initialLocationRequested) return;
-        _initialLocationRequested = true;
-        await TryShowCurrentLocationAsync(showMessageOnFailure: false);
     }
 
     private void NewsButton_Click(object sender, RoutedEventArgs e)
@@ -182,7 +173,8 @@ public partial class MainWindow : Window
         InfoCardType.Text = shop.RamenType;
         InfoCardAddress.Text = string.IsNullOrWhiteSpace(shop.Address) ? "住所未登録" : shop.Address;
         InfoCardPrice.Text = $"¥{shop.Price:N0}";
-        InfoCardRating.Text = $"★ {shop.Rating:F1}  {(shop.IsFavorite ? "★ お気に入り" : string.Empty)}";
+        InfoCardRating.Text = $"★ {shop.Rating:F1}";
+        InfoCardFavorite.Text = shop.IsFavorite ? "♥ お気に入り" : string.Empty;
 
         if (!BusinessHoursStatusCalculator.HasOpeningHours(shop.OpeningHours))
         {
