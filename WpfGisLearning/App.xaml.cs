@@ -25,7 +25,7 @@ public partial class App : Application
         services.AddSingleton<IExcelShopDataService, ExcelShopDataService>();
         services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
         services.AddSingleton<IReverseGeocodingService, NominatimReverseGeocodingService>();
-        services.AddSingleton<NewsService>();
+        services.AddSingleton<INewsService, NewsService>();
 
         services.AddTransient<DetailView>();
         services.AddTransient<ShopListView>();
