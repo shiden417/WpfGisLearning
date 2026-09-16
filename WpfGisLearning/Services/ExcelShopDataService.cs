@@ -6,16 +6,30 @@ using WpfGisLearning.Validation;
 
 namespace WpfGisLearning.Services;
 
+/// <summary>
+/// 店舗データとExcelファイルの相互変換を担当するサービスです。
+/// ClosedXMLを使ったExcel操作と、ShopValidationを使った入力検証を一か所にまとめています。
+/// </summary>
 public sealed class ExcelShopDataService : IExcelShopDataService
 {
+    /// <summary>
+    /// Excelの列見出しです。
+    /// インポートとエクスポートで同じ列構成を利用するため共有します。
+    /// </summary>
     private static readonly string[] Headers =
     [
         "ID", "店舗名", "価格", "住所", "緯度", "経度", "ラーメンの種類",
         "営業時間モード", "開始時刻", "終了時刻", "定休日", "評価"
     ];
 
+    /// <summary>入力テンプレートであらかじめ用意するデータ行数です。</summary>
     private const int TemplateRows = 200;
 
+    /// <summary>
+    /// 店舗入力用のExcelテンプレートを作成します。
+    /// 入力規則や説明シートも作り、利用者がルールを確認できるようにします。
+    /// </summary>
+    /// <param name="filePath">作成するExcelファイルの保存先です。</param>
     public void CreateImportTemplate(string filePath)
     {
         using var workbook = new XLWorkbook();
@@ -30,6 +44,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         sheet.Row(1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.SheetView.FreezeRows(1);
 
+        // 列ごとに入力しやすい幅を設定する。
         double[] widths = [10, 26, 12, 34, 13, 13, 16, 18, 12, 12, 18, 10];
         for (var i = 0; i < widths.Length; i++) sheet.Column(i + 1).Width = widths[i];
 
@@ -38,11 +53,13 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         inputRange.Style.Border.SetInsideBorder(XLBorderStyleValues.Hair);
         inputRange.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
 
+        // 数値項目はExcel上でも意味のある表示形式にする。
         sheet.Range(2, 1, TemplateRows + 1, 1).Style.NumberFormat.Format = "0";
         sheet.Range(2, 3, TemplateRows + 1, 3).Style.NumberFormat.Format = "#,##0";
         sheet.Range(2, 5, TemplateRows + 1, 6).Style.NumberFormat.Format = "0.000000";
         sheet.Range(2, 12, TemplateRows + 1, 12).Style.NumberFormat.Format = "0.0";
 
+        // ラーメン種別を候補から選べるドロップダウンにする。
         var ramenValidation = sheet.Range(2, 7, TemplateRows + 1, 7).CreateDataValidation();
         ramenValidation.List($"\"{string.Join(",", ShopValidation.RamenTypes)}\"");
         ramenValidation.ErrorTitle = "入力値が不正です";
@@ -52,6 +69,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         ramenValidation.InputTitle = "ラーメンの種類";
         ramenValidation.InputMessage = "プルダウンから選択してください。";
 
+        // 営業時間モードも共通の選択肢をExcelへ反映する。
         var hoursValidation = sheet.Range(2, 8, TemplateRows + 1, 8).CreateDataValidation();
         hoursValidation.List($"\"{string.Join(",", ShopValidation.OpeningHoursModes)}\"");
         hoursValidation.ErrorTitle = "入力値が不正です";
@@ -86,6 +104,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         longitudeValidation.ErrorMessage = "経度は-180～180で入力してください。";
         longitudeValidation.ShowErrorMessage = true;
 
+        // 別シートに入力ルールを文章でも記載する。
         rules.Cell("A1").Value = "入力項目";
         rules.Cell("B1").Value = "入力ルール";
         rules.Range("A1:B1").Style.Font.Bold = true;
@@ -119,6 +138,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         rules.Range("A1:B13").Style.Alignment.WrapText = true;
         rules.Row(1).Height = 24;
 
+        // 入力例となるコメントを一部のセルへ付ける。
         sheet.Cell("A2").GetComment().AddText("既存店舗を更新する場合はIDを入力してください。新規店舗は空欄で構いません。");
         sheet.Cell("B2").GetComment().AddText("店舗名は必須です。");
         sheet.Cell("C2").GetComment().AddText("画面の店舗編集と同じく1円以上です。");
@@ -127,6 +147,9 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         workbook.SaveAs(filePath);
     }
 
+    /// <summary>指定した店舗一覧をExcelへ出力します。</summary>
+    /// <param name="filePath">出力するExcelファイルの保存先です。</param>
+    /// <param name="shops">出力対象の店舗一覧です。</param>
     public void Export(string filePath, IEnumerable<Shop> shops)
     {
         using var workbook = new XLWorkbook();
@@ -136,6 +159,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         var row = 2;
         foreach (var shop in shops.OrderBy(x => x.Id))
         {
+            // アプリ内部では営業時間を1文字列で保持するため、Excelでは入力しやすい4項目へ分解する。
             var (mode, start, end) = SplitOpeningHours(shop.OpeningHours);
             sheet.Cell(row, 1).Value = shop.Id;
             sheet.Cell(row, 2).Value = shop.Name;
@@ -168,6 +192,12 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         workbook.SaveAs(filePath);
     }
 
+    /// <summary>
+    /// Excelファイルを読み込み、各行を検証したうえでShop一覧へ変換します。
+    /// IDが空欄の行は新規店舗として未使用IDを自動採番します。
+    /// </summary>
+    /// <param name="filePath">読み込むExcelファイルのパスです。</param>
+    /// <returns>変換済みの店舗一覧です。</returns>
     public List<Shop> Import(string filePath)
     {
         using var workbook = new XLWorkbook(filePath);
@@ -176,6 +206,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         if (lastRow < 2)
             return [];
 
+        // 先に明示されたIDの重複をチェックして、曖昧な更新対象を防ぐ。
         var explicitIds = new HashSet<int>();
         for (var row = 2; row <= lastRow; row++)
         {
@@ -194,6 +225,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             var id = ReadInt(sheet.Cell(row, 1), 0);
             if (id <= 0)
             {
+                // 空欄IDは明示IDと衝突しない番号を順番に割り当てる。
                 while (explicitIds.Contains(nextId)) nextId++;
                 id = nextId++;
             }
@@ -210,6 +242,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             var closedDay = sheet.Cell(row, 11).GetString().Trim();
             var rating = ReadDouble(sheet.Cell(row, 12));
 
+            // Excel側の自由入力も、画面側と同じ共通ルールで検証する。
             var nameError = ShopValidation.ValidateName(name);
             if (nameError is not null)
                 throw new InvalidDataException($"{row}行目の{nameError}");
@@ -253,15 +286,24 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         return shops;
     }
 
+    /// <summary>指定ワークシートへ共通のExcel列見出しを書き込みます。</summary>
     private static void WriteHeaders(IXLWorksheet sheet)
     {
         for (var i = 0; i < Headers.Length; i++) sheet.Cell(1, i + 1).Value = Headers[i];
     }
 
+    /// <summary>Excelセルをintとして読み込み、空欄なら指定した既定値を返します。</summary>
     private static int ReadInt(IXLCell cell, int fallback) => cell.IsEmpty() ? fallback : cell.GetValue<int>();
+
+    /// <summary>Excelセルをdecimalとして読み込み、空欄なら0を返します。</summary>
     private static decimal ReadDecimal(IXLCell cell) => cell.IsEmpty() ? 0 : cell.GetValue<decimal>();
+
+    /// <summary>Excelセルをdoubleとして読み込み、空欄なら0を返します。</summary>
     private static double ReadDouble(IXLCell cell) => cell.IsEmpty() ? 0 : cell.GetValue<double>();
 
+    /// <summary>
+    /// アプリ内部の営業時間文字列を、Excel用のモード・開始・終了時刻へ分解します。
+    /// </summary>
     private static (string Mode, string Start, string End) SplitOpeningHours(string? openingHours)
     {
         if (string.IsNullOrWhiteSpace(openingHours)) return (ShopValidation.UnsetOpeningHoursMode, string.Empty, string.Empty);
@@ -269,6 +311,8 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             return (BusinessHoursStatusCalculator.Open24Hours, string.Empty, string.Empty);
 
         var parts = openingHours.Replace("〜", "-").Replace("~", "-").Split('-', 2);
-        return parts.Length == 2 ? (ShopValidation.SpecifiedOpeningHoursMode, parts[0].Trim(), parts[1].Trim()) : (ShopValidation.SpecifiedOpeningHoursMode, string.Empty, string.Empty);
+        return parts.Length == 2
+            ? (ShopValidation.SpecifiedOpeningHoursMode, parts[0].Trim(), parts[1].Trim())
+            : (ShopValidation.SpecifiedOpeningHoursMode, string.Empty, string.Empty);
     }
 }
