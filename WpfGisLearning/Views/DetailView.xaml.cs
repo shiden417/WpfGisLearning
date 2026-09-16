@@ -1,14 +1,10 @@
-using Mapsui;
-using Mapsui.Extensions;
-using Mapsui.Layers;
-using Mapsui.Projections;
-using Mapsui.Tiling;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using WpfGisLearning.Map;
 using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
@@ -35,15 +31,13 @@ public partial class DetailView : System.Windows.Controls.UserControl
     private void InitializeMap(DetailViewModel viewModel)
     {
         _map = new Mapsui.Map();
-        _map.Layers.Add(OpenStreetMap.CreateTileLayer());
+        _map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
         DetailMap.Map = _map;
         if (viewModel.Shop is null || !MapCoordinateValidator.IsValid(viewModel.Shop.Latitude, viewModel.Shop.Longitude)) return;
 
-        var point = SphericalMercator.FromLonLat(viewModel.Shop.Longitude, viewModel.Shop.Latitude).ToMPoint();
-        var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
-        _map.Layers.Add(new MemoryLayer { Name = "Shop", Style = null, Features = new[] { feature } });
-        _map.Navigator.CenterOnAndZoomTo(point, 500);
+        var result = ShopLocationLayerBuilder.Build(viewModel.Shop.Latitude, viewModel.Shop.Longitude);
+        _map.Layers.Add(result.Layer);
+        _map.Navigator.CenterOnAndZoomTo(result.Point, ZoomAmount);
     }
 
     private void RefreshDetailView()
