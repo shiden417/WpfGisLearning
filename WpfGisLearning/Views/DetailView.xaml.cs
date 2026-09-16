@@ -159,7 +159,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
 
     private static Button CreatePhotoNavigationButton(bool isPrevious)
     {
-        var path = new Path
+        var path = new System.Windows.Shapes.Path
         {
             Data = Geometry.Parse(isPrevious ? "M 9,2 L 2,9 L 9,16" : "M 2,2 L 9,9 L 2,16"),
             Stroke = Brushes.DimGray,
@@ -190,7 +190,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         };
     }
 
-    private static Path CreateCloseIcon() => new()
+    private static System.Windows.Shapes.Path CreateCloseIcon() => new()
     {
         Data = Geometry.Parse("M 4,4 L 16,16 M 16,4 L 4,16"),
         Stroke = Brushes.DimGray,
