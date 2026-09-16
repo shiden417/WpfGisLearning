@@ -36,7 +36,11 @@ public class NewsServiceTests
             "<item><title>昨日のラーメン</title><link>https://example.com/old</link><pubDate>Tue, 15 Sep 2026 12:00:00 GMT</pubDate></item>" +
             "<item><title>未来のラーメン</title><link>https://example.com/future</link><pubDate>Thu, 17 Sep 2026 12:00:00 GMT</pubDate></item>" +
             "</channel></rss>";
-        var handler = new QueueHandler([CreateResponse(feed)]);
+        var handler = new QueueHandler(
+        [
+            CreateResponse(feed),
+            CreateResponse("<html><head></head></html>")
+        ]);
         using var client = new HttpClient(handler);
         var service = new NewsService(client);
 
