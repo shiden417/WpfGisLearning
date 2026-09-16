@@ -43,7 +43,7 @@ public class ShopFilterTests
     [DataRow(1501, "1500円以下", false)]
     [DataRow(2000, "2000円以下", true)]
     [DataRow(2001, "2000円以下", false)]
-    public void Matches_PriceFilterUsesInclusiveUpperBoundary(decimal price, string filter, bool expected)
+    public void Matches_PriceFilterUsesInclusiveUpperBoundary(int price, string filter, bool expected)
     {
         var shop = CreateShop(Price: price);
 
@@ -80,10 +80,10 @@ public class ShopFilterTests
     [TestMethod]
     public void Matches_NearbyRadiusUsesSelectedDistance()
     {
-        var shop = CreateShop(Latitude: 35.6812, Longitude: 139.7671);
+        var shop = CreateShop(Latitude: 35.7000, Longitude: 139.7671);
 
-        Assert.IsTrue(Matches(shop, nearbyOnly: true, nearbyLatitude: 35.6812, nearbyLongitude: 139.7671, selectedNearbyRadius: "1km"));
-        Assert.IsFalse(Matches(shop, nearbyOnly: true, nearbyLatitude: 35.6812, nearbyLongitude: 139.7671, selectedNearbyRadius: "0km"));
+        Assert.IsFalse(Matches(shop, nearbyOnly: true, nearbyLatitude: 35.6812, nearbyLongitude: 139.7671, selectedNearbyRadius: "1km"));
+        Assert.IsTrue(Matches(shop, nearbyOnly: true, nearbyLatitude: 35.6812, nearbyLongitude: 139.7671, selectedNearbyRadius: "3km"));
     }
 
     [TestMethod]
