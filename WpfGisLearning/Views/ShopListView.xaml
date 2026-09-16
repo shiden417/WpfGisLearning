@@ -5,19 +5,49 @@
              PreviewKeyDown="ShopListView_PreviewKeyDown">
     <UserControl.Resources>
         <Style x:Key="FilterComboBox" TargetType="ComboBox">
-            <Setter Property="Height" Value="38" />
+            <Setter Property="Height" Value="36" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Background" Value="#FFF7F5F2" />
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         </Style>
         <Style x:Key="FilterCheckBox" TargetType="CheckBox">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="12,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Margin" Value="0,0,8,6" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-            <Setter Property="Foreground" Value="#FF454B50" />
-            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Container"
+                                Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Container" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                <Setter TargetName="Container" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Container" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="ShopCard" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
@@ -50,39 +80,64 @@
             <Style.Triggers><DataTrigger Binding="{Binding IsFavorite}" Value="True"><Setter Property="Content" Value="★" /></DataTrigger></Style.Triggers>
         </Style>
         <Style x:Key="RegisterButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
-            <Setter Property="Width" Value="104" /><Setter Property="Height" Value="40" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="10,5" /><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Width" Value="104" /><Setter Property="Height" Value="36" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="10,5" /><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style x:Key="DataManagementButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="MinWidth" Value="76" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="MinWidth" Value="96" />
             <Setter Property="Padding" Value="10,4" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Margin" Value="0" />
         </Style>
     </UserControl.Resources>
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
         <Grid Grid.Row="0" Margin="0,14,0,10">
             <TextBlock Text="🗺 店舗を探す" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
         </Grid>
-        <Border Grid.Row="1" Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="8,6" Margin="0,0,0,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+
+        <Border Grid.Row="1"
+                Background="{StaticResource PanelBrush}"
+                CornerRadius="12"
+                Padding="8"
+                Margin="0,0,0,10"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="店舗データ" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="4,0,12,0" />
+                    <Border Width="1" Height="22" Background="{StaticResource BorderBrush}" Margin="0,0,8,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="テンプレート" Click="DownloadExcelTemplateButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excel入力テンプレートをダウンロード" />
+                    <Border Width="1" Height="22" Background="{StaticResource BorderBrush}" Margin="8,0" />
+                    <Button Content="書き出し" Click="ExportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="店舗データをExcelに書き出す" />
+                    <Border Width="1" Height="22" Background="{StaticResource BorderBrush}" Margin="8,0" />
+                    <Button Content="読み込み" Click="ImportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excelから店舗データを読み込む" />
+                    <Border Width="1" Height="22" Background="{StaticResource BorderBrush}" Margin="8,0" />
+                    <Button Content="＋  登録" Command="{Binding NewShopCommand}" Style="{StaticResource RegisterButton}" ToolTip="新しい店舗を登録" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="店舗データ" VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="⇩ テンプレート" Click="DownloadExcelTemplateButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excel入力テンプレートをダウンロード" />
-                    <Button Content="↥ 書き出し" Click="ExportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="店舗データをExcelに書き出す" />
-                    <Button Content="↧ 読み込み" Click="ImportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excelから店舗データを読み込む" />
-                </StackPanel>
-            </Grid>
-        </Border>
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-            <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <Grid>
                     <TextBox x:Name="SearchTextBox" Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="12,6" BorderThickness="0" Background="{StaticResource InputBackgroundBrush}" VerticalContentAlignment="Center" />
                     <TextBlock Text="店舗名・住所・ジャンルで検索" Foreground="#FFA0A6AB" VerticalAlignment="Center" Margin="12,0,8,0" IsHitTestVisible="False">
@@ -92,21 +147,30 @@
                 <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" />
             </Grid>
         </Border>
+
         <Border Grid.Row="3" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <StackPanel>
-                <Grid Margin="2,0,2,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal"><TextBlock Text="FILTER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="条件で絞り込む" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="8,0,0,0" /></StackPanel><TextBlock Grid.Column="1" Text="SORT" FontSize="11" Foreground="{StaticResource MutedBrush}" /></Grid>
+                <Grid Margin="2,0,2,8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="FILTER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Text="条件で絞り込む" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="8,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="SORT" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                </Grid>
                 <WrapPanel>
                     <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="116" Margin="0,0,8,6" />
                     <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="126" Margin="0,0,8,6" />
-                    <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
-                    <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" />
+                    <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" />
                     <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="92" Margin="0,0,14,6" />
-                    <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
-                    <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
-                    <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" Padding="4,0" />
+                    <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" Style="{StaticResource FilterCheckBox}" />
+                    <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" />
+                    <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" />
                 </WrapPanel>
             </StackPanel>
         </Border>
+
         <Grid Grid.Row="4">
             <ListBox x:Name="ShopListBox" ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource ShopListItem}" PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick" Margin="0">
                 <ListBox.ItemTemplate>
@@ -131,7 +195,6 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <Button Content="＋  登録" Command="{Binding NewShopCommand}" Style="{StaticResource RegisterButton}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,40,18" Panel.ZIndex="10" ToolTip="新しい店舗を登録" />
         </Grid>
     </Grid>
 </UserControl>
