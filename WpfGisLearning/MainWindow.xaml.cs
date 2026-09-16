@@ -13,7 +13,6 @@ public partial class MainWindow : Window
 {
     private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
-    private readonly IShopService _shopService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
     private readonly ShopInfoCardPresenter _infoCardPresenter;
@@ -31,7 +30,6 @@ public partial class MainWindow : Window
         Icon = RameniaIconFactory.Create();
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
-        _shopService = shopService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
         _mapController = new MapController(MapControl);
