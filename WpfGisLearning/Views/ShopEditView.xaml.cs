@@ -1,12 +1,11 @@
 using Microsoft.Win32;
 using Mapsui;
-using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
-using Mapsui.Styles;
 using Mapsui.Tiling;
 using System.Windows;
 using System.Windows.Input;
+using WpfGisLearning.Map;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
@@ -211,14 +210,12 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     private void ShowLocation(double latitude, double longitude, bool recenter = false)
     {
         if (_map is null) return;
-        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
-        var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateShopMarker(selected: false));
+        var result = ShopLocationLayerBuilder.Build(latitude, longitude, "SelectedLocation");
 
         if (_locationLayer is not null) _map.Layers.Remove(_locationLayer);
-        _locationLayer = new MemoryLayer { Name = "SelectedLocation", Style = null, Features = new[] { feature } };
+        _locationLayer = result.Layer;
         _map.Layers.Add(_locationLayer);
-        if (recenter) _map.Navigator.CenterOn(point);
+        if (recenter) _map.Navigator.CenterOn(result.Point);
         EditMapControl.Refresh();
     }
 
