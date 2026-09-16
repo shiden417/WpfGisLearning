@@ -21,25 +21,20 @@ public partial class MainWindow : Window
 
     private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
-    private readonly IShopService _shopService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
     private bool _initialLocationRequested;
     private int? _selectedShopId;
 
     public MainWindow(
-        MainViewModel viewModel,
         ShopListView shopListView,
-        IShopService shopService,
         ICurrentLocationService currentLocationService,
         NewsView newsView)
     {
         InitializeComponent();
-        DataContext = viewModel;
         Icon = CreateRameniaIcon();
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
-        _shopService = shopService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
         _mapController = new MapController(MapControl);
@@ -93,7 +88,7 @@ public partial class MainWindow : Window
     }
 
     private void RebuildShopLayer() =>
-        _mapController.RebuildShopLayer(_shopService.GetShops(), _selectedShopId);
+        _mapController.RebuildShopLayer(_shopListViewModel.Shops, _selectedShopId);
 
     private void MapControl_Loaded(object sender, RoutedEventArgs e)
     {
@@ -162,29 +157,13 @@ public partial class MainWindow : Window
         transform.Y = InfoCardInitialOffset;
         InfoCardBorder.Opacity = 0;
         var storyboard = new Storyboard();
-        AddInfoCardAnimation(
-            storyboard,
-            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(InfoCardFadeDurationMilliseconds)),
-            InfoCardBorder,
-            UIElement.OpacityProperty);
-        AddInfoCardAnimation(
-            storyboard,
-            new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)),
-            transform,
-            TranslateTransform.XProperty);
-        AddInfoCardAnimation(
-            storyboard,
-            new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)),
-            transform,
-            TranslateTransform.YProperty);
+        AddInfoCardAnimation(storyboard, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(InfoCardFadeDurationMilliseconds)), InfoCardBorder, UIElement.OpacityProperty);
+        AddInfoCardAnimation(storyboard, new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)), transform, TranslateTransform.XProperty);
+        AddInfoCardAnimation(storyboard, new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)), transform, TranslateTransform.YProperty);
         storyboard.Begin();
     }
 
-    private static void AddInfoCardAnimation(
-        Storyboard storyboard,
-        AnimationTimeline animation,
-        DependencyObject target,
-        DependencyProperty property)
+    private static void AddInfoCardAnimation(Storyboard storyboard, AnimationTimeline animation, DependencyObject target, DependencyProperty property)
     {
         Storyboard.SetTarget(animation, target);
         Storyboard.SetTargetProperty(animation, new PropertyPath(property));
@@ -265,17 +244,11 @@ public partial class MainWindow : Window
                 "🍜",
                 System.Globalization.CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
-                new Typeface(
-                    new FontFamily("Segoe UI Emoji"),
-                    FontStyles.Normal,
-                    FontWeights.Normal,
-                    FontStretches.Normal),
+                new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
                 RameniaIconFontSize,
                 Brushes.Black,
                 1.0);
-            context.DrawText(
-                formattedText,
-                new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
+            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
         var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
