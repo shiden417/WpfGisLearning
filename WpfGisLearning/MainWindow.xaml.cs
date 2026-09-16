@@ -11,6 +11,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
 
@@ -23,7 +24,7 @@ public partial class MainWindow : Window
     private const double InitialMapPaddingFactor = 1.2;
     private const int SingleShopResolutionIndex = 12;
     private const long ZoomAmount = 500;
-    private const double InfoCardInitialOffset = 18;
+    private const int InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
     private const int RameniaIconSize = 64;
@@ -37,11 +38,10 @@ public partial class MainWindow : Window
     private int? _selectedShopId;
     private readonly ShopListViewModel _shopListViewModel;
     private readonly IShopService _shopService;
-    private readonly INavigationService _navigationService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
 
-    public MainWindow(MainViewModel viewModel, ShopListView shopListView, IShopService shopService, INavigationService navigationService, ICurrentLocationService currentLocationService, NewsView newsView)
+    public MainWindow(MainViewModel viewModel, ShopListView shopListView, IShopService shopService, ICurrentLocationService currentLocationService, NewsView newsView)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -49,7 +49,6 @@ public partial class MainWindow : Window
         MainContent.Content = shopListView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
         _shopService = shopService;
-        _navigationService = navigationService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
