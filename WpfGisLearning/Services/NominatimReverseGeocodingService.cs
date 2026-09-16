@@ -8,7 +8,16 @@ namespace WpfGisLearning.Services;
 
 public sealed class NominatimReverseGeocodingService : IReverseGeocodingService
 {
-    private static readonly HttpClient HttpClient = CreateHttpClient();
+    private readonly HttpClient _httpClient;
+
+    public NominatimReverseGeocodingService() : this(CreateHttpClient())
+    {
+    }
+
+    public NominatimReverseGeocodingService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
 
     public async Task<string?> GetAddressAsync(double latitude, double longitude)
     {
@@ -16,7 +25,7 @@ public sealed class NominatimReverseGeocodingService : IReverseGeocodingService
             return null;
 
         var url = $"https://nominatim.openstreetmap.org/reverse?lat={latitude.ToString(CultureInfo.InvariantCulture)}&lon={longitude.ToString(CultureInfo.InvariantCulture)}&format=jsonv2&accept-language=ja";
-        var result = await HttpClient.GetFromJsonAsync<ReverseGeocodingResult>(url);
+        var result = await _httpClient.GetFromJsonAsync<ReverseGeocodingResult>(url);
         return string.IsNullOrWhiteSpace(result?.DisplayName) ? null : result.DisplayName;
     }
 
