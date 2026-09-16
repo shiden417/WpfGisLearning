@@ -4,7 +4,6 @@
              xmlns:local="clr-namespace:WpfGisLearning">
 
     <Application.Resources>
-        <!-- アプリ全体のカラーパレット -->
         <SolidColorBrush x:Key="AccentBrush" Color="#FFC56B4D" />
         <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF3E1DA" />
         <SolidColorBrush x:Key="AccentPressedBrush" Color="#FFE8CFC3" />
@@ -16,6 +15,8 @@
         <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFFFF" />
         <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFF4F2EF" />
         <SolidColorBrush x:Key="ImagePlaceholderBrush" Color="#FFE8CFC3" />
+        <SolidColorBrush x:Key="FavoriteBrush" Color="#FFE88CA8" />
+        <SolidColorBrush x:Key="FavoriteSoftBrush" Color="#FFFBE6EC" />
 
         <SolidColorBrush x:Key="TextBrush" Color="#FF252A2F" />
         <SolidColorBrush x:Key="SecondaryTextBrush" Color="#FF343A40" />
@@ -29,7 +30,6 @@
         <SolidColorBrush x:Key="HeaderBrush" Color="#FF20252A" />
         <SolidColorBrush x:Key="HeaderButtonBrush" Color="#FF30363B" />
 
-        <!-- 共通ボタンスタイル -->
         <Style x:Key="BaseButton" TargetType="Button">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
             <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
@@ -105,6 +105,16 @@
             </Setter>
         </Style>
 
+        <Style x:Key="FavoriteIconButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="Foreground" Value="{StaticResource FavoriteBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource FavoriteSoftBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
             <Setter Property="Width" Value="38" />
             <Setter Property="Height" Value="38" />
@@ -169,5 +179,4 @@
             <Setter Property="Margin" Value="0,6,0,0" />
         </Style>
     </Application.Resources>
-
 </Application>
