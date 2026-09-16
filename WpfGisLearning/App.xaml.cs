@@ -23,6 +23,7 @@ public partial class App : Application
         services.AddSingleton<IShopDataStore, JsonShopDataStore>();
         services.AddSingleton<IPhotoService, PhotoService>();
         services.AddSingleton<IExcelShopDataService, ExcelShopDataService>();
+        services.AddSingleton<IGeolocationProvider, WindowsGeolocationProvider>();
         services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
         services.AddSingleton<IReverseGeocodingService, NominatimReverseGeocodingService>();
         services.AddSingleton<INewsService, NewsService>();
