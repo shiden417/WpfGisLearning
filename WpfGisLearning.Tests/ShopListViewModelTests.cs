@@ -141,14 +141,14 @@ public class ShopListViewModelTests
     {
         var shopService = new FakeShopService(new Shop { Id = 1, Name = "A" });
         var viewModel = new ShopListViewModel(shopService, new FakeNavigationService());
-        var eventRaised = false;
-        viewModel.ShopsChanged += (_, _) => eventRaised = true;
+        var eventCount = 0;
+        viewModel.ShopsChanged += (_, _) => eventCount++;
         shopService.Shops.Add(new Shop { Id = 2, Name = "B" });
 
         viewModel.RefreshFromService();
 
         Assert.HasCount(2, viewModel.Shops);
-        Assert.IsTrue(eventRaised);
+        Assert.AreEqual(1, eventCount);
     }
 
     [TestMethod]
