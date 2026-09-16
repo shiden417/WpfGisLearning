@@ -46,6 +46,12 @@ public partial class DetailView : System.Windows.Controls.UserControl
         _map.Navigator.CenterOnAndZoomTo(point, 500);
     }
 
+    private void RefreshDetailView()
+    {
+        _viewModel.Reload();
+        InitializeMap(_viewModel);
+    }
+
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
 
@@ -216,11 +222,9 @@ public partial class DetailView : System.Windows.Controls.UserControl
     private void EditButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
-
         var shopId = _viewModel.Shop.Id;
-        Window.GetWindow(this)?.Close();
         _navigationService.NavigateToShopEdit(shopId);
-        _navigationService.NavigateToDetail(shopId);
+        RefreshDetailView();
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
