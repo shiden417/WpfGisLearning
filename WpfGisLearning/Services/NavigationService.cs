@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WpfGisLearning.Services.Interfaces;
@@ -18,10 +19,38 @@ public class NavigationService : INavigationService
     {
         var viewModel = ActivatorUtilities.CreateInstance<DetailViewModel>(_provider, id);
         var view = ActivatorUtilities.CreateInstance<DetailView>(_provider, viewModel);
+
+        var content = new Grid
+        {
+            Background = (Brush)Application.Current.FindResource("WindowBackgroundBrush")
+        };
+        content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(72) });
+        content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Star });
+
+        var header = new Border
+        {
+            Background = (Brush)Application.Current.FindResource("HeaderBrush")
+        };
+        var headerGrid = new Grid { Margin = new Thickness(24, 0, 24, 0) };
+        headerGrid.Children.Add(new TextBlock
+        {
+            Text = "🍜 Ramenia",
+            Foreground = (Brush)Application.Current.FindResource("SurfaceBrush"),
+            FontSize = 28,
+            FontWeight = FontWeights.Bold,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        header.Child = headerGrid;
+        Grid.SetRow(header, 0);
+        content.Children.Add(header);
+
+        Grid.SetRow(view, 1);
+        content.Children.Add(view);
+
         var window = new Window
         {
             Title = "店舗詳細 - Ramenia",
-            Content = view,
+            Content = content,
             Width = 1000,
             Height = 900,
             MinWidth = 820,
