@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using WpfGisLearning.Models;
-using WpfGisLearning.Services;
+using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
 
@@ -22,7 +22,9 @@ public partial class DetailViewModel : ObservableObject
 
     public DetailViewModel(int id, IShopService shopService, IPhotoService photoService)
     {
-        Id = id; _shopService = shopService; _photoService = photoService;
+        Id = id;
+        _shopService = shopService;
+        _photoService = photoService;
         ServiceInstanceId = shopService.GetHashCode().ToString();
         Shop = shopService.GetShops().FirstOrDefault(shop => shop.Id == id);
         IsFavorite = Shop?.IsFavorite ?? false;
@@ -44,6 +46,7 @@ public partial class DetailViewModel : ObservableObject
     private void ToggleFavorite()
     {
         if (Shop is null) return;
-        _shopService.ToggleFavorite(Shop.Id); IsFavorite = Shop.IsFavorite;
+        _shopService.ToggleFavorite(Shop.Id);
+        IsFavorite = Shop.IsFavorite;
     }
 }
