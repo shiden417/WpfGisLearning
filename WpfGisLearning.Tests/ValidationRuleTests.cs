@@ -30,16 +30,32 @@ public class ValidationRuleTests
     [TestMethod]
     public void DoubleRangeValidationRule_RejectsValueOutsideRange()
     {
-        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5 };
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
         var result = rule.Validate("5.1", Culture);
         Assert.IsFalse(result.IsValid);
     }
 
     [TestMethod]
-    public void DoubleRangeValidationRule_AcceptsValueInsideRange()
+    public void DoubleRangeValidationRule_AcceptsOneDecimalPlace()
     {
-        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5 };
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
         var result = rule.Validate("4.5", Culture);
+        Assert.IsTrue(result.IsValid);
+    }
+
+    [TestMethod]
+    public void DoubleRangeValidationRule_RejectsMoreThanOneDecimalPlace()
+    {
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
+        var result = rule.Validate("4.55", Culture);
+        Assert.IsFalse(result.IsValid);
+    }
+
+    [TestMethod]
+    public void DoubleRangeValidationRule_AcceptsIntegerWhenOneDecimalPlaceIsAllowed()
+    {
+        var rule = new DoubleRangeValidationRule { Minimum = 0, Maximum = 5, DecimalPlaces = 1 };
+        var result = rule.Validate("5", Culture);
         Assert.IsTrue(result.IsValid);
     }
 
