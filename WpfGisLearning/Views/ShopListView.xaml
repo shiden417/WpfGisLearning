@@ -68,6 +68,10 @@
         </Grid>
         <Border Grid.Row="1" Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="8,6" Margin="0,0,0,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <TextBlock Text="店舗データ" VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="⇩ テンプレート" Click="DownloadExcelTemplateButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excel入力テンプレートをダウンロード" />
