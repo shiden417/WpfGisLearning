@@ -57,12 +57,12 @@ public partial class ShopEditViewModel : ObservableObject
 
     public bool IsDirty => !string.Equals(_initialState, CreateStateFingerprint(), StringComparison.Ordinal);
     public bool CanEdit => !IsSaving;
-    public bool HasSaveSuccessMessage => !string.IsNullOrWhiteSpace(SaveSuccessMessage);
 
     public ShopEditViewModel(IShopService shopService, IPhotoService photoService)
     {
         _shopService = shopService;
         _photoService = photoService;
+        _initialState = CreateStateFingerprint();
     }
 
     partial void OnShopNameChanged(string value) => MarkDirty();
@@ -83,7 +83,6 @@ public partial class ShopEditViewModel : ObservableObject
     partial void OnClosedSaturdayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
     partial void OnRatingChanged(double value) => MarkDirty();
     partial void OnIsSavingChanged(bool value) => OnPropertyChanged(nameof(CanEdit));
-    partial void OnSaveSuccessMessageChanged(string value) => OnPropertyChanged(nameof(HasSaveSuccessMessage));
 
     public void Load(int? shopId)
     {
