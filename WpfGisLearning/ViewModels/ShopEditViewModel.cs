@@ -240,6 +240,7 @@ public partial class ShopEditViewModel : ObservableObject
             CaptureInitialState();
             _isLoading = false;
             SaveSuccessMessage = "店舗情報を保存しました。";
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -448,12 +449,17 @@ public partial class ShopEditViewModel : ObservableObject
         PhotoCountError = string.Empty;
     }
 
-    private void MarkDirty()
-    {
-        if (_isLoading) return;
-        SaveSuccessMessage = string.Empty;
-        OnPropertyChanged(nameof(IsDirty));
-    }
+    private string CreateStateFingerprint() => string.Join("|",
+        ShopName.Trim(),
+        ShopPrice,
+        ShopAddress.Trim(),
+        ShopLatitude,
+        ShopLongitude,
+        RamenType,
+        OpeningHours,
+        ClosedDay,
+        Rating,
+        string.Join(",", Photos.Select(x => $"{x.Id}:{x.FileName}:{x.IsMain}:{x.SortOrder}:{x.SourcePath}")));
 
     private void CaptureInitialState()
     {
@@ -461,36 +467,18 @@ public partial class ShopEditViewModel : ObservableObject
         OnPropertyChanged(nameof(IsDirty));
     }
 
-    private string CreateStateFingerprint()
+    private void MarkDirty()
     {
-        var photos = string.Join("|", Photos.Select(photo =>
-            $"{photo.Id}:{photo.FileName}:{photo.IsMain}:{photo.SortOrder}:{photo.SourcePath}"));
-
-        return string.Join("\u001F",
-            ShopName,
-            ShopPrice.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            ShopAddress,
-            ShopLatitude?.ToString("R", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
-            ShopLongitude?.ToString("R", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
-            RamenType,
-            OpeningHours,
-            OpeningHoursMode,
-            OpeningTime,
-            ClosingTime,
-            ClosedDay,
-            ClosedSunday,
-            ClosedMonday,
-            ClosedTuesday,
-            ClosedWednesday,
-            ClosedThursday,
-            ClosedFriday,
-            ClosedSaturday,
-            Rating.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
-            photos);
+        if (_isLoading) return;
+        OnPropertyChanged(nameof(IsDirty));
     }
 
     [RelayCommand]
-    private void Cancel() => RequestClose?.Invoke(this, EventArgs.Empty);
+    private void Cancel()
+    {
+        CaptureInitialState();
+        RequestClose?.Invoke(this, EventArgs.Empty);
+    }
 
     public event EventHandler? RequestClose;
 }
