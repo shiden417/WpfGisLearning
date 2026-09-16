@@ -60,6 +60,14 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         if (sender is System.Windows.Controls.Button { Tag: ShopPhoto photo }) _viewModel.SetMainPhoto(photo);
     }
 
+    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (Validation.GetHasError(ShopPriceTextBox) || Validation.GetHasError(RatingTextBox))
+            return;
+
+        _viewModel.SaveCommand.Execute(null);
+    }
+
     private void ShopEditView_Loaded(object sender, RoutedEventArgs e)
     {
         if (_map is not null) return;
