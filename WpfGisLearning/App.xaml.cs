@@ -20,6 +20,7 @@ public partial class App : Application
         services.AddSingleton<MainWindow>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IShopService, ShopService>();
+        services.AddSingleton<IShopDataStore, JsonShopDataStore>();
         services.AddSingleton<IPhotoService, PhotoService>();
         services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
         services.AddSingleton<IReverseGeocodingService, NominatimReverseGeocodingService>();
