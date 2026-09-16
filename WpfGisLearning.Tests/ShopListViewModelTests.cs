@@ -127,6 +127,20 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
+    public void SelectShopById_WhenShopDoesNotExistDoesNotChangeSelection()
+    {
+        var viewModel = CreateViewModel(new Shop { Id = 1, Name = "A" });
+        viewModel.SelectedShop = viewModel.Shops[0];
+        var eventCount = 0;
+        viewModel.SelectedShopChanged += (_, _) => eventCount++;
+
+        viewModel.SelectShopById(999);
+
+        Assert.AreEqual(1, viewModel.SelectedShop?.Id);
+        Assert.AreEqual(0, eventCount);
+    }
+
+    [TestMethod]
     public void OpenSelectedShop_NavigatesToSelectedShopDetail()
     {
         var navigation = new FakeNavigationService();
@@ -136,6 +150,32 @@ public class ShopListViewModelTests
         viewModel.OpenSelectedShopCommand.Execute(null);
 
         Assert.AreEqual(42, navigation.DetailShopId);
+    }
+
+    [TestMethod]
+    public void OpenSelectedShop_WhenNothingSelectedDoesNothing()
+    {
+        var navigation = new FakeNavigationService();
+        var viewModel = CreateViewModel(navigation, new Shop { Id = 42, Name = "A" });
+
+        viewModel.OpenSelectedShopCommand.Execute(null);
+
+        Assert.IsNull(navigation.DetailShopId);
+    }
+
+    [TestMethod]
+    public void RefreshFromService_ReloadsCurrentDataAndRaisesEvent()
+    {
+        var shopService = new FakeShopService(new Shop { Id = 1, Name = "A" });
+        var viewModel = new ShopListViewModel(shopService, new FakeNavigationService());
+        var eventRaised = false;
+        viewModel.ShopsChanged += (_, _) => eventRaised = true;
+        shopService.Shops.Add(new Shop { Id = 2, Name = "B" });
+
+        viewModel.RefreshFromService();
+
+        Assert.HasCount(2, viewModel.Shops);
+        Assert.IsTrue(eventRaised);
     }
 
     [TestMethod]
@@ -157,6 +197,8 @@ public class ShopListViewModelTests
         Assert.IsFalse(viewModel.FavoriteOnly);
         Assert.IsFalse(viewModel.NearbyOnly);
         Assert.IsFalse(viewModel.SortByName);
+        Assert.IsFalse(viewModel.SortByPrice);
+        Assert.IsFalse(viewModel.SortByRating);
         Assert.HasCount(2, GetVisibleShops(viewModel));
     }
 
@@ -171,16 +213,16 @@ public class ShopListViewModelTests
 
     private sealed class FakeShopService : IShopService
     {
-        private readonly List<Shop> _shops;
-        public FakeShopService(IEnumerable<Shop> shops) => _shops = shops.ToList();
+        public List<Shop> Shops { get; }
+        public FakeShopService(IEnumerable<Shop> shops) => Shops = shops.ToList();
         public string GetWelcomeMessage() => string.Empty;
-        public IEnumerable<Shop> GetShops() => _shops;
-        public void AddShop(Shop shop) => _shops.Add(shop);
+        public IEnumerable<Shop> GetShops() => Shops;
+        public void AddShop(Shop shop) => Shops.Add(shop);
         public void UpdateShop(Shop shop) { }
-        public void DeleteShop(int id) => _shops.RemoveAll(shop => shop.Id == id);
+        public void DeleteShop(int id) => Shops.RemoveAll(shop => shop.Id == id);
         public void ToggleFavorite(int id)
         {
-            var shop = _shops.FirstOrDefault(x => x.Id == id);
+            var shop = Shops.FirstOrDefault(x => x.Id == id);
             if (shop is not null) shop.IsFavorite = !shop.IsFavorite;
         }
     }
