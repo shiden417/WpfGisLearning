@@ -27,7 +27,14 @@ public class ExternalMapLinkBuilderTests
     [TestMethod]
     public void CreateGoogleMapsUrl_RejectsNullShop()
     {
-        Assert.ThrowsException<ArgumentNullException>(
-            () => ExternalMapLinkBuilder.CreateGoogleMapsUrl(null!));
+        try
+        {
+            ExternalMapLinkBuilder.CreateGoogleMapsUrl(null!);
+            Assert.Fail("ArgumentNullException が発生しませんでした。");
+        }
+        catch (ArgumentNullException)
+        {
+            // 期待した例外。
+        }
     }
 }
