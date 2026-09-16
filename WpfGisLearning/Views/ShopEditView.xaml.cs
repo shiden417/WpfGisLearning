@@ -101,7 +101,13 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void HostWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (_allowWindowClose || !_viewModel.IsDirty || _viewModel.IsSaving) return;
+        if (_allowWindowClose) return;
+        if (_viewModel.IsSaving)
+        {
+            e.Cancel = true;
+            return;
+        }
+        if (!_viewModel.IsDirty) return;
 
         var result = MessageBox.Show(
             "変更内容が保存されていません。保存せずに閉じますか？",
