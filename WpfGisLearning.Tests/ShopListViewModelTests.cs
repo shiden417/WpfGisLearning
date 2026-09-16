@@ -86,19 +86,6 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
-    public void Sort_ByNameUsesAscendingOrder()
-    {
-        var viewModel = CreateViewModel(
-            new Shop { Id = 1, Name = "B" },
-            new Shop { Id = 2, Name = "A" },
-            new Shop { Id = 3, Name = "C" });
-
-        viewModel.SortByName = true;
-
-        Assert.IsTrue(GetVisibleShops(viewModel).Select(shop => shop.Id).SequenceEqual([2, 1, 3]));
-    }
-
-    [TestMethod]
     public void ToggleFavorite_UpdatesShopAndRaisesShopsChanged()
     {
         var viewModel = CreateViewModel(new Shop { Id = 1, Name = "A", IsFavorite = false });
@@ -175,14 +162,14 @@ public class ShopListViewModelTests
         viewModel.SelectedPriceFilter = "1000円以下";
         viewModel.FavoriteOnly = true;
         viewModel.NearbyOnly = true;
-        viewModel.SortByName = true;
+        viewModel.SortByPrice = true;
+        viewModel.SortByRating = true;
         viewModel.ClearSearchCommand.Execute(null);
         Assert.AreEqual(string.Empty, viewModel.SearchKeyword);
         Assert.AreEqual("すべて", viewModel.SelectedRamenType);
         Assert.AreEqual("すべて", viewModel.SelectedPriceFilter);
         Assert.IsFalse(viewModel.FavoriteOnly);
         Assert.IsFalse(viewModel.NearbyOnly);
-        Assert.IsFalse(viewModel.SortByName);
         Assert.IsFalse(viewModel.SortByPrice);
         Assert.IsFalse(viewModel.SortByRating);
         Assert.HasCount(2, GetVisibleShops(viewModel));
