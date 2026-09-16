@@ -247,7 +247,6 @@ public partial class ShopEditViewModel : ObservableObject
         if (_isEdit)
         {
             DeleteRemovedPhotos(shop);
-            _shopService.UpdateShop(shop);
             return;
         }
 
@@ -282,7 +281,9 @@ public partial class ShopEditViewModel : ObservableObject
 
     private void NormalizePhotoOrder()
     {
-        for (var i = 0; i < Photos.Count; i++) Photos[i].SortOrder = i;
+        for (var i = 0; i < Photos.Count; i++)
+            Photos[i].SortOrder = i;
+
         OnPropertyChanged(nameof(Photos));
     }
 
