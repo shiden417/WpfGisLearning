@@ -10,14 +10,28 @@ using WpfGisLearning.ViewModels;
 
 namespace WpfGisLearning.Views;
 
+/// <summary>
+/// 店舗詳細画面のViewです。
+/// 店舗情報表示に加えて、WPF側で必要な地図操作・写真ビューア・外部地図起動を担当します。
+/// </summary>
 public partial class DetailView : System.Windows.Controls.UserControl
 {
+    // 詳細画面の地図で使用するズーム量です。
     private const long ZoomAmount = 500;
+
+    // 画面に表示している店舗のViewModelです。
     private readonly DetailViewModel _viewModel;
+
+    // 編集画面への遷移を担当するサービスです。
     private readonly INavigationService _navigationService;
+
+    // 店舗削除など、店舗データ操作を担当するサービスです。
     private readonly IShopService _shopService;
+
+    // 詳細画面専用のMapsui地図です。
     private Mapsui.Map? _map;
 
+    /// <summary>依存するViewModelとサービスを受け取り、画面を初期化します。</summary>
     public DetailView(DetailViewModel viewModel, INavigationService navigationService, IShopService shopService)
     {
         InitializeComponent();
@@ -28,6 +42,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         InitializeMap(viewModel);
     }
 
+    /// <summary>店舗位置を中心にした詳細画面用の地図を生成します。</summary>
     private void InitializeMap(DetailViewModel viewModel)
     {
         _map = new Mapsui.Map();
@@ -40,15 +55,20 @@ public partial class DetailView : System.Windows.Controls.UserControl
         _map.Navigator.CenterOnAndZoomTo(result.Point, ZoomAmount);
     }
 
+    /// <summary>編集後などにViewModelと地図を再読み込みします。</summary>
     private void RefreshDetailView()
     {
         _viewModel.Reload();
         InitializeMap(_viewModel);
     }
 
+    /// <summary>詳細画面の地図を拡大します。</summary>
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
+
+    /// <summary>詳細画面の地図を縮小します。</summary>
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
 
+    /// <summary>店舗位置をGoogle Mapsで開きます。</summary>
     private void OpenExternalMapButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
@@ -63,6 +83,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         }
     }
 
+    /// <summary>店舗写真をクリックしたとき、写真ビューアを開きます。</summary>
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not string path) return;
@@ -78,6 +99,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         }
     }
 
+    /// <summary>写真を前後に切り替えられるモーダルビューアWindowを生成します。</summary>
     private Window CreatePhotoViewerWindow(int startIndex)
     {
         var window = new Window
@@ -128,6 +150,8 @@ public partial class DetailView : System.Windows.Controls.UserControl
         window.Content = grid;
 
         var currentIndex = startIndex;
+
+        // 現在位置の写真、件数表示、前後ボタンの表示状態を更新します。
         void UpdatePhoto()
         {
             if (_viewModel.PhotoPaths.Count == 0) { window.Close(); return; }
@@ -139,7 +163,10 @@ public partial class DetailView : System.Windows.Controls.UserControl
             nextButton.Visibility = showNavigation;
         }
 
+        // 前の写真へ移動し、先頭からは末尾へ循環します。
         void Previous() { currentIndex = currentIndex == 0 ? _viewModel.PhotoPaths.Count - 1 : currentIndex - 1; UpdatePhoto(); }
+
+        // 次の写真へ移動し、末尾からは先頭へ循環します。
         void Next() { currentIndex = currentIndex == _viewModel.PhotoPaths.Count - 1 ? 0 : currentIndex + 1; UpdatePhoto(); }
 
         previousButton.Click += (_, _) => Previous();
@@ -156,6 +183,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         return window;
     }
 
+    /// <summary>写真ビューアの前へ・次へボタンを生成します。</summary>
     private static Button CreatePhotoNavigationButton(bool isPrevious)
     {
         var path = new System.Windows.Shapes.Path
@@ -189,6 +217,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         };
     }
 
+    /// <summary>写真ビューア右上の閉じるアイコンを生成します。</summary>
     private static System.Windows.Shapes.Path CreateCloseIcon() => new()
     {
         Data = Geometry.Parse("M 4,4 L 16,16 M 16,4 L 4,16"),
@@ -204,6 +233,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         Margin = new Thickness(0)
     };
 
+    /// <summary>指定された画像ファイルをWPFのBitmapImageへ読み込みます。</summary>
     private static BitmapImage LoadBitmap(string path)
     {
         if (!File.Exists(path)) throw new FileNotFoundException("写真ファイルが見つかりません。", path);
@@ -213,6 +243,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         return bitmap;
     }
 
+    /// <summary>現在の店舗を編集画面へ渡します。</summary>
     private void EditButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
@@ -221,6 +252,7 @@ public partial class DetailView : System.Windows.Controls.UserControl
         RefreshDetailView();
     }
 
+    /// <summary>確認後に現在の店舗を削除し、詳細Windowを閉じます。</summary>
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
@@ -237,8 +269,10 @@ public partial class DetailView : System.Windows.Controls.UserControl
         }
     }
 
+    /// <summary>WPFのMessageBoxで統一したエラー表示を行います。</summary>
     private static void ShowErrorDialog(string message, Exception ex) =>
         MessageBox.Show($"{message}\n{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
 
+    /// <summary>詳細画面をホストしているWindowを閉じます。</summary>
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Window.GetWindow(this)?.Close();
 }
