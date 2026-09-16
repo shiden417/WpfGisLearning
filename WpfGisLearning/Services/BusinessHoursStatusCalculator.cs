@@ -6,10 +6,16 @@ namespace WpfGisLearning.Services;
 public static class BusinessHoursStatusCalculator
 {
     private static readonly string[] DayNames = ["日", "月", "火", "水", "木", "金", "土"];
+    public const string Open24Hours = "24時間営業";
+
+    public static bool HasOpeningHours(string? openingHours) =>
+        !string.IsNullOrWhiteSpace(openingHours);
 
     public static bool IsOpen(string? openingHours, string? closedDay, DateTime dateTime)
     {
+        if (!HasOpeningHours(openingHours)) return false;
         if (IsClosedDay(closedDay, dateTime.DayOfWeek)) return false;
+        if (string.Equals(openingHours.Trim(), Open24Hours, StringComparison.Ordinal)) return true;
 
         foreach (var (start, end) in ParseTimeRanges(openingHours))
         {
