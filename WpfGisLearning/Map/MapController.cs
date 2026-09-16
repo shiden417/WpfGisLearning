@@ -3,7 +3,6 @@ using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Tiling;
-using Mapsui.UI.Wpf;
 using System.Windows;
 using WpfGisLearning.Models;
 
@@ -16,12 +15,17 @@ public sealed class MapController
     private const int SingleShopResolutionIndex = 12;
     private const long ZoomAmount = 500;
 
-    private readonly MapControl _mapControl;
+    private readonly IMapControlAdapter _mapControl;
     private Mapsui.Map? _map;
     private MemoryLayer? _currentLocationLayer;
     private ShopMapLayerResult? _shopMapLayerResult;
 
-    public MapController(MapControl mapControl)
+    public MapController(Mapsui.UI.Wpf.MapControl mapControl)
+        : this(new MapControlAdapter(mapControl))
+    {
+    }
+
+    public MapController(IMapControlAdapter mapControl)
     {
         _mapControl = mapControl;
     }
