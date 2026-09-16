@@ -80,7 +80,7 @@ public class ShopEditViewModelTests
         viewModel.ClosedMonday = true;
         viewModel.ClosedTuesday = true;
 
-        viewModel.SaveCommand.Execute(null);
+        viewModel.SaveCommand.ExecuteAsync(null).GetAwaiter().GetResult();
 
         Assert.HasCount(1, shopService.Shops);
         var shop = shopService.Shops[0];
@@ -104,7 +104,7 @@ public class ShopEditViewModelTests
         viewModel.ShopLongitude = 139.7671;
         viewModel.OpeningHoursMode = "24時間営業";
 
-        viewModel.SaveCommand.Execute(null);
+        viewModel.SaveCommand.ExecuteAsync(null).GetAwaiter().GetResult();
 
         Assert.HasCount(1, shopService.Shops);
         Assert.AreEqual("24時間営業", shopService.Shops[0].OpeningHours);
@@ -121,7 +121,7 @@ public class ShopEditViewModelTests
         viewModel.ShopLongitude = 139.7671;
         viewModel.OpeningHoursMode = "未設定";
 
-        viewModel.SaveCommand.Execute(null);
+        viewModel.SaveCommand.ExecuteAsync(null).GetAwaiter().GetResult();
 
         Assert.HasCount(1, shopService.Shops);
         Assert.AreEqual(string.Empty, shopService.Shops[0].OpeningHours);
