@@ -10,9 +10,9 @@ public partial class ShopListView : UserControl
 {
     private readonly ShopListViewModel _viewModel;
 
-    public event EventHandler? DownloadExcelTemplateRequested;
-    public event EventHandler? ExportExcelRequested;
-    public event EventHandler? ImportExcelRequested;
+    public event RoutedEventHandler? DownloadExcelTemplateRequested;
+    public event RoutedEventHandler? ExportExcelRequested;
+    public event RoutedEventHandler? ImportExcelRequested;
 
     public ShopListView(ShopListViewModel viewModel)
     {
@@ -33,13 +33,13 @@ public partial class ShopListView : UserControl
     }
 
     private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e) =>
-        DownloadExcelTemplateRequested?.Invoke(this, EventArgs.Empty);
+        DownloadExcelTemplateRequested?.Invoke(sender, e);
 
     private void ExportExcelButton_Click(object sender, RoutedEventArgs e) =>
-        ExportExcelRequested?.Invoke(this, EventArgs.Empty);
+        ExportExcelRequested?.Invoke(sender, e);
 
     private void ImportExcelButton_Click(object sender, RoutedEventArgs e) =>
-        ImportExcelRequested?.Invoke(this, EventArgs.Empty);
+        ImportExcelRequested?.Invoke(sender, e);
 
     private void ShopListItem_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
