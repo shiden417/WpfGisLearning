@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
-using WpfGisLearning.ViewModels;
 using WpfGisLearning.Views;
 
 namespace WpfGisLearning;
@@ -14,10 +13,17 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
         var services = new ServiceCollection();
-        services.AddSingleton<MainViewModel>();
+
         services.AddSingleton<MainWindow>();
         services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<IShopService, ShopService>();
+        services.AddSingleton<IPhotoService, PhotoService>();
+        services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
+        services.AddSingleton<IReverseGeocodingService, NominatimReverseGeocodingService>();
+        services.AddSingleton<NewsService>();
+
         services.AddTransient<DetailView>();
         services.AddTransient<ShopListView>();
         services.AddTransient<ShopListViewModel>();
@@ -27,11 +33,7 @@ public partial class App : Application
         services.AddTransient<Views.DetailPage>();
         services.AddTransient<NewsView>();
         services.AddTransient<NewsViewModel>();
-        services.AddSingleton<NewsService>();
-        services.AddSingleton<IShopService, ShopService>();
-        services.AddSingleton<IPhotoService, PhotoService>();
-        services.AddSingleton<ICurrentLocationService, CurrentLocationService>();
-        services.AddSingleton<IReverseGeocodingService, NominatimReverseGeocodingService>();
+
         _serviceProvider = services.BuildServiceProvider();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
