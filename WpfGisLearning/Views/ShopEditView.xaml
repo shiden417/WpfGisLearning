@@ -7,6 +7,7 @@
         <conv:ImagePathConverter x:Key="ImagePathConverter" />
         <Style TargetType="TextBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
         <Style TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+        <Style x:Key="OpeningTimeComboBox" TargetType="ComboBox"><Setter Property="FocusVisualStyle" Value="{x:Null}" /><Setter Property="VerticalContentAlignment" Value="Center" /><Setter Property="IsEnabled" Value="False" /><Style.Triggers><DataTrigger Binding="{Binding OpeningHoursMode}" Value="時間指定"><Setter Property="IsEnabled" Value="True" /></DataTrigger></Style.Triggers></Style>
         <Style x:Key="MainPhotoButton" TargetType="Button" BasedOn="{StaticResource BaseButton}"><Setter Property="Padding" Value="7,0" /><Setter Property="Margin" Value="2" /><Style.Triggers><DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="Content" Value="✓ メイン" /><Setter Property="Background" Value="{StaticResource AccentBrush}" /><Setter Property="Foreground" Value="{StaticResource SurfaceBrush}" /><Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" /></DataTrigger></Style.Triggers></Style>
     </UserControl.Resources>
     <Grid Background="{StaticResource WindowBackgroundBrush}">
@@ -25,11 +26,11 @@
                         <ComboBox ItemsSource="{Binding OpeningHoursModes}" SelectedItem="{Binding OpeningHoursMode}" Height="36" Padding="8,0" />
                         <Grid Margin="0,6,0,0">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding OpeningTime}" Height="36" Padding="8,0" IsEnabled="{Binding OpeningHoursMode, Converter={StaticResource StringEqualsConverter}, ConverterParameter=時間指定}" />
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding OpeningTime}" Height="36" Padding="8,0" Style="{StaticResource OpeningTimeComboBox}" />
                             <TextBlock Grid.Column="1" Text="～" VerticalAlignment="Center" Margin="8,0" Foreground="{StaticResource MutedBrush}" />
-                            <ComboBox Grid.Column="2" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding ClosingTime}" Height="36" Padding="8,0" IsEnabled="{Binding OpeningHoursMode, Converter={StaticResource StringEqualsConverter}, ConverterParameter=時間指定}" />
+                            <ComboBox Grid.Column="2" ItemsSource="{Binding TimeOptions}" SelectedItem="{Binding ClosingTime}" Height="36" Padding="8,0" Style="{StaticResource OpeningTimeComboBox}" />
                         </Grid>
-                        <TextBlock Text="定休日" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
+                        <TextBlock Text="定休日（複数選択可）" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                         <WrapPanel>
                             <CheckBox Content="日" IsChecked="{Binding ClosedSunday}" Margin="0,0,12,0" />
                             <CheckBox Content="月" IsChecked="{Binding ClosedMonday}" Margin="0,0,12,0" />
