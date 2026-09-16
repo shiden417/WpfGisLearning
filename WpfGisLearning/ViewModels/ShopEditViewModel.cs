@@ -257,6 +257,8 @@ public partial class ShopEditViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
         if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
         if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
+        else if (Math.Abs(Rating * 10 - Math.Round(Rating * 10)) > 1e-9)
+            RatingError = "評価は小数第1位までで入力してください。";
     }
 
     private void ValidateOpeningHours()
