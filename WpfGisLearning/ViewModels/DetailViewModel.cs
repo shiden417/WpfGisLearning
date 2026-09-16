@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using WpfGisLearning.Models;
+using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
@@ -19,6 +20,11 @@ public partial class DetailViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isFavorite;
+
+    public bool IsCurrentlyOpen => Shop is not null &&
+        BusinessHoursStatusCalculator.IsOpen(Shop.OpeningHours, Shop.ClosedDay, DateTime.Now);
+
+    public string BusinessHoursStatus => IsCurrentlyOpen ? "営業中" : "営業時間外";
 
     public DetailViewModel(int id, IShopService shopService, IPhotoService photoService)
     {
