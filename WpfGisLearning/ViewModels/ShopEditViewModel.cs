@@ -16,6 +16,8 @@ public partial class ShopEditViewModel : ObservableObject
     private readonly IPhotoService _photoService;
     private readonly List<ShopPhoto> _originalPhotos = [];
     private bool _isEdit;
+    private bool _isLoading;
+    private string _initialState = string.Empty;
 
     public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
@@ -50,6 +52,12 @@ public partial class ShopEditViewModel : ObservableObject
     [ObservableProperty] private string openingHoursError = string.Empty;
     [ObservableProperty] private string locationError = string.Empty;
     [ObservableProperty] private string photoCountError = string.Empty;
+    [ObservableProperty] private bool isSaving;
+    [ObservableProperty] private string saveSuccessMessage = string.Empty;
+
+    public bool IsDirty => !string.Equals(_initialState, CreateStateFingerprint(), StringComparison.Ordinal);
+    public bool CanEdit => !IsSaving;
+    public bool HasSaveSuccessMessage => !string.IsNullOrWhiteSpace(SaveSuccessMessage);
 
     public ShopEditViewModel(IShopService shopService, IPhotoService photoService)
     {
@@ -57,22 +65,33 @@ public partial class ShopEditViewModel : ObservableObject
         _photoService = photoService;
     }
 
-    partial void OnOpeningHoursModeChanged(string value) => UpdateOpeningHours();
-    partial void OnOpeningTimeChanged(string value) => UpdateOpeningHours();
-    partial void OnClosingTimeChanged(string value) => UpdateOpeningHours();
-    partial void OnClosedSundayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedMondayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedTuesdayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedWednesdayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedThursdayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedFridayChanged(bool value) => UpdateClosedDay();
-    partial void OnClosedSaturdayChanged(bool value) => UpdateClosedDay();
+    partial void OnShopNameChanged(string value) => MarkDirty();
+    partial void OnShopPriceChanged(decimal value) => MarkDirty();
+    partial void OnShopAddressChanged(string value) => MarkDirty();
+    partial void OnShopLatitudeChanged(double? value) => MarkDirty();
+    partial void OnShopLongitudeChanged(double? value) => MarkDirty();
+    partial void OnRamenTypeChanged(string value) => MarkDirty();
+    partial void OnOpeningHoursModeChanged(string value) { UpdateOpeningHours(); MarkDirty(); }
+    partial void OnOpeningTimeChanged(string value) { UpdateOpeningHours(); MarkDirty(); }
+    partial void OnClosingTimeChanged(string value) { UpdateOpeningHours(); MarkDirty(); }
+    partial void OnClosedSundayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedMondayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedTuesdayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedWednesdayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedThursdayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedFridayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnClosedSaturdayChanged(bool value) { UpdateClosedDay(); MarkDirty(); }
+    partial void OnRatingChanged(double value) => MarkDirty();
+    partial void OnIsSavingChanged(bool value) => OnPropertyChanged(nameof(CanEdit));
+    partial void OnSaveSuccessMessageChanged(string value) => OnPropertyChanged(nameof(HasSaveSuccessMessage));
 
     public void Load(int? shopId)
     {
+        _isLoading = true;
         ShopId = shopId;
         _isEdit = shopId.HasValue;
         ClearErrors();
+        SaveSuccessMessage = string.Empty;
         Photos.Clear();
         _originalPhotos.Clear();
         OnPropertyChanged(nameof(ScreenTitle));
@@ -85,6 +104,8 @@ public partial class ShopEditViewModel : ObservableObject
             OpeningTime = "11:00";
             ClosingTime = "21:00";
             ClearClosedDays();
+            _isLoading = false;
+            CaptureInitialState();
             return;
         }
 
@@ -92,6 +113,8 @@ public partial class ShopEditViewModel : ObservableObject
         if (shop is null)
         {
             ErrorMessage = "編集対象の店舗が見つかりません。";
+            _isLoading = false;
+            CaptureInitialState();
             return;
         }
 
@@ -124,6 +147,9 @@ public partial class ShopEditViewModel : ObservableObject
                 SortOrder = photo.SortOrder
             });
         }
+
+        _isLoading = false;
+        CaptureInitialState();
     }
 
     public void AddPhoto(string sourcePath)
@@ -140,7 +166,7 @@ public partial class ShopEditViewModel : ObservableObject
 
         Photos.Add(new ShopPhoto { SourcePath = sourcePath, SortOrder = Photos.Count, IsMain = Photos.Count == 0 });
         PhotoCountError = string.Empty;
-        OnPropertyChanged(nameof(Photos));
+        MarkDirty();
     }
 
     public void RemovePhoto(ShopPhoto? photo)
@@ -151,6 +177,7 @@ public partial class ShopEditViewModel : ObservableObject
         if (wasMain && Photos.Count > 0) Photos[0].IsMain = true;
         if (Photos.Count < MaxPhotoCount) PhotoCountError = string.Empty;
         NormalizePhotoOrder();
+        MarkDirty();
     }
 
     public void SetMainPhoto(ShopPhoto? photo)
@@ -158,6 +185,7 @@ public partial class ShopEditViewModel : ObservableObject
         if (photo is null) return;
         foreach (var item in Photos) item.IsMain = item == photo;
         RefreshPhotoCollection();
+        MarkDirty();
     }
 
     private void RefreshPhotoCollection()
@@ -178,8 +206,10 @@ public partial class ShopEditViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Save()
+    private async Task Save()
     {
+        if (IsSaving) return;
+
         ClearErrors();
         ValidateRequiredFields();
         ValidateOpeningHours();
@@ -197,15 +227,28 @@ public partial class ShopEditViewModel : ObservableObject
         var shop = CreateShop(latitude, longitude, existing);
         try
         {
-            SaveShop(shop);
-            SavePhotos(shop);
-            UpdatePhotoFileNames(shop);
-            _shopService.UpdateShop(shop);
-            RequestClose?.Invoke(this, EventArgs.Empty);
+            IsSaving = true;
+            SaveSuccessMessage = string.Empty;
+            await Task.Run(() =>
+            {
+                SaveShop(shop);
+                SavePhotos(shop);
+                UpdatePhotoFileNames(shop);
+                _shopService.UpdateShop(shop);
+            });
+
+            _isLoading = true;
+            CaptureInitialState();
+            _isLoading = false;
+            SaveSuccessMessage = "店舗情報を保存しました。";
         }
         catch (Exception ex)
         {
             ErrorMessage = $"店舗を保存できませんでした。\n{ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
         }
     }
 
@@ -404,6 +447,47 @@ public partial class ShopEditViewModel : ObservableObject
         OpeningHoursError = string.Empty;
         LocationError = string.Empty;
         PhotoCountError = string.Empty;
+    }
+
+    private void MarkDirty()
+    {
+        if (_isLoading) return;
+        SaveSuccessMessage = string.Empty;
+        OnPropertyChanged(nameof(IsDirty));
+    }
+
+    private void CaptureInitialState()
+    {
+        _initialState = CreateStateFingerprint();
+        OnPropertyChanged(nameof(IsDirty));
+    }
+
+    private string CreateStateFingerprint()
+    {
+        var photos = string.Join("|", Photos.Select(photo =>
+            $"{photo.Id}:{photo.FileName}:{photo.IsMain}:{photo.SortOrder}:{photo.SourcePath}"));
+
+        return string.Join("\u001F",
+            ShopName,
+            ShopPrice.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ShopAddress,
+            ShopLatitude?.ToString("R", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            ShopLongitude?.ToString("R", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            RamenType,
+            OpeningHours,
+            OpeningHoursMode,
+            OpeningTime,
+            ClosingTime,
+            ClosedDay,
+            ClosedSunday,
+            ClosedMonday,
+            ClosedTuesday,
+            ClosedWednesday,
+            ClosedThursday,
+            ClosedFriday,
+            ClosedSaturday,
+            Rating.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+            photos);
     }
 
     [RelayCommand]
