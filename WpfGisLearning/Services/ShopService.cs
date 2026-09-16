@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using WpfGisLearning.Models;
+using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.Services;
 
@@ -12,10 +13,16 @@ public class ShopService : IShopService
 
     public ShopService(IPhotoService photoService)
     {
-        _photoService = photoService; _shops = Load();
-        if (_shops.Count == 0) { _shops.AddRange(CreateInitialShops()); Save(); }
+        _photoService = photoService;
+        _shops = Load();
+        if (_shops.Count == 0)
+        {
+            _shops.AddRange(CreateInitialShops());
+            Save();
+        }
         RefreshPhotoPaths();
     }
+
     public string GetWelcomeMessage() => "Welcome to Ramenia!";
     public IEnumerable<Shop> GetShops() => _shops;
     public void AddShop(Shop shop) { RefreshPhotoPath(shop); _shops.Add(shop); Save(); }
