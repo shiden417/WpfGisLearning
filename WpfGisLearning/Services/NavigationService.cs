@@ -1,31 +1,29 @@
-using Microsoft.Extensions.DependencyInjection;
-using System.Windows.Controls;
 using WpfGisLearning.Services.Interfaces;
-using WpfGisLearning.ViewModels;
-using WpfGisLearning.Views;
 
 namespace WpfGisLearning.Services;
 
 public class NavigationService : INavigationService
 {
-    private readonly IServiceProvider _provider;
     private readonly INavigationHost _host;
+    private readonly INavigationViewFactory _viewFactory;
 
     public NavigationService(IServiceProvider provider)
-        : this(provider, new WpfNavigationHost())
+        : this(provider, new WpfNavigationHost(), new WpfNavigationViewFactory(provider))
     {
     }
 
-    public NavigationService(IServiceProvider provider, INavigationHost host)
+    public NavigationService(
+        IServiceProvider provider,
+        INavigationHost host,
+        INavigationViewFactory viewFactory)
     {
-        _provider = provider;
         _host = host;
+        _viewFactory = viewFactory;
     }
 
     public void NavigateToDetail(int id)
     {
-        var viewModel = ActivatorUtilities.CreateInstance<DetailViewModel>(_provider, id);
-        var view = ActivatorUtilities.CreateInstance<DetailView>(_provider, viewModel);
+        var view = _viewFactory.CreateDetailView(id);
 
         _host.ShowDialog(
             view,
@@ -39,9 +37,7 @@ public class NavigationService : INavigationService
 
     public void NavigateToShopEdit(int? id = null)
     {
-        var viewModel = _provider.GetRequiredService<ShopEditViewModel>();
-        viewModel.Load(id);
-        var view = ActivatorUtilities.CreateInstance<ShopEditView>(_provider, viewModel);
+        var view = _viewFactory.CreateShopEditView(id);
 
         _host.ShowDialog(
             view,
@@ -54,18 +50,13 @@ public class NavigationService : INavigationService
 
     public void NavigateToShopPageFrame()
     {
-        var frame = new Frame
-        {
-            NavigationUIVisibility = System.Windows.Navigation.NavigationUIVisibility.Visible
-        };
-        var shopPage = ActivatorUtilities.CreateInstance<Views.ShopPage>(_provider);
-        frame.Navigate(shopPage);
-        _host.NavigateMainContent(frame);
+        var content = _viewFactory.CreateShopPageFrame();
+        _host.NavigateMainContent(content);
     }
 
     public void NavigateToShopList()
     {
-        var view = ActivatorUtilities.CreateInstance<Views.ShopListView>(_provider);
-        _host.NavigateMainContent(view);
+        var content = _viewFactory.CreateShopListView();
+        _host.NavigateMainContent(content);
     }
 }
