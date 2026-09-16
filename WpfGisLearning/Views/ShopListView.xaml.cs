@@ -32,6 +32,15 @@ public partial class ShopListView : UserControl
         Dispatcher.BeginInvoke(() => ShopListBox.ScrollIntoView(shop));
     }
 
+    private void ExcelMenuButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.ContextMenu is ContextMenu contextMenu)
+        {
+            contextMenu.PlacementTarget = button;
+            contextMenu.IsOpen = true;
+        }
+    }
+
     private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e) =>
         DownloadExcelTemplateRequested?.Invoke(sender, e);
 
