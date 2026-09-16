@@ -99,7 +99,7 @@ public class ShopValidationTests
     [TestMethod]
     public void TimeOptions_ContainsEveryHalfHour()
     {
-        Assert.AreEqual(48, ShopValidation.TimeOptions.Count);
+        Assert.HasCount(48, ShopValidation.TimeOptions);
         CollectionAssert.Contains(ShopValidation.TimeOptions.ToArray(), "00:00");
         CollectionAssert.Contains(ShopValidation.TimeOptions.ToArray(), "23:30");
     }
