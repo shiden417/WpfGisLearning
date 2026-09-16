@@ -2,9 +2,9 @@ using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
+using Mapsui.Tiling;
 using Mapsui.UI.Wpf;
 using System.Windows;
-using System.Windows.Input;
 using WpfGisLearning.Models;
 
 namespace WpfGisLearning.Services;
@@ -72,7 +72,11 @@ public sealed class MapController
     public void CenterOnShop(Shop shop)
     {
         if (_map is null) return;
-        var point = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
+
+        var point = SphericalMercator
+            .FromLonLat(shop.Longitude, shop.Latitude)
+            .ToMPoint();
+
         _map.Navigator.CenterOn(point);
     }
 
@@ -94,7 +98,9 @@ public sealed class MapController
     {
         if (_map is null) return;
 
-        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
+        var point = SphericalMercator
+            .FromLonLat(longitude, latitude)
+            .ToMPoint();
         var feature = new PointFeature(point);
         feature.Styles.Add(MapMarkerStyleFactory.CreateCurrentLocationMarker());
 
@@ -114,7 +120,11 @@ public sealed class MapController
     public void CenterOn(double latitude, double longitude)
     {
         if (_map is null) return;
-        _map.Navigator.CenterOn(SphericalMercator.FromLonLat(longitude, latitude).ToMPoint());
+
+        var point = SphericalMercator
+            .FromLonLat(longitude, latitude)
+            .ToMPoint();
+        _map.Navigator.CenterOn(point);
     }
 
     public void ZoomIn() => _map?.Navigator.ZoomIn(ZoomAmount);
