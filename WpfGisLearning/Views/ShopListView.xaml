@@ -6,12 +6,19 @@
     <UserControl.Resources>
         <Style x:Key="FilterComboBox" TargetType="ComboBox">
             <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Padding" Value="10,0" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        </Style>
+        <Style x:Key="FilterLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource LabelBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,5,0" />
         </Style>
         <Style x:Key="FilterCheckBox" TargetType="CheckBox">
             <Setter Property="Height" Value="36" />
@@ -86,11 +93,20 @@
                         <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" Height="38" />
                     </Grid>
                     <WrapPanel Grid.Row="1" Margin="0,10,0,0">
-                        <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="116" Margin="0,0,8,6" />
-                        <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="126" Margin="0,0,8,6" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
+                            <TextBlock Text="ジャンル" Style="{StaticResource FilterLabel}" />
+                            <ComboBox ItemsSource="{Binding RamenTypeOptions}" SelectedItem="{Binding SelectedRamenType}" Style="{StaticResource FilterComboBox}" Width="88" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
+                            <TextBlock Text="価格" Style="{StaticResource FilterLabel}" />
+                            <ComboBox ItemsSource="{Binding PriceFilterOptions}" SelectedItem="{Binding SelectedPriceFilter}" Style="{StaticResource FilterComboBox}" Width="112" />
+                        </StackPanel>
                         <CheckBox Content="お気に入り" IsChecked="{Binding FavoriteOnly}" Style="{StaticResource FilterCheckBox}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,8,6">
+                            <TextBlock Text="距離" Style="{StaticResource FilterLabel}" />
+                            <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="76" />
+                        </StackPanel>
                         <CheckBox Content="現在地周辺" IsChecked="{Binding NearbyOnly}" Style="{StaticResource FilterCheckBox}" />
-                        <ComboBox ItemsSource="{Binding NearbyRadiusOptions}" SelectedItem="{Binding SelectedNearbyRadius}" Style="{StaticResource FilterComboBox}" Width="92" Margin="0,0,8,6" />
                         <CheckBox Content="名前 A→Z" IsChecked="{Binding SortByName}" Style="{StaticResource FilterCheckBox}" />
                         <CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource FilterCheckBox}" />
                         <CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource FilterCheckBox}" />
