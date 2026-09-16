@@ -66,6 +66,13 @@ public partial class ShopListViewModel : ObservableObject
     {
         ShopsView.Refresh();
         OnPropertyChanged(nameof(FilteredShopCount));
+
+        if (SelectedShop is not null &&
+            !ShopsView.Cast<Shop>().Any(shop => shop.Id == SelectedShop.Id))
+        {
+            SelectedShop = null;
+        }
+
         ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 
