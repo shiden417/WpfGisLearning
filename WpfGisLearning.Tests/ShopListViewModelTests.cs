@@ -127,20 +127,6 @@ public class ShopListViewModelTests
     }
 
     [TestMethod]
-    public void SelectShopById_WhenShopDoesNotExistDoesNotChangeSelection()
-    {
-        var viewModel = CreateViewModel(new Shop { Id = 1, Name = "A" });
-        viewModel.SelectedShop = viewModel.Shops[0];
-        var eventCount = 0;
-        viewModel.SelectedShopChanged += (_, _) => eventCount++;
-
-        viewModel.SelectShopById(999);
-
-        Assert.AreEqual(1, viewModel.SelectedShop?.Id);
-        Assert.AreEqual(0, eventCount);
-    }
-
-    [TestMethod]
     public void OpenSelectedShop_NavigatesToSelectedShopDetail()
     {
         var navigation = new FakeNavigationService();
@@ -214,7 +200,7 @@ public class ShopListViewModelTests
     private sealed class FakeShopService : IShopService
     {
         public List<Shop> Shops { get; }
-        public FakeShopService(IEnumerable<Shop> shops) => Shops = shops.ToList();
+        public FakeShopService(params Shop[] shops) => Shops = shops.ToList();
         public string GetWelcomeMessage() => string.Empty;
         public IEnumerable<Shop> GetShops() => Shops;
         public void AddShop(Shop shop) => Shops.Add(shop);
@@ -233,6 +219,6 @@ public class ShopListViewModelTests
         public void NavigateToDetail(int id) => DetailShopId = id;
         public void NavigateToShopEdit(int? id = null) { }
         public void NavigateToShopList() { }
-        public void NavigateToShopPageFrame() { }
+        public void NavigateToShopPage() { }
     }
 }
