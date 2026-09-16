@@ -8,6 +8,47 @@ namespace WpfGisLearning.Tests;
 public class ShopEditViewModelTests
 {
     [TestMethod]
+    public void NewViewModel_IsNotDirtyInitially()
+    {
+        var viewModel = CreateViewModel(new TestShopService());
+
+        Assert.IsFalse(viewModel.IsDirty);
+    }
+
+    [TestMethod]
+    public void LoadNewShop_IsNotDirty()
+    {
+        var viewModel = CreateViewModel(new TestShopService());
+
+        viewModel.Load(null);
+
+        Assert.IsFalse(viewModel.IsDirty);
+    }
+
+    [TestMethod]
+    public void ChangingField_MakesViewModelDirty()
+    {
+        var viewModel = CreateViewModel(new TestShopService());
+        viewModel.Load(null);
+
+        viewModel.ShopName = "テスト店舗";
+
+        Assert.IsTrue(viewModel.IsDirty);
+    }
+
+    [TestMethod]
+    public void RevertingField_ClearsDirtyState()
+    {
+        var viewModel = CreateViewModel(new TestShopService());
+        viewModel.Load(null);
+
+        viewModel.ShopName = "テスト店舗";
+        viewModel.ShopName = string.Empty;
+
+        Assert.IsFalse(viewModel.IsDirty);
+    }
+
+    [TestMethod]
     public void Save_WithInvalidRequiredValues_DoesNotSave()
     {
         var shopService = new TestShopService();
@@ -104,9 +145,10 @@ public class ShopEditViewModelTests
     }
 
     [TestMethod]
-    public void SetMainPhoto_ChangesMainPhoto()
+    public void SetMainPhoto_ChangesMainPhotoAndMakesDirty()
     {
         var viewModel = CreateViewModel(new TestShopService());
+        viewModel.Load(null);
         var firstPhoto = new ShopPhoto { Id = "first", IsMain = true };
         var secondPhoto = new ShopPhoto { Id = "second", IsMain = false };
         viewModel.Photos.Add(firstPhoto);
@@ -116,6 +158,7 @@ public class ShopEditViewModelTests
 
         Assert.IsFalse(firstPhoto.IsMain);
         Assert.IsTrue(secondPhoto.IsMain);
+        Assert.IsTrue(viewModel.IsDirty);
         Assert.AreEqual("first", viewModel.Photos[0].Id);
         Assert.AreEqual("second", viewModel.Photos[1].Id);
     }
