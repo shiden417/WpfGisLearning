@@ -11,9 +11,6 @@
                     <TextBlock Text="🍜 Ramenia" Foreground="{StaticResource SurfaceBrush}" FontSize="28" FontWeight="Bold" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Content="⇩" Click="DownloadExcelTemplateButton_Click" Style="{StaticResource HeaderIconButton}" ToolTip="Excel入力テンプレートをダウンロード" />
-                    <Button Content="↥" Click="ExportExcelButton_Click" Style="{StaticResource HeaderIconButton}" ToolTip="店舗データをExcelに書き出す" />
-                    <Button Content="↧" Click="ImportExcelButton_Click" Style="{StaticResource HeaderIconButton}" ToolTip="Excelから店舗データを読み込む" />
                     <Button Content="🗺" Click="ShopMapButton_Click" Style="{StaticResource HeaderIconButton}" ToolTip="店舗・地図" />
                     <Button Content="📰" Click="NewsButton_Click" Style="{StaticResource HeaderIconButton}" ToolTip="ラーメンニュース" />
                 </StackPanel>
