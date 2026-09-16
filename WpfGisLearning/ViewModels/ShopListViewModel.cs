@@ -5,18 +5,13 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using WpfGisLearning.Models;
+using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.ViewModels;
 
 public partial class ShopListViewModel : ObservableObject
 {
-    private const string AllFilter = "すべて";
-    private const string PriceFilter1000 = "1000円以下";
-    private const string PriceFilter1500 = "1500円以下";
-    private const string PriceFilter2000 = "2000円以下";
-    private const double EarthRadiusKm = 6371.0;
-
     public ObservableCollection<Shop> Shops { get; } = new();
     public ICollectionView ShopsView { get; }
     public int FilteredShopCount => ShopsView.Cast<Shop>().Count();
@@ -27,8 +22,8 @@ public partial class ShopListViewModel : ObservableObject
     private double? _nearbyLongitude;
 
     [ObservableProperty] private string searchKeyword = string.Empty;
-    [ObservableProperty] private string selectedRamenType = AllFilter;
-    [ObservableProperty] private string selectedPriceFilter = AllFilter;
+    [ObservableProperty] private string selectedRamenType = ShopFilter.AllFilter;
+    [ObservableProperty] private string selectedPriceFilter = ShopFilter.AllFilter;
     [ObservableProperty] private string selectedNearbyRadius = "5km";
     [ObservableProperty] private bool favoriteOnly;
     [ObservableProperty] private bool nearbyOnly;
@@ -37,8 +32,12 @@ public partial class ShopListViewModel : ObservableObject
     [ObservableProperty] private bool sortByRating;
     [ObservableProperty] private Shop? selectedShop;
 
-    public string[] RamenTypeOptions { get; } = [AllFilter, "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
-    public string[] PriceFilterOptions { get; } = [AllFilter, PriceFilter1000, PriceFilter1500, PriceFilter2000];
+    public string[] RamenTypeOptions { get; } =
+        [ShopFilter.AllFilter, "醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
+
+    public string[] PriceFilterOptions { get; } =
+        [ShopFilter.AllFilter, ShopFilter.PriceFilter1000, ShopFilter.PriceFilter1500, ShopFilter.PriceFilter2000];
+
     public string[] NearbyRadiusOptions { get; } = ["1km", "3km", "5km", "10km", "20km"];
 
     public event EventHandler<Shop?>? SelectedShopChanged;
@@ -84,79 +83,18 @@ public partial class ShopListViewModel : ObservableObject
 
     private bool FilterShop(object item)
     {
-        if (item is not Shop shop)
-            return false;
-
-        return MatchesKeyword(shop)
-            && MatchesRamenType(shop)
-            && MatchesFavorite(shop)
-            && MatchesPrice(shop)
-            && MatchesNearby(shop);
+        return item is Shop shop
+            && ShopFilter.Matches(
+                shop,
+                SearchKeyword,
+                SelectedRamenType,
+                SelectedPriceFilter,
+                FavoriteOnly,
+                NearbyOnly,
+                _nearbyLatitude,
+                _nearbyLongitude,
+                SelectedNearbyRadius);
     }
-
-    private bool MatchesKeyword(Shop shop)
-    {
-        var keyword = SearchKeyword.Trim();
-        if (string.IsNullOrWhiteSpace(keyword))
-            return true;
-
-        return shop.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-            || shop.Address.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-            || shop.RamenType.Contains(keyword, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool MatchesRamenType(Shop shop)
-    {
-        return SelectedRamenType == AllFilter || shop.RamenType == SelectedRamenType;
-    }
-
-    private bool MatchesFavorite(Shop shop)
-    {
-        return !FavoriteOnly || shop.IsFavorite;
-    }
-
-    private bool MatchesPrice(Shop shop)
-    {
-        if (SelectedPriceFilter == AllFilter)
-            return true;
-
-        var maxPrice = SelectedPriceFilter switch
-        {
-            PriceFilter1000 => 1000m,
-            PriceFilter1500 => 1500m,
-            PriceFilter2000 => 2000m,
-            _ => decimal.MaxValue
-        };
-
-        return shop.Price <= maxPrice;
-    }
-
-    private bool MatchesNearby(Shop shop)
-    {
-        if (!NearbyOnly)
-            return true;
-
-        if (!_nearbyLatitude.HasValue || !_nearbyLongitude.HasValue)
-            return false;
-
-        var radiusKm = double.Parse(SelectedNearbyRadius.Replace("km", ""));
-        return DistanceKm(_nearbyLatitude.Value, _nearbyLongitude.Value, shop.Latitude, shop.Longitude) <= radiusKm;
-    }
-
-    private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
-    {
-        var dLat = DegreesToRadians(lat2 - lat1);
-        var dLon = DegreesToRadians(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-            + Math.Cos(DegreesToRadians(lat1))
-            * Math.Cos(DegreesToRadians(lat2))
-            * Math.Sin(dLon / 2)
-            * Math.Sin(dLon / 2);
-
-        return EarthRadiusKm * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-    }
-
-    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
 
     private void ReloadShops()
     {
@@ -225,8 +163,8 @@ public partial class ShopListViewModel : ObservableObject
     private void ClearSearch()
     {
         SearchKeyword = string.Empty;
-        SelectedRamenType = AllFilter;
-        SelectedPriceFilter = AllFilter;
+        SelectedRamenType = ShopFilter.AllFilter;
+        SelectedPriceFilter = ShopFilter.AllFilter;
         FavoriteOnly = false;
         NearbyOnly = false;
         SortByName = false;
