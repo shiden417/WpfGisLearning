@@ -20,6 +20,7 @@ public partial class ShopListViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private double? _nearbyLatitude;
     private double? _nearbyLongitude;
+    private bool _isClearingSearch;
 
     [ObservableProperty] private string searchKeyword = string.Empty;
     [ObservableProperty] private string selectedRamenType = ShopFilter.AllFilter;
@@ -51,14 +52,53 @@ public partial class ShopListViewModel : ObservableObject
         ShopsView.Filter = FilterShop;
     }
 
-    partial void OnSearchKeywordChanged(string value) => RefreshFilteredShops();
-    partial void OnSelectedRamenTypeChanged(string value) => RefreshFilteredShops();
-    partial void OnSelectedPriceFilterChanged(string value) => RefreshFilteredShops();
-    partial void OnSelectedNearbyRadiusChanged(string value) => RefreshFilteredShops();
-    partial void OnFavoriteOnlyChanged(bool value) => RefreshFilteredShops();
-    partial void OnNearbyOnlyChanged(bool value) => RefreshFilteredShops();
-    partial void OnSortByPriceChanged(bool value) => ApplySort();
-    partial void OnSortByRatingChanged(bool value) => ApplySort();
+    partial void OnSearchKeywordChanged(string value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnSelectedRamenTypeChanged(string value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnSelectedPriceFilterChanged(string value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnSelectedNearbyRadiusChanged(string value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnFavoriteOnlyChanged(bool value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnNearbyOnlyChanged(bool value)
+    {
+        if (!_isClearingSearch)
+            RefreshFilteredShops();
+    }
+
+    partial void OnSortByPriceChanged(bool value)
+    {
+        if (!_isClearingSearch)
+            ApplySort();
+    }
+
+    partial void OnSortByRatingChanged(bool value)
+    {
+        if (!_isClearingSearch)
+            ApplySort();
+    }
 
     private void RefreshFilteredShops()
     {
@@ -168,13 +208,23 @@ public partial class ShopListViewModel : ObservableObject
     [RelayCommand]
     private void ClearSearch()
     {
-        SearchKeyword = string.Empty;
-        SelectedRamenType = ShopFilter.AllFilter;
-        SelectedPriceFilter = ShopFilter.AllFilter;
-        FavoriteOnly = false;
-        NearbyOnly = false;
-        SortByPrice = false;
-        SortByRating = false;
+        _isClearingSearch = true;
+        try
+        {
+            SearchKeyword = string.Empty;
+            SelectedRamenType = ShopFilter.AllFilter;
+            SelectedPriceFilter = ShopFilter.AllFilter;
+            FavoriteOnly = false;
+            NearbyOnly = false;
+            SortByPrice = false;
+            SortByRating = false;
+        }
+        finally
+        {
+            _isClearingSearch = false;
+        }
+
+        ApplySort();
     }
 
     public void SetNearbyLocation(double latitude, double longitude)
@@ -198,6 +248,5 @@ public partial class ShopListViewModel : ObservableObject
     {
         ReloadShops();
         ApplySort();
-        ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 }
