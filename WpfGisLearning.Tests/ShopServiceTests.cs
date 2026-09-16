@@ -70,7 +70,7 @@ public class ShopServiceTests
 
         service.DeleteShop(1);
 
-        Assert.IsEmpty(service.GetShops());
+        Assert.HasCount(0, service.GetShops());
         Assert.AreSame(shop, photoService.DeletedShop);
         Assert.IsTrue(store.SaveCalled);
     }
@@ -134,19 +134,14 @@ public class ShopServiceTests
 
     private sealed class FakeShopDataStore : IShopDataStore
     {
-        private readonly List<Shop> _shops;
+        private readonly List<Shop> _initialShops;
         public bool SaveCalled { get; set; }
 
-        public FakeShopDataStore(params Shop[] shops) => _shops = shops.ToList();
+        public FakeShopDataStore(params Shop[] shops) => _initialShops = shops.ToList();
 
-        public List<Shop> Load() => _shops;
+        public List<Shop> Load() => _initialShops.ToList();
 
-        public void Save(IEnumerable<Shop> shops)
-        {
-            SaveCalled = true;
-            _shops.Clear();
-            _shops.AddRange(shops);
-        }
+        public void Save(IEnumerable<Shop> shops) => SaveCalled = true;
     }
 
     private sealed class FakePhotoService : IPhotoService
