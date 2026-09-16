@@ -5,6 +5,7 @@ using System.IO;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services;
 using WpfGisLearning.Services.Interfaces;
+using WpfGisLearning.Validation;
 
 namespace WpfGisLearning.ViewModels;
 
@@ -21,9 +22,9 @@ public partial class ShopEditViewModel : ObservableObject
 
     public int? ShopId { get; private set; }
     public string ScreenTitle => _isEdit ? "店舗を編集" : "店舗を登録";
-    public string[] RamenTypes { get; } = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
-    public string[] OpeningHoursModes { get; } = ["未設定", "時間指定", BusinessHoursStatusCalculator.Open24Hours];
-    public string[] TimeOptions { get; } = CreateTimeOptions();
+    public string[] RamenTypes { get; } = [.. ShopValidation.RamenTypes];
+    public string[] OpeningHoursModes { get; } = [.. ShopValidation.OpeningHoursModes];
+    public string[] TimeOptions { get; } = [.. ShopValidation.TimeOptions];
     public ObservableCollection<ShopPhoto> Photos { get; } = new();
 
     [ObservableProperty] private string shopName = string.Empty;
@@ -99,7 +100,7 @@ public partial class ShopEditViewModel : ObservableObject
         {
             ShopLatitude = null;
             ShopLongitude = null;
-            OpeningHoursMode = "未設定";
+            OpeningHoursMode = ShopValidation.UnsetOpeningHoursMode;
             OpeningTime = "11:00";
             ClosingTime = "21:00";
             ClearClosedDays();
@@ -196,7 +197,7 @@ public partial class ShopEditViewModel : ObservableObject
 
     public bool TrySetLocation(double latitude, double longitude)
     {
-        if (!MapCoordinateValidator.IsValid(latitude, longitude)) return false;
+        if (ShopValidation.ValidateLocation(latitude, longitude) is not null) return false;
         ShopLatitude = latitude;
         ShopLongitude = longitude;
         LocationError = string.Empty;
@@ -254,24 +255,23 @@ public partial class ShopEditViewModel : ObservableObject
 
     private void ValidateRequiredFields()
     {
-        if (string.IsNullOrWhiteSpace(ShopName)) ShopNameError = "店舗名を入力してください。";
-        if (ShopPrice <= 0) ShopPriceError = "価格は1円以上で入力してください。";
-        if (Rating < 0 || Rating > 5) RatingError = "評価は0～5の範囲で入力してください。";
-        else if (Math.Abs(Rating * 10 - Math.Round(Rating * 10)) > 1e-9)
-            RatingError = "評価は小数第1位までで入力してください。";
+        ShopNameError = ShopValidation.ValidateName(ShopName) ?? string.Empty;
+        ShopPriceError = ShopValidation.ValidatePrice(ShopPrice) ?? string.Empty;
+        RatingError = ShopValidation.ValidateRating(Rating) ?? string.Empty;
     }
 
     private void ValidateOpeningHours()
     {
-        if (OpeningHoursMode == "時間指定" && string.Equals(OpeningTime, ClosingTime, StringComparison.Ordinal))
-            OpeningHoursError = "開始時刻と終了時刻は異なる時刻を選択してください。24時間営業の場合は「24時間営業」を選択してください。";
+        OpeningHoursError = ShopValidation.ValidateOpeningHours(OpeningHoursMode, OpeningTime, ClosingTime) ?? string.Empty;
     }
 
     private bool TryGetValidLocation(out double latitude, out double longitude)
     {
         latitude = ShopLatitude.GetValueOrDefault();
         longitude = ShopLongitude.GetValueOrDefault();
-        return ShopLatitude.HasValue && ShopLongitude.HasValue && MapCoordinateValidator.IsValid(latitude, longitude);
+        return ShopLatitude.HasValue
+            && ShopLongitude.HasValue
+            && ShopValidation.ValidateLocation(latitude, longitude) is null;
     }
 
     private bool HasValidationErrors() => !string.IsNullOrEmpty(ShopNameError)
@@ -356,7 +356,7 @@ public partial class ShopEditViewModel : ObservableObject
         OpeningHours = OpeningHoursMode switch
         {
             BusinessHoursStatusCalculator.Open24Hours => BusinessHoursStatusCalculator.Open24Hours,
-            "時間指定" => $"{OpeningTime}-{ClosingTime}",
+            ShopValidation.SpecifiedOpeningHoursMode => $"{OpeningTime}-{ClosingTime}",
             _ => string.Empty
         };
     }
@@ -377,11 +377,11 @@ public partial class ShopEditViewModel : ObservableObject
         {
             OpeningTime = match.Groups["start"].Value;
             ClosingTime = match.Groups["end"].Value;
-            OpeningHoursMode = "時間指定";
+            OpeningHoursMode = ShopValidation.SpecifiedOpeningHoursMode;
             return;
         }
 
-        OpeningHoursMode = string.IsNullOrWhiteSpace(value) ? "未設定" : "時間指定";
+        OpeningHoursMode = string.IsNullOrWhiteSpace(value) ? ShopValidation.UnsetOpeningHoursMode : ShopValidation.SpecifiedOpeningHoursMode;
         if (!string.IsNullOrWhiteSpace(value) && !match.Success)
         {
             OpeningTime = "11:00";
@@ -427,17 +427,6 @@ public partial class ShopEditViewModel : ObservableObject
         ClosedFriday = false;
         ClosedSaturday = false;
         ClosedDay = string.Empty;
-    }
-
-    private static string[] CreateTimeOptions()
-    {
-        var values = new List<string>();
-        for (var hour = 0; hour < 24; hour++)
-        {
-            values.Add($"{hour:00}:00");
-            values.Add($"{hour:00}:30");
-        }
-        return [.. values];
     }
 
     private void ClearErrors()
