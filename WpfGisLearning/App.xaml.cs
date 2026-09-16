@@ -42,4 +42,11 @@ public partial class App : Application
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
     }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _serviceProvider?.Dispose();
+        _serviceProvider = null;
+        base.OnExit(e);
+    }
 }
