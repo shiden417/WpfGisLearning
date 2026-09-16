@@ -1,9 +1,3 @@
-using Mapsui;
-using Mapsui.Extensions;
-using Mapsui.Layers;
-using Mapsui.Projections;
-using Mapsui.Tiling;
-using Mapsui.Styles;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -19,29 +13,26 @@ namespace WpfGisLearning;
 
 public partial class MainWindow : Window
 {
-    private const string ShopLayerName = ShopMapLayerBuilder.LayerName;
-    private const string CurrentLocationLayerName = "CurrentLocation";
-    private const double InitialMapPaddingFactor = 1.2;
-    private const int SingleShopResolutionIndex = 12;
-    private const long ZoomAmount = 500;
     private const int InfoCardInitialOffset = 18;
     private const int InfoCardFadeDurationMilliseconds = 180;
     private const int InfoCardSlideDurationMilliseconds = 220;
     private const int RameniaIconSize = 64;
     private const int RameniaIconFontSize = 48;
 
-    private Mapsui.Map? _map;
-    private MemoryLayer? _currentLocationLayer;
-    private ShopMapLayerResult? _shopMapLayerResult;
-    private bool _initialMapPositionSet;
-    private bool _initialLocationRequested;
-    private int? _selectedShopId;
+    private readonly MapController _mapController;
     private readonly ShopListViewModel _shopListViewModel;
     private readonly IShopService _shopService;
     private readonly ICurrentLocationService _currentLocationService;
     private readonly NewsView _newsView;
+    private bool _initialLocationRequested;
+    private int? _selectedShopId;
 
-    public MainWindow(MainViewModel viewModel, ShopListView shopListView, IShopService shopService, ICurrentLocationService currentLocationService, NewsView newsView)
+    public MainWindow(
+        MainViewModel viewModel,
+        ShopListView shopListView,
+        IShopService shopService,
+        ICurrentLocationService currentLocationService,
+        NewsView newsView)
     {
         InitializeComponent();
         DataContext = viewModel;
@@ -51,10 +42,13 @@ public partial class MainWindow : Window
         _shopService = shopService;
         _currentLocationService = currentLocationService;
         _newsView = newsView;
+        _mapController = new MapController(MapControl);
+
         _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
         _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
         _newsView.RequestBack += NewsView_RequestBack;
         Loaded += MainWindow_Loaded;
+
         InitializeMap();
     }
 
@@ -86,9 +80,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            _map = new Mapsui.Map();
-            _map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            MapControl.Map = _map;
+            _mapController.Initialize();
             RebuildShopLayer();
             MapControl.MouseLeftButtonUp += MapControl_MouseLeftButtonUp;
             MapControl.Loaded += MapControl_Loaded;
@@ -100,38 +92,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RebuildShopLayer()
-    {
-        if (_map is null) return;
-        _shopMapLayerResult = ShopMapLayerBuilder.Build(_shopService.GetShops(), _selectedShopId);
-        ReplaceShopLayer(_shopMapLayerResult.Layer);
-    }
-
-    private void ReplaceShopLayer(MemoryLayer newLayer)
-    {
-        var oldLayer = _map?.Layers.FirstOrDefault(layer => layer.Name == ShopLayerName);
-        if (oldLayer is not null) _map!.Layers.Remove(oldLayer);
-        _map?.Layers.Add(newLayer);
-        MapControl.Refresh();
-    }
+    private void RebuildShopLayer() =>
+        _mapController.RebuildShopLayer(_shopService.GetShops(), _selectedShopId);
 
     private void MapControl_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_initialMapPositionSet || _map is null) return;
-        if (MapControl.ActualWidth <= 0 || MapControl.ActualHeight <= 0) return;
+        if (_mapController.InitialMapPositionSet) return;
         SetInitialMapPosition();
     }
 
     private void SetInitialMapPosition()
     {
-        var bounds = _shopMapLayerResult?.Bounds;
-        if (_map is null || bounds is null || !bounds.HasValidCoordinates) return;
         try
         {
-            var center = MapViewportCalculator.CalculateCenter(bounds);
-            var resolution = MapViewportCalculator.CalculateResolution(bounds, _map.Navigator.Resolutions, MapControl.ActualWidth, MapControl.ActualHeight, InitialMapPaddingFactor, SingleShopResolutionIndex);
-            _map.Navigator.CenterOnAndZoomTo(center, resolution);
-            _initialMapPositionSet = true;
+            _mapController.SetInitialMapPosition();
         }
         catch (Exception ex)
         {
@@ -145,16 +119,12 @@ public partial class MainWindow : Window
     {
         _selectedShopId = shop?.Id;
         RebuildShopLayer();
-        if (shop is null || !MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude)) return;
-        ShowInfoCard(shop);
-        CenterMapOnShop(shop);
-    }
 
-    private void CenterMapOnShop(Shop shop)
-    {
-        if (_map is null) return;
-        var point = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
-        _map.Navigator.CenterOn(point);
+        if (shop is null || !MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
+            return;
+
+        ShowInfoCard(shop);
+        _mapController.CenterOnShop(shop);
     }
 
     private void MapControl_MouseLeftButtonUp(object? sender, MouseButtonEventArgs e)
@@ -162,10 +132,9 @@ public partial class MainWindow : Window
         try
         {
             var position = e.GetPosition(MapControl);
-            var mapInfo = MapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition((int)position.X, (int)position.Y), MapControl.Map?.Layers ?? Enumerable.Empty<ILayer>());
-            if (mapInfo?.Layer?.Name != ShopLayerName || mapInfo.Feature is null) return;
-            if (mapInfo.Feature["Id"] is not null && int.TryParse(mapInfo.Feature["Id"]?.ToString(), out var shopId))
-                _shopListViewModel.SelectShopById(shopId);
+            var shopId = _mapController.GetShopIdAt(position);
+            if (shopId is not null)
+                _shopListViewModel.SelectShopById(shopId.Value);
         }
         catch (Exception ex)
         {
@@ -193,20 +162,37 @@ public partial class MainWindow : Window
         transform.Y = InfoCardInitialOffset;
         InfoCardBorder.Opacity = 0;
         var storyboard = new Storyboard();
-        AddInfoCardAnimation(storyboard, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(InfoCardFadeDurationMilliseconds)), InfoCardBorder, UIElement.OpacityProperty);
-        AddInfoCardAnimation(storyboard, new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)), transform, TranslateTransform.XProperty);
-        AddInfoCardAnimation(storyboard, new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)), transform, TranslateTransform.YProperty);
+        AddInfoCardAnimation(
+            storyboard,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(InfoCardFadeDurationMilliseconds)),
+            InfoCardBorder,
+            UIElement.OpacityProperty);
+        AddInfoCardAnimation(
+            storyboard,
+            new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)),
+            transform,
+            TranslateTransform.XProperty);
+        AddInfoCardAnimation(
+            storyboard,
+            new DoubleAnimation(InfoCardInitialOffset, 0, TimeSpan.FromMilliseconds(InfoCardSlideDurationMilliseconds)),
+            transform,
+            TranslateTransform.YProperty);
         storyboard.Begin();
     }
 
-    private static void AddInfoCardAnimation(Storyboard storyboard, AnimationTimeline animation, DependencyObject target, DependencyProperty property)
+    private static void AddInfoCardAnimation(
+        Storyboard storyboard,
+        AnimationTimeline animation,
+        DependencyObject target,
+        DependencyProperty property)
     {
         Storyboard.SetTarget(animation, target);
         Storyboard.SetTargetProperty(animation, new PropertyPath(property));
         storyboard.Children.Add(animation);
     }
 
-    private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) => await TryShowCurrentLocationAsync(showMessageOnFailure: true);
+    private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) =>
+        await TryShowCurrentLocationAsync(showMessageOnFailure: true);
 
     private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure)
     {
@@ -216,30 +202,31 @@ public partial class MainWindow : Window
             if (location is null)
             {
                 if (showMessageOnFailure)
-                    MessageBox.Show("現在地を取得できませんでした。位置情報の利用を許可しているか確認してください。", "現在地", MessageBoxButton.OK, MessageBoxImage.Information);
+                {
+                    MessageBox.Show(
+                        "現在地を取得できませんでした。位置情報の利用を許可しているか確認してください。",
+                        "現在地",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
                 return;
             }
-            ShowCurrentLocation(location.Latitude, location.Longitude);
-            _map?.Navigator.CenterOn(SphericalMercator.FromLonLat(location.Longitude, location.Latitude).ToMPoint());
+
+            _mapController.ShowCurrentLocation(location.Latitude, location.Longitude);
+            _mapController.CenterOn(location.Latitude, location.Longitude);
         }
         catch (Exception ex)
         {
             ShowMapError("現在地を取得できませんでした。", ex);
             if (showMessageOnFailure)
-                MessageBox.Show($"現在地を取得できませんでした。\n{ex.Message}", "現在地", MessageBoxButton.OK, MessageBoxImage.Information);
+            {
+                MessageBox.Show(
+                    $"現在地を取得できませんでした。\n{ex.Message}",
+                    "現在地",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
         }
-    }
-
-    private void ShowCurrentLocation(double latitude, double longitude)
-    {
-        if (_map is null) return;
-        var point = SphericalMercator.FromLonLat(longitude, latitude).ToMPoint();
-        var feature = new PointFeature(point);
-        feature.Styles.Add(MapMarkerStyleFactory.CreateCurrentLocationMarker());
-        _currentLocationLayer ??= new MemoryLayer { Name = CurrentLocationLayerName, Style = null };
-        _currentLocationLayer.Features = new[] { feature };
-        if (!_map.Layers.Contains(_currentLocationLayer)) _map.Layers.Add(_currentLocationLayer);
-        MapControl.Refresh();
     }
 
     public void RefreshShopData() => _shopListViewModel.RefreshFromService();
@@ -250,12 +237,12 @@ public partial class MainWindow : Window
         _shopListViewModel.NearbyOnly = false;
         InfoCardBorder.Visibility = Visibility.Collapsed;
         RebuildShopLayer();
-        _initialMapPositionSet = false;
+        _mapController.InitialMapPositionSet = false;
         SetInitialMapPosition();
     }
 
-    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
-    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
+    private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomIn();
+    private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomOut();
 
     private void MapControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -274,9 +261,23 @@ public partial class MainWindow : Window
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
-            var formattedText = new FormattedText("🍜", System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(new FontFamily("Segoe UI Emoji"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), RameniaIconFontSize, Brushes.Black, 1.0);
-            context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
+            var formattedText = new FormattedText(
+                "🍜",
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(
+                    new FontFamily("Segoe UI Emoji"),
+                    FontStyles.Normal,
+                    FontWeights.Normal,
+                    FontStretches.Normal),
+                RameniaIconFontSize,
+                Brushes.Black,
+                1.0);
+            context.DrawText(
+                formattedText,
+                new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
+
         var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
