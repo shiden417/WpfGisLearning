@@ -6,7 +6,17 @@ namespace WpfGisLearning.Services;
 
 public class PhotoService : IPhotoService
 {
-    private readonly string _rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ramenia", "Images");
+    private readonly string _rootPath;
+
+    public PhotoService()
+        : this(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ramenia", "Images"))
+    {
+    }
+
+    public PhotoService(string rootPath)
+    {
+        _rootPath = rootPath;
+    }
 
     public string GetPhotoPath(Shop shop, ShopPhoto photo) => Path.Combine(_rootPath, shop.Id.ToString(), photo.FileName);
 
