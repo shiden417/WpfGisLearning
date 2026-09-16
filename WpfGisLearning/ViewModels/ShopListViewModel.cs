@@ -66,6 +66,7 @@ public partial class ShopListViewModel : ObservableObject
     {
         ShopsView.Refresh();
         OnPropertyChanged(nameof(FilteredShopCount));
+        ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void ApplySort()
@@ -136,7 +137,6 @@ public partial class ShopListViewModel : ObservableObject
 
         _shopService.ToggleFavorite(shop.Id);
         RefreshFilteredShops();
-        ShopsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
