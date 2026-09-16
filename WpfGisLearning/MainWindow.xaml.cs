@@ -106,6 +106,7 @@ public partial class MainWindow : Window
         if (_selectedShopId.HasValue && !filteredShops.Any(shop => shop.Id == _selectedShopId.Value))
         {
             _selectedShopId = null;
+            _shopListViewModel.SelectedShop = null;
             InfoCardBorder.Visibility = Visibility.Collapsed;
         }
     }
@@ -133,13 +134,25 @@ public partial class MainWindow : Window
     private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop)
     {
         _selectedShopId = shop?.Id;
+
+        if (shop is null)
+        {
+            InfoCardBorder.Visibility = Visibility.Collapsed;
+            RebuildShopLayer();
+            return;
+        }
+
         RebuildShopLayer();
 
-        if (shop is null || !MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
+        if (!MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
+        {
+            InfoCardBorder.Visibility = Visibility.Collapsed;
             return;
+        }
 
         if (!_shopListViewModel.ShopsView.Cast<Shop>().Any(filteredShop => filteredShop.Id == shop.Id))
         {
+            _selectedShopId = null;
             InfoCardBorder.Visibility = Visibility.Collapsed;
             return;
         }
@@ -434,8 +447,9 @@ public partial class MainWindow : Window
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
-        var renderTarget = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        renderTarget.Render(visual);
-        return renderTarget;
+        var bitmap = new RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        bitmap.Freeze();
+        return bitmap;
     }
 }
