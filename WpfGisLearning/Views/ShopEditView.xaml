@@ -95,7 +95,7 @@
                             <TextBlock Text="評価" Margin="0,12,0,5" Foreground="{StaticResource LabelBrush}" />
                             <TextBox x:Name="RatingTextBox" Height="36">
                                 <TextBox.Text>
-                                    <Binding Path="Rating" UpdateSourceTrigger="PropertyChanged" NotifyOnValidationError="True" ValidatesOnExceptions="True">
+                                    <Binding Path="Rating" UpdateSourceTrigger="LostFocus" NotifyOnValidationError="True" ValidatesOnExceptions="True">
                                         <Binding.ValidationRules><validation:DoubleRangeValidationRule Minimum="0" Maximum="5" DecimalPlaces="1" ValidationStep="RawProposedValue" /></Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
