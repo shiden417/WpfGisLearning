@@ -52,11 +52,31 @@
         <Style x:Key="RegisterButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
             <Setter Property="Width" Value="104" /><Setter Property="Height" Value="40" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Padding" Value="10,5" /><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="SemiBold" />
         </Style>
+        <Style x:Key="DataManagementButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
+            <Setter Property="Height" Value="34" />
+            <Setter Property="MinWidth" Value="76" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
     </UserControl.Resources>
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <Grid Grid.Row="0" Margin="0,14,0,12"><TextBlock Text="🗺 店舗を探す" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextBrush}" /></Grid>
-        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <Grid Grid.Row="0" Margin="0,14,0,10">
+            <TextBlock Text="🗺 店舗を探す" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+        </Grid>
+        <Border Grid.Row="1" Background="{StaticResource PanelBrush}" CornerRadius="12" Padding="8,6" Margin="0,0,0,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+            <Grid>
+                <TextBlock Text="店舗データ" VerticalAlignment="Center" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="⇩ テンプレート" Click="DownloadExcelTemplateButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excel入力テンプレートをダウンロード" />
+                    <Button Content="↥ 書き出し" Click="ExportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="店舗データをExcelに書き出す" />
+                    <Button Content="↧ 読み込み" Click="ImportExcelButton_Click" Style="{StaticResource DataManagementButton}" ToolTip="Excelから店舗データを読み込む" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <Grid>
@@ -68,7 +88,7 @@
                 <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" />
             </Grid>
         </Border>
-        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Border Grid.Row="3" Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="10" Margin="0,0,0,12" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <StackPanel>
                 <Grid Margin="2,0,2,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal"><TextBlock Text="FILTER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" /><TextBlock Text="条件で絞り込む" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="8,0,0,0" /></StackPanel><TextBlock Grid.Column="1" Text="SORT" FontSize="11" Foreground="{StaticResource MutedBrush}" /></Grid>
                 <WrapPanel>
@@ -83,7 +103,7 @@
                 </WrapPanel>
             </StackPanel>
         </Border>
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="4">
             <ListBox x:Name="ShopListBox" ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource ShopListItem}" PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick" Margin="0">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Shop}">
