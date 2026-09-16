@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using WpfGisLearning.Services.Interfaces;
 using WpfGisLearning.ViewModels;
 
@@ -172,7 +171,8 @@ public partial class DetailView : System.Windows.Controls.UserControl
             Stretch = Stretch.Fill,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0)
+            Margin = new Thickness(0),
+            RenderTransformOrigin = new Point(0.5, 0.5)
         };
 
         return new Button
@@ -216,7 +216,11 @@ public partial class DetailView : System.Windows.Controls.UserControl
     private void EditButton_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.Shop is null) return;
-        _navigationService.NavigateToShopEdit(_viewModel.Shop.Id);
+
+        var shopId = _viewModel.Shop.Id;
+        Window.GetWindow(this)?.Close();
+        _navigationService.NavigateToShopEdit(shopId);
+        _navigationService.NavigateToDetail(shopId);
     }
 
     private void DeleteButton_Click(object sender, RoutedEventArgs e)
