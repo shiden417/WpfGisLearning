@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using System.IO;
 using WpfGisLearning.Models;
 using WpfGisLearning.Services.Interfaces;
+using WpfGisLearning.Validation;
 
 namespace WpfGisLearning.Services;
 
@@ -13,8 +14,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         "営業時間モード", "開始時刻", "終了時刻", "定休日", "評価"
     ];
 
-    private static readonly string[] RamenTypes = ["醤油", "塩", "味噌", "豚骨", "家系", "二郎系", "つけ麺", "その他"];
-    private static readonly string[] OpeningHoursModes = ["未設定", "時間指定", BusinessHoursStatusCalculator.Open24Hours];
     private const int TemplateRows = 200;
 
     public void CreateImportTemplate(string filePath)
@@ -45,7 +44,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         sheet.Range(2, 12, TemplateRows + 1, 12).Style.NumberFormat.Format = "0.0";
 
         var ramenValidation = sheet.Range(2, 7, TemplateRows + 1, 7).CreateDataValidation();
-        ramenValidation.List($"\"{string.Join(",", RamenTypes)}\"");
+        ramenValidation.List($"\"{string.Join(",", ShopValidation.RamenTypes)}\"");
         ramenValidation.ErrorTitle = "入力値が不正です";
         ramenValidation.ErrorMessage = "一覧からラーメンの種類を選択してください。";
         ramenValidation.ShowErrorMessage = true;
@@ -54,7 +53,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         ramenValidation.InputMessage = "プルダウンから選択してください。";
 
         var hoursValidation = sheet.Range(2, 8, TemplateRows + 1, 8).CreateDataValidation();
-        hoursValidation.List($"\"{string.Join(",", OpeningHoursModes)}\"");
+        hoursValidation.List($"\"{string.Join(",", ShopValidation.OpeningHoursModes)}\"");
         hoursValidation.ErrorTitle = "入力値が不正です";
         hoursValidation.ErrorMessage = "未設定・時間指定・24時間営業から選択してください。";
         hoursValidation.ShowErrorMessage = true;
@@ -101,8 +100,8 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             ("住所", "任意"),
             ("緯度", "-90～90"),
             ("経度", "-180～180"),
-            ("ラーメンの種類", string.Join(" / ", RamenTypes)),
-            ("営業時間モード", string.Join(" / ", OpeningHoursModes)),
+            ("ラーメンの種類", string.Join(" / ", ShopValidation.RamenTypes)),
+            ("営業時間モード", string.Join(" / ", ShopValidation.OpeningHoursModes)),
             ("開始時刻", "営業時間モードが時間指定の場合に入力。30分単位（例：11:00）"),
             ("終了時刻", "営業時間モードが時間指定の場合に入力。30分単位（例：21:00）"),
             ("定休日", "複数指定は「日・月・火」のように区切る"),
@@ -211,53 +210,48 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             var closedDay = sheet.Cell(row, 11).GetString().Trim();
             var rating = ReadDouble(sheet.Cell(row, 12));
 
-            if (string.IsNullOrWhiteSpace(name))
-                throw new InvalidDataException($"{row}行目の店舗名を入力してください。");
-            if (price <= 0)
-                throw new InvalidDataException($"{row}行目の価格は1円以上で入力してください。");
-            if (!MapCoordinateValidator.IsValid(latitude, longitude))
-                throw new InvalidDataException($"{row}行目の緯度・経度が不正です。");
-            if (string.IsNullOrWhiteSpace(ramenType)) ramenType = "醤油";
-            if (!RamenTypes.Contains(ramenType, StringComparer.Ordinal))
-                throw new InvalidDataException($"{row}行目のラーメンの種類が不正です。");
-            if (rating < 0 || rating > 5 || Math.Abs(rating * 10 - Math.Round(rating * 10)) > 1e-9)
-                throw new InvalidDataException($"{row}行目の評価は0～5、小数第1位までで入力してください。");
+            var nameError = ShopValidation.ValidateName(name);
+            if (nameError is not null)
+                throw new InvalidDataException($"{row}行目の{nameError}");
 
-            var openingHours = hoursMode switch
-            {
-                "未設定" or "" => string.Empty,
-                BusinessHoursStatusCalculator.Open24Hours => BusinessHoursStatusCalculator.Open24Hours,
-                "時間指定" => BuildOpeningHours(openingTime, closingTime, row),
-                _ => throw new InvalidDataException($"{row}行目の営業時間モードが不正です。")
-            };
+            var priceError = ShopValidation.ValidatePrice(price);
+            if (priceError is not null)
+                throw new InvalidDataException($"{row}行目の{priceError}");
+
+            var locationError = ShopValidation.ValidateLocation(latitude, longitude);
+            if (locationError is not null)
+                throw new InvalidDataException($"{row}行目の{locationError}");
+
+            if (string.IsNullOrWhiteSpace(ramenType))
+                ramenType = ShopValidation.RamenTypes[0];
+            var ramenTypeError = ShopValidation.ValidateRamenType(ramenType);
+            if (ramenTypeError is not null)
+                throw new InvalidDataException($"{row}行目の{ramenTypeError}");
+
+            var ratingError = ShopValidation.ValidateRating(rating);
+            if (ratingError is not null)
+                throw new InvalidDataException($"{row}行目の{ratingError}");
+
+            if (!ShopValidation.TryBuildOpeningHours(hoursMode, openingTime, closingTime, out var openingHours, out var openingHoursError))
+                throw new InvalidDataException($"{row}行目の{openingHoursError}");
 
             shops.Add(new Shop
             {
-                Id = id, Name = name, Price = price, Address = address,
-                Latitude = latitude, Longitude = longitude, RamenType = ramenType,
-                OpeningHours = openingHours, ClosedDay = closedDay, Rating = rating
+                Id = id,
+                Name = name,
+                Price = price,
+                Address = address,
+                Latitude = latitude,
+                Longitude = longitude,
+                RamenType = ramenType,
+                OpeningHours = openingHours,
+                ClosedDay = closedDay,
+                Rating = rating
             });
         }
 
         return shops;
     }
-
-    private static string BuildOpeningHours(string openingTime, string closingTime, int row)
-    {
-        if (!TimeSpan.TryParseExact(openingTime, @"hh\:mm", null, out _) ||
-            !TimeSpan.TryParseExact(closingTime, @"hh\:mm", null, out _))
-            throw new InvalidDataException($"{row}行目の開始時刻・終了時刻が不正です。30分単位で入力してください。");
-
-        if (!IsHalfHour(openingTime) || !IsHalfHour(closingTime))
-            throw new InvalidDataException($"{row}行目の開始時刻・終了時刻は30分単位で入力してください。");
-        if (string.Equals(openingTime, closingTime, StringComparison.Ordinal))
-            throw new InvalidDataException($"{row}行目の開始時刻と終了時刻は異なる時刻を選択してください。");
-
-        return $"{openingTime}-{closingTime}";
-    }
-
-    private static bool IsHalfHour(string value) =>
-        TimeSpan.TryParseExact(value, @"hh\:mm", null, out var time) && time.Minutes is 0 or 30 && time.Hours < 24;
 
     private static void WriteHeaders(IXLWorksheet sheet)
     {
@@ -270,11 +264,11 @@ public sealed class ExcelShopDataService : IExcelShopDataService
 
     private static (string Mode, string Start, string End) SplitOpeningHours(string? openingHours)
     {
-        if (string.IsNullOrWhiteSpace(openingHours)) return ("未設定", string.Empty, string.Empty);
+        if (string.IsNullOrWhiteSpace(openingHours)) return (ShopValidation.UnsetOpeningHoursMode, string.Empty, string.Empty);
         if (string.Equals(openingHours.Trim(), BusinessHoursStatusCalculator.Open24Hours, StringComparison.Ordinal))
             return (BusinessHoursStatusCalculator.Open24Hours, string.Empty, string.Empty);
 
         var parts = openingHours.Replace("〜", "-").Replace("~", "-").Split('-', 2);
-        return parts.Length == 2 ? ("時間指定", parts[0].Trim(), parts[1].Trim()) : ("時間指定", string.Empty, string.Empty);
+        return parts.Length == 2 ? (ShopValidation.SpecifiedOpeningHoursMode, parts[0].Trim(), parts[1].Trim()) : (ShopValidation.SpecifiedOpeningHoursMode, string.Empty, string.Empty);
     }
 }
