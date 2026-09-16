@@ -25,21 +25,19 @@ public sealed record ShopMapLayerResult(MemoryLayer Layer, ShopMapBounds Bounds)
 public static class ShopMapLayerBuilder
 {
     public const string LayerName = "Shops";
-
     private const double OverlapOffsetPixels = 12;
-    private const double ClusterCellSizePixels = 56;
-    private const int MinimumClusterSize = 2;
 
-    public static ShopMapLayerResult Build(
-        IEnumerable<Shop> shops,
-        int? selectedShopId,
-        double resolution)
+    public static ShopMapLayerResult Build(IEnumerable<Shop> shops, int? selectedShopId)
     {
         var validShops = shops
             .Where(shop => MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
             .ToList();
 
-        var features = CreateFeatures(validShops, selectedShopId, resolution).ToList<IFeature>();
+        var features = validShops
+            .GroupBy(shop => (shop.Latitude, shop.Longitude))
+            .SelectMany(group => CreateFeatures(group.ToList(), selectedShopId))
+            .ToList<IFeature>();
+
         var bounds = CalculateBounds(validShops);
         var layer = new MemoryLayer
         {
@@ -51,47 +49,31 @@ public static class ShopMapLayerBuilder
         return new ShopMapLayerResult(layer, bounds);
     }
 
-    private static IEnumerable<IFeature> CreateFeatures(
-        IReadOnlyList<Shop> shops,
-        int? selectedShopId,
-        double resolution)
+    private static IEnumerable<IFeature> CreateFeatures(IReadOnlyList<Shop> shops, int? selectedShopId)
     {
-        if (shops.Count == 0)
-            yield break;
-
-        var safeResolution = resolution > 0 ? resolution : 1;
-        var cellSize = safeResolution * ClusterCellSizePixels;
-        var groups = shops
-            .GroupBy(shop => GetClusterCell(shop, cellSize))
-            .ToList();
-
-        foreach (var group in groups)
+        if (shops.Count == 1)
         {
-            var groupShops = group.ToList();
+            yield return CreateFeature(shops[0], selectedShopId == shops[0].Id, 0, 1);
+            yield break;
+        }
 
-            if (groupShops.Count < MinimumClusterSize || groupShops.Any(shop => shop.Id == selectedShopId))
-            {
-                foreach (var shop in groupShops)
-                {
-                    yield return CreateShopFeature(shop, selectedShopId == shop.Id, 0, 1);
-                }
-
-                continue;
-            }
-
-            yield return CreateClusterFeature(groupShops);
+        for (var index = 0; index < shops.Count; index++)
+        {
+            var shop = shops[index];
+            var angle = 2 * Math.PI * index / shops.Count;
+            var offsetX = Math.Cos(angle) * OverlapOffsetPixels;
+            var offsetY = Math.Sin(angle) * OverlapOffsetPixels;
+            yield return CreateFeature(
+                shop,
+                selectedShopId == shop.Id,
+                index,
+                shops.Count,
+                offsetX,
+                offsetY);
         }
     }
 
-    private static (long X, long Y) GetClusterCell(Shop shop, double cellSize)
-    {
-        var point = SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint();
-        return (
-            (long)Math.Floor(point.X / cellSize),
-            (long)Math.Floor(point.Y / cellSize));
-    }
-
-    private static IFeature CreateShopFeature(
+    private static IFeature CreateFeature(
         Shop shop,
         bool selected,
         int overlapIndex,
@@ -107,8 +89,7 @@ public static class ShopMapLayerBuilder
         {
             ["Name"] = shop.Name,
             ["Address"] = shop.Address,
-            ["Id"] = shop.Id,
-            ["IsCluster"] = false
+            ["Id"] = shop.Id
         };
 
         var markerStyle = MapMarkerStyleFactory.CreateShopMarker(selected);
@@ -132,34 +113,6 @@ public static class ShopMapLayerBuilder
                 CollisionDetection = false
             });
         }
-
-        return feature;
-    }
-
-    private static IFeature CreateClusterFeature(IReadOnlyList<Shop> shops)
-    {
-        var points = shops
-            .Select(shop => SphericalMercator.FromLonLat(shop.Longitude, shop.Latitude).ToMPoint())
-            .ToList();
-        var center = new MPoint(points.Average(point => point.X), points.Average(point => point.Y));
-
-        var feature = new PointFeature(center)
-        {
-            ["IsCluster"] = true,
-            ["ClusterIds"] = string.Join(",", shops.Select(shop => shop.Id)),
-            ["ClusterCount"] = shops.Count
-        };
-
-        feature.Styles.Add(MapMarkerStyleFactory.CreateClusterMarker());
-        feature.Styles.Add(new LabelStyle
-        {
-            Text = shops.Count.ToString(),
-            Font = new Font { Size = 12, Bold = true },
-            ForeColor = Color.White,
-            HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center,
-            VerticalAlignment = LabelStyle.VerticalAlignmentEnum.Center,
-            CollisionDetection = false
-        });
 
         return feature;
     }
