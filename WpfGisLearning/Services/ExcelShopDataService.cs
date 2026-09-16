@@ -68,9 +68,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         ramenValidation.ErrorTitle = "入力値が不正です";
         ramenValidation.ErrorMessage = "一覧からラーメンの種類を選択してください。";
         ramenValidation.ShowErrorMessage = true;
-        ramenValidation.ShowInputMessage = true;
-        ramenValidation.InputTitle = "ラーメンの種類";
-        ramenValidation.InputMessage = "プルダウンから選択してください。";
 
         var hoursValidation = sheet.Range(2, 8, TemplateRows + 1, 8).DataValidation;
         hoursValidation.List($"\"{string.Join(",", OpeningHoursModes)}\"");
@@ -85,7 +82,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         priceValidation.ShowErrorMessage = true;
 
         var ratingValidation = sheet.Range(2, 12, TemplateRows + 1, 12).DataValidation;
-        ratingValidation.Custom("=AND(L2>=0,L2<=5,MOD(ROUND(L2*10,0),1)=0)");
+        ratingValidation.Custom("=AND(L2>=0,L2<=5,ROUND(L2,1)=L2)");
         ratingValidation.ErrorTitle = "評価が不正です";
         ratingValidation.ErrorMessage = "評価は0～5の範囲で、小数第1位まで入力してください。";
         ratingValidation.ShowErrorMessage = true;
@@ -103,7 +100,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         rules.Range("A2:B13").Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
         rules.Range("A2:B13").Values = new object[,]
         {
-            { "ID", "1以上。既存IDは更新、空欄は新規登録" },
+            { "ID", "1以上。空欄の場合は新規店舗として自動採番" },
             { "店舗名", "必須" },
             { "価格", "1円以上" },
             { "住所", "任意" },
@@ -111,8 +108,8 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             { "経度", "-180～180" },
             { "ラーメンの種類", string.Join(" / ", RamenTypes) },
             { "営業時間モード", string.Join(" / ", OpeningHoursModes) },
-            { "開始時刻", "営業時間モードが時間指定の場合に使用（例：11:00）" },
-            { "終了時刻", "営業時間モードが時間指定の場合に使用（例：21:00）" },
+            { "開始時刻", "営業時間モードが時間指定の場合に入力（例：11:00）" },
+            { "終了時刻", "営業時間モードが時間指定の場合に入力（例：21:00）" },
             { "定休日", "複数指定は「日・月・火」のように区切る" },
             { "評価", "0～5、小数第1位まで" }
         };
@@ -177,14 +174,30 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         if (lastRow < 2)
             return [];
 
+        var explicitIds = new HashSet<int>();
+        for (var row = 2; row <= lastRow; row++)
+        {
+            if (sheet.Range(row, 1, row, Headers.Length).Cells().All(cell => cell.IsEmpty()))
+                continue;
+            var id = ReadInt(sheet.Cell(row, 1), 0);
+            if (id > 0 && !explicitIds.Add(id))
+                throw new InvalidDataException($"{row}行目の店舗IDが重複しています。ID: {id}");
+        }
+
         var shops = new List<Shop>();
-        var nextId = 1;
+        var nextId = explicitIds.Count == 0 ? 1 : explicitIds.Max() + 1;
         for (var row = 2; row <= lastRow; row++)
         {
             if (sheet.Range(row, 1, row, Headers.Length).Cells().All(cell => cell.IsEmpty()))
                 continue;
 
             var id = ReadInt(sheet.Cell(row, 1), 0);
+            if (id <= 0)
+            {
+                while (explicitIds.Contains(nextId)) nextId++;
+                id = nextId++;
+            }
+
             var name = sheet.Cell(row, 2).GetString().Trim();
             var price = ReadDecimal(sheet.Cell(row, 3));
             var address = sheet.Cell(row, 4).GetString().Trim();
@@ -197,9 +210,7 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             var closedDay = sheet.Cell(row, 11).GetString().Trim();
             var rating = ReadDouble(sheet.Cell(row, 12));
 
-            if (id <= 0)
-                id = nextId;
-            nextId = Math.Max(nextId, id + 1);
+            if (string.IsNullOrWhiteSpace(ramenType)) ramenType = "醤油";
 
             var openingHours = hoursMode switch
             {
