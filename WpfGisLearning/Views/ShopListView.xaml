@@ -180,7 +180,47 @@
         </Border>
 
         <Grid Grid.Row="3">
-            <ListBox x:Name="ShopListBox" ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource ShopListItem}" PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <TextBox x:Name="SearchTextBox"
+                                     Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="38"
+                                     Padding="12,6"
+                                     BorderThickness="0"
+                                     Background="{StaticResource InputBackgroundBrush}"
+                                     VerticalContentAlignment="Center" />
+                            <TextBlock Text="店舗名・住所・ジャンルで検索"
+                                       Foreground="#FFA0A6AB"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0,8,0"
+                                       IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SearchKeyword}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Button Grid.Column="1" Content="リセット" Command="{Binding ClearSearchCommand}" Margin="8,0,0,0" />
+                    </Grid>
+                </Border>
+            </Grid>
+            <ListBox Grid.Row="1" x:Name="ShopListBox" ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource ShopListItem}" PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick" Margin="0">
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type models:Shop}">
                         <Border Style="{StaticResource ShopCard}">
