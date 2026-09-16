@@ -3,6 +3,7 @@ using Mapsui.Extensions;
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Tiling;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,6 +57,21 @@ public partial class DetailView : System.Windows.Controls.UserControl
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
+
+    private void OpenExternalMapButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Shop is null) return;
+
+        try
+        {
+            var url = ExternalMapLinkBuilder.CreateGoogleMapsUrl(_viewModel.Shop);
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"外部地図を開けませんでした。\n{ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     private void Photo_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
