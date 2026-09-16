@@ -3,8 +3,18 @@ using System.Windows.Controls;
 
 namespace WpfGisLearning.Validation;
 
+/// <summary>
+/// WPFのBindingで価格入力を検証するValidationRuleです。
+/// TextBoxに入力された値が正の10進数として解釈できるか確認します。
+/// </summary>
 public sealed class DecimalPositiveValidationRule : ValidationRule
 {
+    /// <summary>
+    /// Binding対象の値を検証し、1円以上の有効な価格かを返します。
+    /// </summary>
+    /// <param name="value">TextBoxから渡される入力値です。</param>
+    /// <param name="cultureInfo">数値解析に使用するカルチャです。</param>
+    /// <returns>有効ならValidResult、不正なら画面表示用のエラーを返します。</returns>
     public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
     {
         if (value is null || string.IsNullOrWhiteSpace(value.ToString()))
