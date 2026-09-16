@@ -28,6 +28,8 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
     private Mapsui.Map? _map;
     private MemoryLayer? _locationLayer;
     private bool _isDraggingLocation;
+    private Window? _hostWindow;
+    private bool _allowWindowClose;
 
     public ShopEditView(ShopEditViewModel viewModel, ICurrentLocationService currentLocationService, IReverseGeocodingService reverseGeocodingService)
     {
@@ -71,6 +73,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void ShopEditView_Loaded(object sender, RoutedEventArgs e)
     {
+        AttachHostWindow();
         if (_map is not null) return;
         _map = new Mapsui.Map();
         _map.Layers.Add(OpenStreetMap.CreateTileLayer());
@@ -88,6 +91,58 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         SetJapanOverview();
     }
 
+    private void AttachHostWindow()
+    {
+        var window = Window.GetWindow(this);
+        if (window is null || ReferenceEquals(_hostWindow, window)) return;
+        _hostWindow = window;
+        _hostWindow.Closing += HostWindow_Closing;
+    }
+
+    private void HostWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_allowWindowClose || !_viewModel.IsDirty || _viewModel.IsSaving) return;
+
+        var result = MessageBox.Show(
+            "変更内容が保存されていません。保存せずに閉じますか？",
+            "未保存の変更",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        _allowWindowClose = true;
+    }
+
+    private void ViewModel_RequestClose(object? sender, EventArgs e)
+    {
+        if (_hostWindow is null)
+        {
+            _hostWindow = Window.GetWindow(this);
+            if (_hostWindow is null) return;
+        }
+
+        if (_viewModel.IsSaving) return;
+
+        if (_viewModel.IsDirty)
+        {
+            var result = MessageBox.Show(
+                "変更内容が保存されていません。保存せずに閉じますか？",
+                "未保存の変更",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes) return;
+        }
+
+        _allowWindowClose = true;
+        _hostWindow.Close();
+    }
+
     private void SetJapanOverview()
     {
         var point = SphericalMercator.FromLonLat(JapanOverviewLongitude, JapanOverviewLatitude).ToMPoint();
@@ -96,7 +151,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private async void EditMapControl_PreviewMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
     {
-        if (_map is null) return;
+        if (_map is null || _viewModel.IsSaving) return;
         var position = e.GetPosition(EditMapControl);
         if (e.ClickCount == 2)
         {
@@ -104,8 +159,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
             e.Handled = true;
             return;
         }
-        if (HasLocationAt(position.X, position.Y)
-        )
+        if (HasLocationAt(position.X, position.Y))
         {
             _isDraggingLocation = true;
             EditMapControl.CaptureMouse();
@@ -115,7 +169,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void EditMapControl_PreviewMouseMove(object? sender, MouseEventArgs e)
     {
-        if (!_isDraggingLocation || _map is null) return;
+        if (!_isDraggingLocation || _map is null || _viewModel.IsSaving) return;
         var position = e.GetPosition(EditMapControl);
         SetLocationFromScreen(position.X, position.Y, false);
         e.Handled = true;
@@ -126,6 +180,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
         if (!_isDraggingLocation) return;
         _isDraggingLocation = false;
         EditMapControl.ReleaseMouseCapture();
+        if (_viewModel.IsSaving) return;
         var position = e.GetPosition(EditMapControl);
         if (SetLocationFromScreen(position.X, position.Y, false)) await UpdateAddressAsync();
         e.Handled = true;
@@ -183,6 +238,7 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsSaving) return;
         try
         {
             var location = await _currentLocationService.GetCurrentLocationAsync();
@@ -205,6 +261,4 @@ public partial class ShopEditView : System.Windows.Controls.UserControl
 
     private void ZoomInButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomIn(ZoomAmount);
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _map?.Navigator.ZoomOut(ZoomAmount);
-
-    private void ViewModel_RequestClose(object? sender, EventArgs e) => Window.GetWindow(this)?.Close();
 }
