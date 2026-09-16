@@ -98,8 +98,17 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RebuildShopLayer() =>
-        _mapController.RebuildShopLayer(_shopListViewModel.Shops, _selectedShopId);
+    private void RebuildShopLayer()
+    {
+        var filteredShops = _shopListViewModel.ShopsView.Cast<Shop>().ToList();
+        _mapController.RebuildShopLayer(filteredShops, _selectedShopId);
+
+        if (_selectedShopId.HasValue && !filteredShops.Any(shop => shop.Id == _selectedShopId.Value))
+        {
+            _selectedShopId = null;
+            InfoCardBorder.Visibility = Visibility.Collapsed;
+        }
+    }
 
     private void MapControl_Loaded(object sender, RoutedEventArgs e)
     {
@@ -128,6 +137,12 @@ public partial class MainWindow : Window
 
         if (shop is null || !MapCoordinateValidator.IsValid(shop.Latitude, shop.Longitude))
             return;
+
+        if (!_shopListViewModel.ShopsView.Cast<Shop>().Any(filteredShop => filteredShop.Id == shop.Id))
+        {
+            InfoCardBorder.Visibility = Visibility.Collapsed;
+            return;
+        }
 
         ShowInfoCard(shop);
         _mapController.CenterOnShop(shop);
@@ -202,6 +217,7 @@ public partial class MainWindow : Window
                 return;
             }
 
+            _shopListViewModel.SetNearbyLocation(location.Latitude, location.Longitude);
             _mapController.ShowCurrentLocation(location.Latitude, location.Longitude);
             _mapController.CenterOn(location.Latitude, location.Longitude);
         }
@@ -224,14 +240,14 @@ public partial class MainWindow : Window
     private void ShowAllShopsButton_Click(object sender, RoutedEventArgs e)
     {
         _selectedShopId = null;
-        _shopListViewModel.NearbyOnly = false;
+        _shopListViewModel.ClearSearchCommand.Execute(null);
         InfoCardBorder.Visibility = Visibility.Collapsed;
         RebuildShopLayer();
         _mapController.InitialMapPositionSet = false;
         SetInitialMapPosition();
     }
 
-    private void DownloadExcelTemplateButton_Click(object? sender, EventArgs e)
+    private void DownloadExcelTemplateButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new SaveFileDialog
         {
@@ -263,7 +279,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ExportExcelButton_Click(object? sender, EventArgs e)
+    private void ExportExcelButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new SaveFileDialog
         {
@@ -295,7 +311,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ImportExcelButton_Click(object? sender, EventArgs e)
+    private void ImportExcelButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
         {
@@ -321,10 +337,8 @@ public partial class MainWindow : Window
 
             _shopService.ReplaceAll(shops);
             _selectedShopId = null;
-            _shopListViewModel.FavoriteOnly = false;
-            _shopListViewModel.NearbyOnly = false;
+            _shopListViewModel.ClearSearchCommand.Execute(null);
             _shopListViewModel.RefreshFromService();
-            RebuildShopLayer();
             InfoCardBorder.Visibility = Visibility.Collapsed;
 
             MessageBox.Show(
@@ -420,9 +434,8 @@ public partial class MainWindow : Window
             context.DrawText(formattedText, new Point((size - formattedText.Width) / 2, (size - formattedText.Height) / 2));
         }
 
-        var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-        bitmap.Freeze();
-        return bitmap;
+        var renderTarget = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
+        renderTarget.Render(visual);
+        return renderTarget;
     }
 }
