@@ -10,4 +10,5 @@ public interface IShopService
     void UpdateShop(Shop shop);
     void DeleteShop(int id);
     void ToggleFavorite(int id);
+    void ReplaceAll(IEnumerable<Shop> shops);
 }
