@@ -4,12 +4,22 @@ using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.Views;
 
+/// <summary>
+/// Excelのファイル選択ダイアログと店舗データサービスの橋渡しを担当するUIコントローラーです。
+/// Excelの具体的な読み書きはIExcelShopDataServiceへ委譲します。
+/// </summary>
 public sealed class ExcelShopDataController
 {
+    /// <summary>Excelファイルの作成・読込・出力を担当するサービスです。</summary>
     private readonly IExcelShopDataService _excelShopDataService;
+
+    /// <summary>現在の店舗データを取得・置換するサービスです。</summary>
     private readonly IShopService _shopService;
+
+    /// <summary>Excelインポート完了後に画面データを再同期するコールバックです。</summary>
     private readonly Action _afterImport;
 
+    /// <summary>必要なサービスとインポート後処理を受け取ります。</summary>
     public ExcelShopDataController(
         IExcelShopDataService excelShopDataService,
         IShopService shopService,
@@ -20,6 +30,7 @@ public sealed class ExcelShopDataController
         _afterImport = afterImport;
     }
 
+    /// <summary>保存先を選択して、店舗入力用Excelテンプレートを作成します。</summary>
     public void DownloadTemplate()
     {
         var dialog = new SaveFileDialog
@@ -52,6 +63,7 @@ public sealed class ExcelShopDataController
         }
     }
 
+    /// <summary>保存先を選択して、現在の店舗一覧をExcelへ出力します。</summary>
     public void Export()
     {
         var dialog = new SaveFileDialog
@@ -84,6 +96,9 @@ public sealed class ExcelShopDataController
         }
     }
 
+    /// <summary>
+    /// Excelファイルを選択して検証済み店舗データを読み込み、ユーザー確認後に全店舗を置換します。
+    /// </summary>
     public void Import()
     {
         var dialog = new OpenFileDialog
