@@ -81,19 +81,50 @@ public partial class DetailView : System.Windows.Controls.UserControl
     {
         var window = new Window
         {
-            Title = $"写真 - {_viewModel.Shop?.Name ?? "店舗"}", Width = 1000, Height = 750,
-            Owner = Window.GetWindow(this), Background = System.Windows.Media.Brushes.Black,
+            Title = $"写真 - {_viewModel.Shop?.Name ?? "店舗"}",
+            Width = 1000,
+            Height = 750,
+            Owner = Window.GetWindow(this),
+            Background = System.Windows.Media.Brushes.Black,
             WindowStartupLocation = WindowStartupLocation.CenterOwner
         };
 
-        var image = new System.Windows.Controls.Image { Stretch = System.Windows.Media.Stretch.Uniform, Margin = new Thickness(48, 48, 48, 72), Focusable = true };
-        var counter = new TextBlock { Foreground = System.Windows.Media.Brushes.White, FontSize = 14, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 22) };
-        var previousButton = new Button { Content = "‹", FontSize = 42, Width = 56, Height = 72, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 0, 0) };
-        var nextButton = new Button { Content = "›", FontSize = 42, Width = 56, Height = 72, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
-        var closeButton = new Button { Content = "×", FontSize = 24, Width = 44, Height = 44, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 12, 12, 0) };
+        var image = new System.Windows.Controls.Image
+        {
+            Stretch = System.Windows.Media.Stretch.Uniform,
+            Margin = new Thickness(48, 48, 48, 72),
+            Focusable = true
+        };
+        var counter = new TextBlock
+        {
+            Foreground = System.Windows.Media.Brushes.White,
+            FontSize = 14,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 0, 22)
+        };
+        var previousButton = CreatePhotoNavigationButton("‹", HorizontalAlignment.Left, new Thickness(12, 0, 0, 0));
+        var nextButton = CreatePhotoNavigationButton("›", HorizontalAlignment.Right, new Thickness(0, 0, 12, 0));
+        var closeButton = new Button
+        {
+            Content = "×",
+            FontSize = 24,
+            Width = 44,
+            Height = 44,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(0, 12, 12, 0),
+            Padding = new Thickness(0),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
 
         var grid = new Grid();
-        grid.Children.Add(image); grid.Children.Add(previousButton); grid.Children.Add(nextButton); grid.Children.Add(counter); grid.Children.Add(closeButton);
+        grid.Children.Add(image);
+        grid.Children.Add(previousButton);
+        grid.Children.Add(nextButton);
+        grid.Children.Add(counter);
+        grid.Children.Add(closeButton);
         window.Content = grid;
 
         var currentIndex = startIndex;
@@ -103,8 +134,9 @@ public partial class DetailView : System.Windows.Controls.UserControl
             currentIndex = Math.Clamp(currentIndex, 0, _viewModel.PhotoPaths.Count - 1);
             image.Source = LoadBitmap(_viewModel.PhotoPaths[currentIndex]);
             counter.Text = $"{currentIndex + 1} / {_viewModel.PhotoPaths.Count}";
-            previousButton.Visibility = _viewModel.PhotoPaths.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
-            nextButton.Visibility = _viewModel.PhotoPaths.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            var showNavigation = _viewModel.PhotoPaths.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+            previousButton.Visibility = showNavigation;
+            nextButton.Visibility = showNavigation;
         }
 
         void Previous() { currentIndex = currentIndex == 0 ? _viewModel.PhotoPaths.Count - 1 : currentIndex - 1; UpdatePhoto(); }
@@ -123,6 +155,20 @@ public partial class DetailView : System.Windows.Controls.UserControl
         window.Loaded += (_, _) => image.Focus();
         return window;
     }
+
+    private static Button CreatePhotoNavigationButton(string content, HorizontalAlignment alignment, Thickness margin) => new()
+    {
+        Content = content,
+        FontSize = 42,
+        Width = 56,
+        Height = 72,
+        HorizontalAlignment = alignment,
+        VerticalAlignment = VerticalAlignment.Center,
+        Margin = margin,
+        Padding = new Thickness(0),
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center
+    };
 
     private static BitmapImage LoadBitmap(string path)
     {
