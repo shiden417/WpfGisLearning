@@ -11,20 +11,41 @@ public sealed class DoubleRangeValidationRule : ValidationRule
 
     public override ValidationResult Validate(object? value, CultureInfo cultureInfo)
     {
-        if (value is null || string.IsNullOrWhiteSpace(value.ToString()))
+        var text = value?.ToString() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(text))
             return new ValidationResult(false, "数値を入力してください。");
 
-        if (!double.TryParse(value.ToString(), NumberStyles.Float, cultureInfo, out var number))
+        var separator = cultureInfo.NumberFormat.NumberDecimalSeparator;
+        if (DecimalPlaces.HasValue && text.EndsWith(separator, StringComparison.Ordinal))
+        {
+            var integerPart = text[..^separator.Length];
+            if (integerPart.Length == 0)
+                return ValidationResult.ValidResult;
+
+            if (double.TryParse(integerPart, NumberStyles.Integer, cultureInfo, out var partialNumber))
+                return partialNumber >= Minimum && partialNumber <= Maximum
+                    ? ValidationResult.ValidResult
+                    : new ValidationResult(false, $"{Minimum:0.0}～{Maximum:0.0}の範囲で入力してください。");
+        }
+
+        if (text == separator)
+            return DecimalPlaces.HasValue ? ValidationResult.ValidResult : new ValidationResult(false, "数値を入力してください。");
+
+        if (!double.TryParse(text, NumberStyles.Float, cultureInfo, out var number))
             return new ValidationResult(false, "数値を入力してください。");
 
         if (number < Minimum || number > Maximum)
-            return new ValidationResult(false, $"{Minimum:0}～{Maximum:0}の範囲で入力してください。");
+            return new ValidationResult(false, $"{Minimum:0.0}～{Maximum:0.0}の範囲で入力してください。");
 
         if (DecimalPlaces.HasValue)
         {
-            var scale = Math.Pow(10, DecimalPlaces.Value);
-            if (Math.Abs(number * scale - Math.Round(number * scale)) > 1e-9)
-                return new ValidationResult(false, $"小数第{DecimalPlaces.Value}位までで入力してください。");
+            var separatorIndex = text.IndexOf(separator, StringComparison.Ordinal);
+            if (separatorIndex >= 0)
+            {
+                var decimalDigitCount = text[(separatorIndex + separator.Length)..].Length;
+                if (decimalDigitCount > DecimalPlaces.Value)
+                    return new ValidationResult(false, $"小数第{DecimalPlaces.Value}位までで入力してください。");
+            }
         }
 
         return ValidationResult.ValidResult;
