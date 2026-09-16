@@ -183,7 +183,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid Grid.Row="0" Margin="0,0,0,8">
-                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="14" Padding="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <Border Background="{StaticResource PanelBrush}" CornerRadius="14" Padding="10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -195,7 +195,7 @@
                                      Height="38"
                                      Padding="12,6"
                                      BorderThickness="0"
-                                     Background="{StaticResource InputBackgroundBrush}"
+                                     Background="{StaticResource SurfaceBrush}"
                                      VerticalContentAlignment="Center" />
                             <TextBlock Text="店舗名・住所・ジャンルで検索"
                                        Foreground="#FFA0A6AB"
