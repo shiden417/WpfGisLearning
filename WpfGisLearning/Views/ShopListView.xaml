@@ -98,6 +98,82 @@
                 <Border Grid.Row="3" HorizontalAlignment="Left" Padding="5,3" Margin="0,4,0,0" Background="#FFF7F8F9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="7"><StackPanel Orientation="Horizontal"><TextBlock Text="並べ替え" Style="{StaticResource FilterLabel}" Margin="0,0,6,0" /><CheckBox Content="価格" IsChecked="{Binding SortByPrice}" Style="{StaticResource SortCheckBox}" Margin="0,0,6,0" /><CheckBox Content="評価" IsChecked="{Binding SortByRating}" Style="{StaticResource SortCheckBox}" Margin="0" /></StackPanel></Border>
             </Grid>
         </Border>
-        <Grid Grid.Row="3"><ListBox x:Name="ShopListBox" ItemsSource="{Binding ShopsView}" SelectedItem="{Binding SelectedShop, Mode=TwoWay}" Background="Transparent" BorderThickness="0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemContainerStyle="{StaticResource ShopListItem}" PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick" Margin="0"><ListBox.ItemTemplate><DataTemplate DataType="{x:Type models:Shop}"><Border Style="{StaticResource ShopCard}"><Border.ContextMenu><ContextMenu><MenuItem Header="詳細" Click="ShopContextMenu_Detail_Click" /><MenuItem Header="編集" Click="ShopContextMenu_Edit_Click" /><Separator /><MenuItem Header="お気に入り切替" Click="ShopContextMenu_Favorite_Click" /><MenuItem Header="削除" Click="ShopContextMenu_Delete_Click" /></ContextMenu></Border.ContextMenu><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="82" /><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions><Border Grid.Column="0" Width="72" Height="82" Background="{StaticResource AccentSoftBrush}" CornerRadius="9" ClipToBounds="True" VerticalAlignment="Top"><Grid><TextBlock Text="🍜" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" /><Image Source="{Binding MainPhotoPath}" Stretch="UniformToFill" /></Grid></Border><StackPanel Grid.Column="1" Margin="10,0,0,0"><TextBlock Text="{Binding Name}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><Border Background="#FFE8EDF1" CornerRadius="6" Padding="7,3"><TextBlock Text="{Binding RamenType}" FontSize="11" Foreground="#FF53616C" FontWeight="SemiBold" /></Border><TextBlock Text="{Binding Rating, StringFormat=★ {0:F1}}" FontSize="12" Foreground="{StaticResource RatingBrush}" Margin="8,3,0,0" /></StackPanel><TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="{StaticResource LabelBrush}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" /><TextBlock Text="{Binding Price, StringFormat=¥{0:N0}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,7,0,0" /></StackPanel><Button Grid.Column="2" Style="{StaticResource FavoriteButton}" Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Top" /></Grid></Border></DataTemplate></ListBox.ItemTemplate></ListBox></Grid>
+        <Grid Grid.Row="3">
+            <ListBox x:Name="ShopListBox"
+                     ItemsSource="{Binding ShopsView}"
+                     SelectedItem="{Binding SelectedShop, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemContainerStyle="{StaticResource ShopListItem}"
+                     PreviewMouseDoubleClick="ShopListItem_PreviewMouseDoubleClick"
+                     Margin="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type models:Shop}">
+                        <Border Style="{StaticResource ShopCard}">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="詳細" Click="ShopContextMenu_Detail_Click" />
+                                    <MenuItem Header="編集" Click="ShopContextMenu_Edit_Click" />
+                                    <Separator />
+                                    <MenuItem Header="お気に入り切替" Click="ShopContextMenu_Favorite_Click" />
+                                    <MenuItem Header="削除" Click="ShopContextMenu_Delete_Click" />
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="82" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="40" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Width="72" Height="82" Background="{StaticResource AccentSoftBrush}" CornerRadius="9" ClipToBounds="True" VerticalAlignment="Top">
+                                    <Grid>
+                                        <TextBlock Text="🍜" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Image Source="{Binding MainPhotoPath}" Stretch="UniformToFill" />
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextBrush}" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                        <Border Background="#FFE8EDF1" CornerRadius="6" Padding="7,3">
+                                            <TextBlock Text="{Binding RamenType}" FontSize="11" Foreground="#FF53616C" FontWeight="SemiBold" />
+                                        </Border>
+                                        <TextBlock Text="{Binding Rating, StringFormat=★ {0:F1}}" FontSize="12" Foreground="{StaticResource RatingBrush}" Margin="8,3,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Address, TargetNullValue=住所未登録}" FontSize="12" Foreground="{StaticResource LabelBrush}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Price, StringFormat=¥{0:N0}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,7,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                                    <Button Style="{StaticResource FavoriteButton}"
+                                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Empty State overlay shown when no filtered shops -->
+            <Border Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding FilteredShopCount}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="360" Opacity="0.95">
+                        <TextBlock Text="検索結果がありません" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" TextAlignment="Center" />
+                        <TextBlock Text="条件を変更するか、データを追加してください。" Margin="0,8,0,0" Foreground="{StaticResource LabelBrush}" HorizontalAlignment="Center" TextAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

@@ -183,8 +183,21 @@ public class ShopListViewModelTests
     private static ShopListViewModel CreateViewModel(params Shop[] shops) =>
         CreateViewModel(new FakeNavigationService(), shops);
 
+    [TestMethod]
+    public void FilteredShopCount_IsZero_WhenNoResults()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "A" },
+            new Shop { Id = 2, Name = "B" });
+
+        // 存在しないキーワードで絞り込む
+        viewModel.SearchKeyword = "__no_match__";
+
+        Assert.AreEqual(0, viewModel.FilteredShopCount);
+    }
+
     private static ShopListViewModel CreateViewModel(FakeNavigationService navigation, params Shop[] shops) =>
-        new(new FakeShopService(shops), navigation);
+        new ShopListViewModel(new FakeShopService(shops), navigation);
 
     private static List<Shop> GetVisibleShops(ShopListViewModel viewModel) =>
         viewModel.ShopsView.Cast<Shop>().ToList();
