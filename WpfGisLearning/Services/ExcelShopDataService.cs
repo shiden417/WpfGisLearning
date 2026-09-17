@@ -44,7 +44,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         sheet.Row(1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
         sheet.SheetView.FreezeRows(1);
 
-        // 列ごとに入力しやすい幅を設定する。
         double[] widths = [10, 26, 12, 34, 13, 13, 16, 18, 12, 12, 18, 10];
         for (var i = 0; i < widths.Length; i++) sheet.Column(i + 1).Width = widths[i];
 
@@ -53,13 +52,11 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         inputRange.Style.Border.SetInsideBorder(XLBorderStyleValues.Hair);
         inputRange.Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
 
-        // 数値項目はExcel上でも意味のある表示形式にする。
         sheet.Range(2, 1, TemplateRows + 1, 1).Style.NumberFormat.Format = "0";
         sheet.Range(2, 3, TemplateRows + 1, 3).Style.NumberFormat.Format = "#,##0";
         sheet.Range(2, 5, TemplateRows + 1, 6).Style.NumberFormat.Format = "0.000000";
         sheet.Range(2, 12, TemplateRows + 1, 12).Style.NumberFormat.Format = "0.0";
 
-        // ラーメン種別を候補から選べるドロップダウンにする。
         var ramenValidation = sheet.Range(2, 7, TemplateRows + 1, 7).CreateDataValidation();
         ramenValidation.List($"\"{string.Join(",", ShopValidation.RamenTypes)}\"");
         ramenValidation.ErrorTitle = "入力値が不正です";
@@ -69,7 +66,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         ramenValidation.InputTitle = "ラーメンの種類";
         ramenValidation.InputMessage = "プルダウンから選択してください。";
 
-        // 営業時間モードも共通の選択肢をExcelへ反映する。
         var hoursValidation = sheet.Range(2, 8, TemplateRows + 1, 8).CreateDataValidation();
         hoursValidation.List($"\"{string.Join(",", ShopValidation.OpeningHoursModes)}\"");
         hoursValidation.ErrorTitle = "入力値が不正です";
@@ -104,7 +100,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         longitudeValidation.ErrorMessage = "経度は-180～180で入力してください。";
         longitudeValidation.ShowErrorMessage = true;
 
-        // 別シートに入力ルールを文章でも記載する。
         rules.Cell("A1").Value = "入力項目";
         rules.Cell("B1").Value = "入力ルール";
         rules.Range("A1:B1").Style.Font.Bold = true;
@@ -138,7 +133,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         rules.Range("A1:B13").Style.Alignment.WrapText = true;
         rules.Row(1).Height = 24;
 
-        // 入力例となるコメントを一部のセルへ付ける。
         sheet.Cell("A2").GetComment().AddText("既存店舗を更新する場合はIDを入力してください。新規店舗は空欄で構いません。");
         sheet.Cell("B2").GetComment().AddText("店舗名は必須です。");
         sheet.Cell("C2").GetComment().AddText("画面の店舗編集と同じく1円以上です。");
@@ -159,7 +153,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         var row = 2;
         foreach (var shop in shops.OrderBy(x => x.Id))
         {
-            // アプリ内部では営業時間を1文字列で保持するため、Excelでは入力しやすい4項目へ分解する。
             var (mode, start, end) = SplitOpeningHours(shop.OpeningHours);
             sheet.Cell(row, 1).Value = shop.Id;
             sheet.Cell(row, 2).Value = shop.Name;
@@ -194,10 +187,8 @@ public sealed class ExcelShopDataService : IExcelShopDataService
 
     /// <summary>
     /// Excelファイルを読み込み、各行を検証したうえでShop一覧へ変換します。
-    /// IDが空欄の行は新規店舗として未使用IDを自動採番します。
+    /// IDが空欄の行は0として返し、実際の採番は既存店舗との統合時に行います。
     /// </summary>
-    /// <param name="filePath">読み込むExcelファイルのパスです。</param>
-    /// <returns>変換済みの店舗一覧です。</returns>
     public List<Shop> Import(string filePath)
     {
         using var workbook = new XLWorkbook(filePath);
@@ -206,7 +197,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         if (lastRow < 2)
             return [];
 
-        // 先に明示されたIDの重複をチェックして、曖昧な更新対象を防ぐ。
         var explicitIds = new HashSet<int>();
         for (var row = 2; row <= lastRow; row++)
         {
@@ -217,19 +207,12 @@ public sealed class ExcelShopDataService : IExcelShopDataService
         }
 
         var shops = new List<Shop>();
-        var nextId = explicitIds.Count == 0 ? 1 : explicitIds.Max() + 1;
         for (var row = 2; row <= lastRow; row++)
         {
             if (sheet.Range(row, 1, row, Headers.Length).Cells().All(cell => cell.IsEmpty())) continue;
 
+            // 空欄IDは0のまま保持し、既存店舗のIDと照合した後に新しいIDを決める。
             var id = ReadInt(sheet.Cell(row, 1), 0);
-            if (id <= 0)
-            {
-                // 空欄IDは明示IDと衝突しない番号を順番に割り当てる。
-                while (explicitIds.Contains(nextId)) nextId++;
-                id = nextId++;
-            }
-
             var name = sheet.Cell(row, 2).GetString().Trim();
             var price = ReadDecimal(sheet.Cell(row, 3));
             var address = sheet.Cell(row, 4).GetString().Trim();
@@ -242,7 +225,6 @@ public sealed class ExcelShopDataService : IExcelShopDataService
             var closedDay = sheet.Cell(row, 11).GetString().Trim();
             var rating = ReadDouble(sheet.Cell(row, 12));
 
-            // Excel側の自由入力も、画面側と同じ共通ルールで検証する。
             var nameError = ShopValidation.ValidateName(name);
             if (nameError is not null)
                 throw new InvalidDataException($"{row}行目の{nameError}");
