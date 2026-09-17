@@ -51,7 +51,7 @@ public class ExcelShopDataServiceTests
     }
 
     [TestMethod]
-    public void Import_BlankIdAssignsNextId()
+    public void Import_BlankIdKeepsZeroForMergeStep()
     {
         var path = CreateWorkbookWithRows(
             [
@@ -62,7 +62,7 @@ public class ExcelShopDataServiceTests
         {
             var imported = _service.Import(path);
 
-            Assert.IsTrue(imported.Select(x => x.Id).SequenceEqual([1, 2]));
+            Assert.IsTrue(imported.Select(x => x.Id).SequenceEqual([1, 0]));
         }
         finally
         {
