@@ -91,7 +91,7 @@ public sealed class ShopService : IShopService
 
     /// <summary>
     /// 店舗一覧を丸ごと置き換えて永続化します。
-    /// Excelインポートなど、外部から一覧全体を置き換える処理で使用します。
+    /// 明示的な全置換が必要な処理でのみ使用します。
     /// </summary>
     public void ReplaceAll(IEnumerable<Shop> shops)
     {
@@ -99,6 +99,45 @@ public sealed class ShopService : IShopService
         _shops.Clear();
         _shops.AddRange(importedShops);
         RefreshPhotoPaths();
+        Save();
+    }
+
+    /// <summary>
+    /// Excelなどから取り込んだ店舗を既存データへ統合します。
+    /// IDが一致する店舗はExcel側の項目で更新し、IDが0以下の店舗は新規店舗として追加します。
+    /// Excelに含まれない既存店舗はそのまま保持します。
+    /// 写真とお気に入り状態はExcelの列に存在しないため、既存店舗の値を維持します。
+    /// </summary>
+    public void MergeImported(IEnumerable<Shop> shops)
+    {
+        var importedShops = shops.ToList();
+        var nextId = _shops.Count == 0 ? 1 : _shops.Max(x => x.Id) + 1;
+
+        foreach (var importedShop in importedShops)
+        {
+            if (importedShop.Id <= 0)
+            {
+                importedShop.Id = nextId++;
+                RefreshPhotoPath(importedShop);
+                _shops.Add(importedShop);
+                continue;
+            }
+
+            var existingIndex = _shops.FindIndex(x => x.Id == importedShop.Id);
+            if (existingIndex < 0)
+            {
+                RefreshPhotoPath(importedShop);
+                _shops.Add(importedShop);
+                continue;
+            }
+
+            var existingShop = _shops[existingIndex];
+            importedShop.IsFavorite = existingShop.IsFavorite;
+            importedShop.Photos = existingShop.Photos;
+            RefreshPhotoPath(importedShop);
+            _shops[existingIndex] = importedShop;
+        }
+
         Save();
     }
 
