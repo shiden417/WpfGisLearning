@@ -13,7 +13,7 @@ public sealed class ExcelShopDataController
     /// <summary>Excelファイルの作成・読込・出力を担当するサービスです。</summary>
     private readonly IExcelShopDataService _excelShopDataService;
 
-    /// <summary>現在の店舗データを取得・置換するサービスです。</summary>
+    /// <summary>現在の店舗データを取得・更新するサービスです。</summary>
     private readonly IShopService _shopService;
 
     /// <summary>Excelインポート完了後に画面データを再同期するコールバックです。</summary>
@@ -97,7 +97,8 @@ public sealed class ExcelShopDataController
     }
 
     /// <summary>
-    /// Excelファイルを選択して検証済み店舗データを読み込み、ユーザー確認後に全店舗を置換します。
+    /// Excelファイルを選択して検証済み店舗データを読み込み、ユーザー確認後に既存データへ統合します。
+    /// ID一致は更新、IDが空欄だった店舗は新規店舗として追加し、Excelにない既存店舗は保持します。
     /// </summary>
     public void Import()
     {
@@ -114,18 +115,18 @@ public sealed class ExcelShopDataController
         {
             var shops = _excelShopDataService.Import(dialog.FileName);
             var result = MessageBox.Show(
-                $"Excelから{shops.Count}件の店舗データを読み込みます。\nIDが一致する店舗は更新し、IDが空欄だった店舗は新規登録します。\n\n実行しますか？",
+                $"Excelから{shops.Count}件の店舗データを読み込みます。\nIDが一致する店舗は更新し、IDが空欄だった店舗は新規登録します。\nExcelに含まれない既存店舗はそのまま残ります。\n\n実行しますか？",
                 "Excelインポートの確認",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
             if (result != MessageBoxResult.Yes) return;
 
-            _shopService.ReplaceAll(shops);
+            _shopService.MergeImported(shops);
             _afterImport();
 
             MessageBox.Show(
-                $"Excelから{shops.Count}件の店舗データを読み込みました。",
+                $"Excelから{shops.Count}件の店舗データを読み込みました。既存店舗は保持されています。",
                 "Excelインポート",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
