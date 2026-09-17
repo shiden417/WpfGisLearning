@@ -25,6 +25,12 @@ public interface IShopService
     /// <summary>指定IDの店舗のお気に入り状態を反転します。</summary>
     void ToggleFavorite(int id);
 
-    /// <summary>店舗一覧全体を置き換えて永続化します。Excelインポートなどで使用します。</summary>
+    /// <summary>店舗一覧全体を置き換えて永続化します。</summary>
     void ReplaceAll(IEnumerable<Shop> shops);
+
+    /// <summary>
+    /// Excelなどから取り込んだ店舗を既存データへ統合します。
+    /// ID一致は更新、IDが0以下の店舗は新規IDを採番して追加します。
+    /// </summary>
+    void MergeImported(IEnumerable<Shop> shops);
 }
