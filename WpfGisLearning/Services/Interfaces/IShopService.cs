@@ -32,5 +32,8 @@ public interface IShopService
     /// Excelなどから取り込んだ店舗を既存データへ統合します。
     /// ID一致は更新、IDが0以下の店舗は新規IDを採番して追加します。
     /// </summary>
-    void MergeImported(IEnumerable<Shop> shops);
+    void MergeImported(IEnumerable<Shop> shops)
+    {
+        ReplaceAll(shops);
+    }
 }
