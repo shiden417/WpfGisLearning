@@ -118,6 +118,44 @@ public class ShopServiceTests
     }
 
     [TestMethod]
+    public void MergeImported_UpdatesMatchingIdAndKeepsExistingShops()
+    {
+        var existing = new Shop { Id = 1, Name = "Existing", IsFavorite = true };
+        var untouched = new Shop { Id = 2, Name = "Untouched" };
+        var store = new FakeShopDataStore(existing, untouched);
+        var service = CreateService(store);
+        store.SaveCalled = false;
+
+        service.MergeImported([
+            new Shop { Id = 1, Name = "Updated" },
+            new Shop { Id = 0, Name = "Imported" }
+        ]);
+
+        var shops = service.GetShops().ToList();
+        Assert.HasCount(3, shops);
+        Assert.AreEqual("Updated", shops.Single(x => x.Id == 1).Name);
+        Assert.IsTrue(shops.Single(x => x.Id == 1).IsFavorite);
+        Assert.AreEqual("Untouched", shops.Single(x => x.Id == 2).Name);
+        Assert.AreEqual("Imported", shops.Single(x => x.Id == 3).Name);
+        Assert.IsTrue(store.SaveCalled);
+    }
+
+    [TestMethod]
+    public void MergeImported_PreservesExistingPhotosWhenUpdating()
+    {
+        var photo = new ShopPhoto { Id = "photo", IsMain = true, FileName = "main.jpg" };
+        var existing = new Shop { Id = 1, Name = "Existing", Photos = [photo] };
+        var store = new FakeShopDataStore(existing);
+        var service = CreateService(store);
+
+        service.MergeImported([new Shop { Id = 1, Name = "Updated" }]);
+
+        var updated = service.GetShops().Single();
+        Assert.HasCount(1, updated.Photos);
+        Assert.AreEqual("main.jpg", updated.Photos.Single().FileName);
+    }
+
+    [TestMethod]
     public void Constructor_RefreshesMainPhotoPath()
     {
         var photo = new ShopPhoto { Id = "main", IsMain = true, FileName = "main.jpg" };
