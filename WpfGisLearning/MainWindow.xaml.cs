@@ -13,54 +13,34 @@ namespace WpfGisLearning;
 /// </summary>
 public partial class MainWindow : Window
 {
-    // メイン地図の生成・店舗レイヤー更新・現在地表示を担当します。
-    private readonly MapController _mapController;
-    // 店舗一覧の検索、選択、フィルターを管理します。
     private readonly ShopListViewModel _shopListViewModel;
-    // Windowsの現在地取得を担当します。
-    private readonly ICurrentLocationService _currentLocationService;
-    // ニュース画面のViewです。
     private readonly NewsView _newsView;
-    // 地図上に表示する店舗情報カードを担当します。
-    private readonly ShopInfoCardPresenter _infoCardPresenter;
-    // Excel入出力に関するWPF操作を担当します。
     private readonly ExcelShopDataController _excelShopDataController;
-    // 現在地図上で選択されている店舗IDです。
-    private int? _selectedShopId;
 
     /// <summary>メイン画面に必要なView、サービス、ViewModelを受け取って初期化します。</summary>
     public MainWindow(
         ShopListView shopListView,
+        MapView mapView,
         IShopService shopService,
         IExcelShopDataService excelShopDataService,
-        ICurrentLocationService currentLocationService,
         NewsView newsView)
     {
         InitializeComponent();
         Icon = RameniaIconFactory.Create();
         MainContent.Content = shopListView;
+        MapContent.Content = mapView;
         _shopListViewModel = (ShopListViewModel)shopListView.DataContext;
-        _currentLocationService = currentLocationService;
         _newsView = newsView;
-        _mapController = new MapController(MapControl);
-        _infoCardPresenter = new ShopInfoCardPresenter(
-            this, InfoCardBorder, InfoCardName, InfoCardType, InfoCardAddress,
-            InfoCardPrice, InfoCardRating, InfoCardFavorite,
-            InfoCardBusinessHoursBadge, InfoCardBusinessHoursStatus);
         _excelShopDataController = new ExcelShopDataController(
             excelShopDataService, shopService, ResetAfterExcelImport);
 
-        _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
-        _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
         shopListView.DownloadExcelTemplateRequested += DownloadExcelTemplateButton_Click;
         shopListView.ExportExcelRequested += ExportExcelButton_Click;
         shopListView.ImportExcelRequested += ImportExcelButton_Click;
         _newsView.RequestBack += NewsView_RequestBack;
-
-        InitializeMap();
     }
 
-    /// <summary>ニュース画面を表示し、店舗エリアを一時的に非表示にします。</summary>
+    /// <summary>ニュース画面を表示し、店舗・地図エリアを一時的に非表示にします。</summary>
     private void NewsButton_Click(object sender, RoutedEventArgs e)
     {
         MainArea.Visibility = Visibility.Collapsed;
@@ -97,12 +77,10 @@ public partial class MainWindow : Window
     private void ImportExcelButton_Click(object sender, RoutedEventArgs e) =>
         _excelShopDataController.Import();
 
-    /// <summary>Excelインポート完了後に選択状態・検索状態・情報カードを初期化します。</summary>
+    /// <summary>Excelインポート完了後に検索状態を初期化し、店舗データを再読み込みします。</summary>
     private void ResetAfterExcelImport()
     {
-        _selectedShopId = null;
         _shopListViewModel.ClearSearchCommand.Execute(null);
         _shopListViewModel.RefreshFromService();
-        _infoCardPresenter.Hide();
     }
 }

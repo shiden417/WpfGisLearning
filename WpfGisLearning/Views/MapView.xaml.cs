@@ -1,17 +1,45 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using WpfGisLearning.Map;
 using WpfGisLearning.Models;
+using WpfGisLearning.Services.Interfaces;
+using WpfGisLearning.ViewModels;
 
-namespace WpfGisLearning;
+namespace WpfGisLearning.Views;
 
 /// <summary>
-/// MainWindowのうち、地図・店舗選択・現在地に関するコードをまとめたpartial部分です。
-/// MainWindow本体から地図関連のWPFイベント処理を分離しています。
+/// 店舗地図画面です。
+/// 地図表示、地図操作、店舗選択、現在地表示をこのViewへまとめています。
 /// </summary>
-public partial class MainWindow
+public partial class MapView : UserControl
 {
-    /// <summary>Mapsuiの地図を初期化し、店舗一覧とWPFイベントを接続します。</summary>
+    private readonly MapController _mapController;
+    private readonly ShopListViewModel _shopListViewModel;
+    private readonly ICurrentLocationService _currentLocationService;
+    private readonly ShopInfoCardPresenter _infoCardPresenter;
+    private int? _selectedShopId;
+
+    /// <summary>店舗一覧のViewModelと現在地サービスを受け取って地図画面を初期化します。</summary>
+    public MapView(ShopListViewModel shopListViewModel, ICurrentLocationService currentLocationService)
+    {
+        InitializeComponent();
+
+        _shopListViewModel = shopListViewModel;
+        _currentLocationService = currentLocationService;
+        _mapController = new MapController(MapControl);
+        _infoCardPresenter = new ShopInfoCardPresenter(
+            this, InfoCardBorder, InfoCardName, InfoCardType, InfoCardAddress,
+            InfoCardPrice, InfoCardRating, InfoCardFavorite,
+            InfoCardBusinessHoursBadge, InfoCardBusinessHoursStatus);
+
+        _shopListViewModel.SelectedShopChanged += ShopListViewModel_SelectedShopChanged;
+        _shopListViewModel.ShopsChanged += ShopListViewModel_ShopsChanged;
+
+        InitializeMap();
+    }
+
+    /// <summary>Mapsuiの地図を初期化し、店舗レイヤーとWPFイベントを接続します。</summary>
     private void InitializeMap()
     {
         try
@@ -34,7 +62,6 @@ public partial class MainWindow
         var filteredShops = _shopListViewModel.ShopsView.Cast<Shop>().ToList();
         _mapController.RebuildShopLayer(filteredShops, _selectedShopId);
 
-        // 選択中店舗がフィルターで消えた場合は、地図と情報カードの選択も解除する。
         if (_selectedShopId.HasValue && !filteredShops.Any(shop => shop.Id == _selectedShopId.Value))
         {
             _selectedShopId = null;
@@ -50,7 +77,7 @@ public partial class MainWindow
         SetInitialMapPosition();
     }
 
-    /// <summary>店舗全体が見える初期地図位置をMapControllerへ依頼します。</summary>
+    /// <summary>店舗全体が見える初期地図位置を設定します。</summary>
     private void SetInitialMapPosition()
     {
         try
@@ -66,9 +93,7 @@ public partial class MainWindow
     /// <summary>店舗一覧が変更されたら地図レイヤーを再構築します。</summary>
     private void ShopListViewModel_ShopsChanged(object? sender, EventArgs e) => RebuildShopLayer();
 
-    /// <summary>
-    /// 一覧で店舗が選択された際に、地図・情報カード・選択状態を同期します。
-    /// </summary>
+    /// <summary>一覧の店舗選択を地図と情報カードへ同期します。</summary>
     private void ShopListViewModel_SelectedShopChanged(object? sender, Shop? shop)
     {
         _selectedShopId = shop?.Id;
@@ -88,7 +113,6 @@ public partial class MainWindow
             return;
         }
 
-        // フィルター結果に存在しない店舗は地図上で選択状態にしない。
         if (!_shopListViewModel.ShopsView.Cast<Shop>().Any(filteredShop => filteredShop.Id == shop.Id))
         {
             _selectedShopId = null;
@@ -123,9 +147,7 @@ public partial class MainWindow
     private async void CurrentLocationButton_Click(object sender, RoutedEventArgs e) =>
         await TryShowCurrentLocationAsync(showMessageOnFailure: true);
 
-    /// <summary>
-    /// 現在地を取得し、近隣フィルター・現在地マーカー・地図中心をまとめて更新します。
-    /// </summary>
+    /// <summary>現在地を取得し、近隣フィルター・現在地マーカー・地図中心を更新します。</summary>
     private async Task TryShowCurrentLocationAsync(bool showMessageOnFailure)
     {
         try
@@ -179,14 +201,14 @@ public partial class MainWindow
     /// <summary>地図を1段階縮小します。</summary>
     private void ZoomOutButton_Click(object sender, RoutedEventArgs e) => _mapController.ZoomOut();
 
-    /// <summary>ダブルクリック時の既定の地図操作を抑制するWPFイベントハンドラーです。</summary>
+    /// <summary>ダブルクリック時の既定の地図操作を抑制します。</summary>
     private void MapControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount != 2) return;
         e.Handled = true;
     }
 
-    /// <summary>地図処理中の例外メッセージを画面上のステータス表示へ設定します。</summary>
+    /// <summary>地図処理中の例外メッセージを画面上に表示します。</summary>
     private void ShowMapError(string message, Exception exception)
     {
         MapStatusText.Text = $"{message}\n{exception.Message}";

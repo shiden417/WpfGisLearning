@@ -41,7 +41,8 @@ public partial class App : Application
         // ViewやViewModelは画面生成ごとに独立したインスタンスを作るTransientとして登録する。
         services.AddTransient<DetailView>();
         services.AddTransient<ShopListView>();
-        services.AddTransient<ShopListViewModel>();
+        services.AddSingleton<ShopListViewModel>();
+        services.AddTransient<MapView>();
         services.AddTransient<ShopEditView>();
         services.AddTransient<ShopEditViewModel>();
         services.AddTransient<Views.ShopPage>();
