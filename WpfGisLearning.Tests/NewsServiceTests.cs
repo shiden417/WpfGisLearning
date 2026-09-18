@@ -13,7 +13,7 @@ public class NewsServiceTests
         var handler = new QueueHandler(
         [
             CreateResponse("<rss><channel><item><title>東京の新店 - Example</title><link>https://example.com/news/1</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate><description>&lt;p&gt;新しいラーメン店がオープン&lt;/p&gt;</description><source>Example</source></item></channel></rss>"),
-            CreateResponse("<html><head><meta property="og:image" content="https://example.com/images/1.jpg" /></head></html>")
+            CreateResponse("""<html><head><meta property="og:image" content="https://example.com/images/1.jpg" /></head></html>""")
         ]);
         using var client = new HttpClient(handler);
         var service = new NewsService(client);
@@ -34,9 +34,9 @@ public class NewsServiceTests
     {
         var handler = new QueueHandler(
         [
-            CreateResponse("<rss><channel><item><title>ニュース</title><link>https://news.google.com/rss/articles/test</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate></item></channel></rss>"),
-            CreateResponse("<html><head><link rel="canonical" href="https://example.com/news/1"></head></html>"),
-            CreateResponse("<html><head><meta property="og:image" content="https://example.com/images/1.jpg"></head></html>")
+            CreateResponse("""<rss><channel><item><title>ニュース</title><link>https://news.google.com/rss/articles/test</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate></item></channel></rss>"""),
+            CreateResponse("""<html><head><link rel="canonical" href="https://example.com/news/1"></head></html>"""),
+            CreateResponse("""<html><head><meta property="og:image" content="https://example.com/images/1.jpg"></head></html>""")
         ]);
         using var client = new HttpClient(handler);
         var service = new NewsService(client);
