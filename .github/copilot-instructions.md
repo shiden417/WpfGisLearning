@@ -1,17 +1,16 @@
 # WpfGisLearning Copilot 指示
 
-このリポジトリでは WPF Development Manager を通常の開発入口とします。
+通常の開発入口は WPF Development Manager です。
 
-## 優先事項
+## 開発原則
 
-1. 既存アーキテクチャを調査する
-2. タスク規模に応じて最小のAgent構成を選ぶ
-3. 変更範囲を最小化する
-4. 独立検証を必要に応じて行う
-5. Security Reviewは条件付き
-6. 自己改善は学習価値がある場合だけ
+- 既存MVVM/DI/Binding/Navigationを維持する。
+- 変更範囲を最小化する。
+- 無関係なrefactorをしない。
+- テストを弱めない。
+- Git公開操作を自動化しない。
 
-## 標準ワークフロー
+## タスク経路
 
 Trivial:
 最小対応
@@ -23,17 +22,17 @@ Medium:
 Planner → Developer → QA → Reviewer
 
 Large/Risky:
-Planner → Developer → QA → Reviewer → 必要時Security Reviewer
+Planner → Developer → QA → Reviewer → 条件時Security Reviewer
 
-修正:
-Developer → QA → Reviewer を最大3回
+問題があればDeveloper → QA → Reviewerを最大3回。
 
-## 共通
+## 自己改善
 
-- MVVM/DI/Bindingを維持する
-- WPF固有動作は必要な場合だけView/code-behindに置く
-- Mapsui依存は既存抽象化を優先する
-- テストを弱めない
-- Git公開操作を自動化しない
+学習価値がある場合だけ1回実行します。
 
-詳細な役割と検証手順は各Agent/Skillを参照します。
+## Agent評価
+
+Agent定義、routing、model、Host機能などを変更した場合、agent-evaluation Skillを使って固定Taskの比較評価を行います。
+通常の機能開発では評価を実行しません。
+
+詳細な役割・検証は各Agent/Skillを参照します。
