@@ -5,54 +5,26 @@ using WpfGisLearning.Services.Interfaces;
 
 namespace WpfGisLearning.Services;
 
-/// <summary>
-/// BingニュースのRSSからラーメン関連ニュースを取得するサービスです。
-/// RSS取得と元記事のOG画像取得をまとめて行い、画面側にはNewsItemとして返します。
-/// </summary>
 public class NewsService : INewsService
 {
-    /// <summary>BingニュースRSS検索のエンドポイントです。</summary>
     private const string FeedBaseUrl = "https://www.bing.com/news/search";
-
-    /// <summary>1回の取得で画面に返す最大ニュース件数です。</summary>
     private const int MaxNewsItems = 20;
-
-    /// <summary>RSS 1ページあたりの取得件数です。</summary>
     private const int FeedPageSize = 10;
-
-    /// <summary>指定日まで遡るために取得するRSSページの最大数です。</summary>
-    private const int MaxFeedPages = 10;
-
-    /// <summary>RSS取得時に送るUser-Agentです。</summary>
+    private const int MaxFeedPages = 20;
     private const string FeedUserAgent = "Ramenia/1.0";
-
-    /// <summary>元記事HTML取得時に送るブラウザー風User-Agentです。</summary>
     private const string ArticleUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36";
 
-    /// <summary>ニュース取得用HTTPクライアントを生成します。</summary>
     private static HttpClient CreateHttpClient() => new() { Timeout = TimeSpan.FromSeconds(10) };
 
-    /// <summary>RSSや記事HTMLの取得に使用するHTTPクライアントです。</summary>
     private readonly HttpClient _httpClient;
 
-    /// <summary>既定のHTTPクライアントを使ってニュースサービスを生成します。</summary>
-    public NewsService()
-        : this(CreateHttpClient())
-    {
-    }
+    public NewsService() : this(CreateHttpClient()) { }
 
-    /// <summary>テストやDIで差し替え可能なHTTPクライアントを受け取ります。</summary>
     public NewsService(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    /// <summary>
-    /// 指定日以前のニュースをRSSから取得し、記事画像も可能な範囲で補完します。
-    /// </summary>
-    /// <param name="date">取得対象とする基準日です。</param>
-    /// <param name="cancellationToken">通信をキャンセルするためのトークンです。</param>
-    /// <returns>公開日時の新しい順に並べたニュース一覧です。</returns>
     public async Task<IReadOnlyList<NewsItem>> GetNewsAsync(
         DateTime date,
         CancellationToken cancellationToken = default)
@@ -60,7 +32,8 @@ public class NewsService : INewsService
         var allItems = new List<NewsItem>();
         var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Bing News RSSは検索結果をページングできるため、指定日まで遡って取得する。
+        // Bing News RSSはページ間で結果が重複することがあるため、
+        // 重複ページだけでは探索を終了せず、指定日まで次ページを確認する。
         for (var page = 0; page < MaxFeedPages; page++)
         {
             var offset = page * FeedPageSize + 1;
@@ -74,11 +47,10 @@ public class NewsService : INewsService
                 .ToList();
 
             if (newItems.Count == 0)
-                break;
+                continue;
 
             allItems.AddRange(newItems);
 
-            // このページの最古記事が指定日以前なら、必要な範囲まで到達している。
             var oldestDate = newItems.Min(item => item.PublishedAt);
             if (oldestDate.Date <= date.Date)
                 break;
@@ -90,16 +62,12 @@ public class NewsService : INewsService
             .Take(MaxNewsItems)
             .ToList();
 
-        // RSSに画像が含まれない記事だけ、元記事HTMLから画像を補完する。
         foreach (var item in items.Where(item => !item.HasImage))
             item.ImageUrl = await TryGetArticleImageUrlAsync(item.SourceUrl, cancellationToken);
 
         return items;
     }
 
-    /// <summary>
-    /// Bing News RSSを1ページ取得します。
-    /// </summary>
     private async Task<IReadOnlyList<NewsItem>> GetFeedPageAsync(
         int offset,
         CancellationToken cancellationToken)
@@ -126,10 +94,6 @@ public class NewsService : INewsService
             .ToList();
     }
 
-    /// <summary>
-    /// 元記事のHTMLからOG画像などの画像URLを取得します。
-    /// 画像取得失敗はニュース全体の取得失敗にせず、画像なしとして扱います。
-    /// </summary>
     private async Task<string> TryGetArticleImageUrlAsync(string url, CancellationToken cancellationToken)
     {
         try
@@ -149,7 +113,6 @@ public class NewsService : INewsService
             if (!string.IsNullOrWhiteSpace(imageUrl))
                 return imageUrl;
 
-            // Googleニュースの中継ページが返った場合はcanonical URLを再取得する。
             var canonicalUrl = NewsItemParser.FindCanonicalUrl(html, finalUri);
             if (!string.IsNullOrWhiteSpace(canonicalUrl)
                 && !string.Equals(canonicalUrl, finalUri?.AbsoluteUri, StringComparison.OrdinalIgnoreCase))
@@ -173,12 +136,10 @@ public class NewsService : INewsService
         }
         catch (OperationCanceledException)
         {
-            // キャンセルだけは呼び出し元へ伝えて、UIから通信を停止できるようにする。
             throw;
         }
         catch
         {
-            // 一部記事の画像取得失敗でニュース一覧全体が使えなくならないようにする。
             return string.Empty;
         }
     }
