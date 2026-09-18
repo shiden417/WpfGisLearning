@@ -53,7 +53,7 @@ public class NewsService : INewsService
     {
         // before条件は基準日の翌日を指定し、基準日当日分まで含める。
         var end = date.Date.AddDays(1);
-        var query = $"(ラーメン OR ラーメン店 OR つけ麺) before:{end:yyyy-MM-dd}";
+        var query = "ラーメン";
         var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&format=RSS&mkt=ja-JP";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
