@@ -56,7 +56,7 @@ public class NewsServiceTests
             "<item><title>新しいラーメン</title><link>https://example.com/new</link><pubDate>Wed, 16 Sep 2026 12:00:00 GMT</pubDate></item>" +
             "</channel></rss>";
         var historicalFeed = "<rss><channel>" +
-            "<item><title>過去のラーメン</title><link>https://example.com/old</link><pubDate>Mon, 1 Sep 2026 12:00:00 GMT</pubDate></item>" +
+            "<item><title>過去のラーメン</title><link>https://example.com/old</link><pubDate>Tue, 1 Sep 2026 12:00:00 GMT</pubDate></item>" +
             "</channel></rss>";
 
         var handler = new QueueHandler(
