@@ -29,6 +29,26 @@ public class NewsServiceTests
         Assert.HasCount(2, handler.Requests);
     }
 
+
+    [TestMethod]
+    public async Task GetNewsAsync_UsesCanonicalArticlePageWhenRedirectPageHasNoImage()
+    {
+        var handler = new QueueHandler(
+        [
+            CreateResponse("<rss><channel><item><title>ニュース</title><link>https://news.google.com/rss/articles/test</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate></item></channel></rss>"),
+            CreateResponse("<html><head><link rel=\"canonical\" href=\"https://example.com/news/1\"></head></html>"),
+            CreateResponse("<html><head><meta property=\"og:image\" content=\"https://example.com/images/1.jpg\"></head></html>")
+        ]);
+        using var client = new HttpClient(handler);
+        var service = new NewsService(client);
+
+        var items = await service.GetNewsAsync(new DateTime(2026, 9, 16));
+
+        Assert.HasCount(1, items);
+        Assert.AreEqual("https://example.com/images/1.jpg", items[0].ImageUrl);
+        Assert.HasCount(3, handler.Requests);
+    }
+
     [TestMethod]
     public async Task GetNewsAsync_ExcludesItemsAfterRequestedDate()
     {
