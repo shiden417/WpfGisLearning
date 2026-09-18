@@ -227,7 +227,7 @@ public class ShopListViewModelTests
         viewModel.FavoriteOnly = true;
         viewModel.SortByPrice = true;
 
-        Assert.IsTrue(changedProperties.Count(name => name == nameof(ShopListViewModel.FilteredShopCount)) >= 5);
+        Assert.IsGreaterThanOrEqualTo(5, changedProperties.Count(name => name == nameof(ShopListViewModel.FilteredShopCount)));
     }
 
     private static ShopListViewModel CreateViewModel(FakeNavigationService navigation, params Shop[] shops) =>
