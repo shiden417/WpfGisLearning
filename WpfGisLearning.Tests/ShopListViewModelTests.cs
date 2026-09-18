@@ -196,6 +196,40 @@ public class ShopListViewModelTests
         Assert.AreEqual(0, viewModel.FilteredShopCount);
     }
 
+    [TestMethod]
+    public void FilteredShopCount_UpdatesWhenFilterChangesAndClears()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "東京店" },
+            new Shop { Id = 2, Name = "大阪店" });
+
+        Assert.AreEqual(2, viewModel.FilteredShopCount);
+
+        viewModel.SearchKeyword = "東京";
+        Assert.AreEqual(1, viewModel.FilteredShopCount);
+
+        viewModel.ClearSearchCommand.Execute(null);
+        Assert.AreEqual(2, viewModel.FilteredShopCount);
+    }
+
+    [TestMethod]
+    public void FilteredShopCount_RaisesPropertyChangedWhenFilterChanges()
+    {
+        var viewModel = CreateViewModel(
+            new Shop { Id = 1, Name = "A", RamenType = "醤油", Price = 900, IsFavorite = true },
+            new Shop { Id = 2, Name = "B", RamenType = "味噌", Price = 1500 });
+        var changedProperties = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
+
+        viewModel.SearchKeyword = "A";
+        viewModel.SelectedRamenType = "醤油";
+        viewModel.SelectedPriceFilter = "1000円以下";
+        viewModel.FavoriteOnly = true;
+        viewModel.SortByPrice = true;
+
+        Assert.IsTrue(changedProperties.Count(name => name == nameof(ShopListViewModel.FilteredShopCount)) >= 5);
+    }
+
     private static ShopListViewModel CreateViewModel(FakeNavigationService navigation, params Shop[] shops) =>
         new ShopListViewModel(new FakeShopService(shops), navigation);
 

@@ -20,6 +20,8 @@ When appropriate, run:
 - `dotnet test`
 
 Inspect the test project and existing testing conventions before adding tests.
+- For bound filtered/count state, verify initial state, filter-driven updates, empty results, clearing/resetting, and relevant `PropertyChanged` notifications; add a focused regression test when needed.
+- Distinguish executed automated checks from static or manual UI checks, and report exact commands, results, or blockers.
 
 ## WPF-specific checks
 Pay attention to:
