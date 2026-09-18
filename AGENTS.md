@@ -1,78 +1,78 @@
-# WpfGisLearning Agent Instructions
+# WpfGisLearning Agent 指示
 
-## Project purpose
-This repository is a WPF learning project and a sandbox for experimenting with AI-assisted development workflows.
+## プロジェクトの目的
+このリポジトリはWPF学習用プロジェクトであり、AI支援開発ワークフローを試すためのサンドボックスでもあります。
 
-## Technology baseline
-- .NET 10 desktop application.
-- WPF with `net10.0-windows10.0.26100.0`.
-- Nullable reference types and implicit usings are enabled.
-- CommunityToolkit.Mvvm.
-- Microsoft.Extensions.Hosting / dependency injection.
-- Mapsui.Wpf.
-- ClosedXML.
-- xUnit-based tests are kept in `WpfGisLearning.Tests`.
+## 技術基盤
+- .NET 10 デスクトップアプリケーション。
+- WPF、\`net10.0-windows10.0.26100.0\`。
+- Nullable参照型とimplicit usingsを有効化。
+- CommunityToolkit.Mvvm。
+- Microsoft.Extensions.Hosting / 依存性注入。
+- Mapsui.Wpf。
+- ClosedXML。
+- xUnitベースのテストは \`WpfGisLearning.Tests\` に配置。
 
-## Architecture
-- Prefer MVVM for application behavior.
-- Prefer dependency injection for services and ViewModel dependencies.
-- Keep UI-specific WPF behavior in Views/code-behind only when it cannot reasonably belong elsewhere.
-- Prefer existing abstractions and patterns over introducing new frameworks or dependencies.
-- Preserve existing behavior unless the task explicitly changes it.
-- Avoid unrelated refactoring during feature work.
+## アーキテクチャ
+- アプリケーションの動作にはMVVMを優先する。
+- サービスとViewModelの依存関係には依存性注入を優先する。
+- UI固有のWPF動作は、合理的に別の場所へ置けない場合に限ってView/code-behindに置く。
+- 新しいフレームワークや依存関係を導入するより、既存の抽象化とパターンを優先する。
+- タスクで明示的に変更しない限り、既存の動作を維持する。
+- 機能開発中に無関係なリファクタリングを行わない。
 
-## Development workflow
-For a non-trivial task:
-1. Inspect the existing implementation and tests before changing code.
-2. Make a concise implementation plan.
-3. Implement the smallest coherent change.
-4. Run `dotnet build` and `dotnet test` where applicable.
-5. Review the diff for unintended changes.
-6. Perform an independent review before declaring the task complete.
-7. After the task is stable, run one bounded AI process-improvement pass.
+## 開発ワークフロー
+重要度の高いタスクでは以下を行う。
+1. コードを変更する前に既存実装とテストを調査する。
+2. 簡潔な実装計画を作る。
+3. 一貫性のある最小限の変更を実装する。
+4. 必要に応じて \`dotnet build\` と \`dotnet test\` を実行する。
+5. 意図しない変更がないか差分を確認する。
+6. タスク完了前に独立したレビューを行う。
+7. タスクが安定した後、範囲付きのAIプロセス改善を1回実施する。
 
-## AI team workflow
-Preferred role separation:
-- Manager: coordinates the workflow and correction loop.
-- Planner: investigates the repository and proposes the implementation plan.
-- Developer: changes production and test code.
-- QA: verifies behavior, tests, build, and regression risk.
-- Reviewer: independently reviews the changes and reports issues.
-- Security Reviewer: inspect security-sensitive changes when authentication, authorization, file I/O, external input, secrets, networking, or data persistence are involved.
-- Process Improver: analyzes completed work and proposes evidence-based improvements to AI configuration.
-- Agent Config Maintainer: applies only approved configuration improvements; it must not modify application code.
+## AIチームのワークフロー
+推奨する役割分担は以下のとおり。
+- Manager: ワークフローと修正ループを調整する。
+- Planner: リポジトリを調査して実装計画を作成する。
+- Developer: 本番コードとテストコードを変更する。
+- QA: 動作、テスト、ビルド、回帰リスクを検証する。
+- Reviewer: 変更を独立してレビューし、問題を報告する。
+- Security Reviewer: 認証、認可、ファイルI/O、外部入力、秘密情報、ネットワーク、永続化に関係する変更ではセキュリティレビューを行う。
+- Process Improver: 完了した作業を分析し、AI設定への根拠ベースの改善案を提示する。
+- Agent Config Maintainer: 承認された設定改善だけを適用し、アプリケーションコードは変更しない。
 
-Do not treat the Developer's own conclusion that code is correct as sufficient evidence. QA and Reviewer must independently inspect the result.
+Developer自身による「コードは正しい」という結論だけを十分な根拠として扱わない。QAとReviewerは独立して結果を確認する。
 
-Limit automated correction cycles to a small bounded number. If repeated attempts do not converge, stop and report the remaining problem instead of looping indefinitely.
+自動修正サイクルは少数に制限する。繰り返し試しても収束しない場合は、無限ループせず残っている問題を報告して停止する。
 
-## AI configuration self-improvement
-After a task reaches a stable result:
-1. Each relevant Agent performs a brief retrospective of its own guidance and the handoff with neighboring roles.
-2. The Process Improver consolidates evidence-based proposals.
-3. The Reviewer checks the proposals for duplication, contradictions, unsafe changes, and unnecessary complexity.
-4. The Agent Config Maintainer applies only accepted configuration changes.
-5. The improvement pass runs at most once and never recursively triggers itself.
-6. Configuration changes apply to subsequent development tasks, not the current task.
+## AI設定の自己改善
+タスクが安定した結果に到達した後、以下を行う。
+1. 各関連Agentが、自分の指示と隣接ロールへの引き継ぎを短く振り返る。
+2. Process Improverが根拠のある改善案を統合する。
+3. Reviewerが重複、矛盾、安全でない変更、過度な複雑さを確認する。
+4. Agent Config Maintainerが承認された設定変更だけを反映する。
+5. 改善パスは1回までとし、再帰的な自己改善を起こさない。
+6. 設定変更は次の開発タスクから適用し、現在のタスクには適用しない。
 
-Configuration improvement must never weaken verification, security controls, role separation, bounded loops, or human Git publication controls.
+設定改善によって検証、セキュリティ管理、役割分担、範囲付きループ、人間によるGit公開管理を弱めてはならない。
 
-## Verification rules
-- Never remove or weaken tests merely to make them pass.
-- Do not suppress compiler warnings or diagnostics to hide defects unless the suppression is explicitly justified and documented.
-- A successful build alone does not prove the requirement is satisfied.
-- When a test cannot be run because of an environment limitation, report that limitation clearly.
-- AI configuration changes must remain separate from application behavior changes.
+## 検証ルール
+- テストを通すためだけにテストを削除したり弱めたりしない。
+- 欠陥を隠す目的でコンパイラ警告や診断を抑制しない。抑制が必要な場合は、明確な理由を記録する。
+- ビルドが成功しただけでは要件を満たした証拠にならない。
+- 環境上の制約でテストを実行できない場合は、その制約を明確に報告する。
+- AI設定の変更はアプリケーションの動作変更と分離する。
 
-## Git safety
-AI agents may inspect, edit, build, and test the working tree.
+## Gitの安全性
+AI Agentは作業ツリーの確認、編集、ビルド、テストを行ってよい。
 
-Do not automatically:
-- push to a remote
-- merge branches
-- merge pull requests
-- delete branches
-- publish releases
-- modify repository settings
+自動で以下を行わない。
+- リモートへpush
+- ブランチのmerge
+- Pull Requestのmerge
+- ブランチ削除
+- リリース公開
+- リポジトリ設定変更
 
-The human owner performs the final review and decides whether to commit/push or create/merge a pull request.
+最終レビューを行い、commit/pushまたはPull Requestの作成/mergeを判断するのは人間の所有者とする。

@@ -1,51 +1,51 @@
-# WpfGisLearning Copilot Instructions
+# WpfGisLearning Copilot 指示
 
-## Project context
-- WPF desktop application targeting `net10.0-windows10.0.26100.0`.
-- Nullable reference types and implicit usings are enabled.
-- Current notable packages include CommunityToolkit.Mvvm, Microsoft.Extensions.Hosting, Mapsui.Wpf, and ClosedXML.
-- The repository includes `WpfGisLearning.Tests` for automated tests.
-- Prefer the existing project architecture and patterns over introducing new dependencies.
+## プロジェクトの背景
+- \`net10.0-windows10.0.26100.0\` を対象とするWPFデスクトップアプリケーション。
+- Nullable参照型とimplicit usingsを有効化。
+- 主なパッケージはCommunityToolkit.Mvvm、Microsoft.Extensions.Hosting、Mapsui.Wpf、ClosedXML。
+- 自動テストは \`WpfGisLearning.Tests\` に配置。
+- 新しい依存関係を導入するより、既存のアーキテクチャとパターンを優先する。
 
-## Development principles
-- Use MVVM consistently for application behavior.
-- Keep dependency injection registrations and lifetimes intentional and consistent.
-- Keep UI-only behavior in Views/code-behind only when it is inherently view-specific WPF behavior.
-- Keep Mapsui-specific WPF control coupling behind the repository's existing map abstractions where applicable.
-- Avoid unrelated refactors during feature work.
-- Preserve existing behavior unless the requirement explicitly changes it.
-- Do not hide compiler/test failures by suppressing diagnostics or weakening tests.
+## 開発原則
+- アプリケーションの動作には一貫してMVVMを使用する。
+- 依存性注入の登録とライフタイムを意図的かつ一貫したものにする。
+- UI固有のWPF動作に限り、View/code-behindへ置く。
+- 必要な場合は、Mapsui固有のWPFコントロールへの結合を既存のマップ抽象化の背後に置く。
+- 機能開発中は無関係なリファクタリングを行わない。
+- 要件で明示的に変更しない限り既存動作を維持する。
+- コンパイラやテストの失敗を診断抑制やテスト弱化で隠さない。
 
-## Verification
-When applicable, validate with:
-- `dotnet build`
-- `dotnet test`
+## 検証
+必要に応じて以下を実行する。
+- \`dotnet build\`
+- \`dotnet test\`
 
-## AI team workflow
-For substantial tasks, prefer the custom-agent workflow:
-`WPF Development Manager` → `wpf-planner` → `wpf-developer` → `wpf-qa` → `wpf-reviewer` → conditional `security-reviewer` → correction loop as needed.
+## AIチームのワークフロー
+重要なタスクでは、カスタムAgentワークフローを優先する。
+\`WPF Development Manager\` → \`wpf-planner\` → \`wpf-developer\` → \`wpf-qa\` → \`wpf-reviewer\` → 条件付き \`security-reviewer\` → 必要に応じた修正ループ。
 
-Use the Security Reviewer when changes involve authentication, authorization, secrets, external input, file I/O, networking, persistence, or dependency changes.
+認証、認可、秘密情報、外部入力、ファイルI/O、ネットワーク、永続化、依存関係の変更を伴う場合はSecurity Reviewerを使用する。
 
-The reviewer(s) must remain independent from the implementation agent. The manager should stop after a bounded number of correction cycles rather than looping indefinitely.
+Reviewerは実装Agentから独立していなければならない。Managerは無限ループせず、修正サイクルを範囲付きで停止する。
 
-## Post-task self-improvement
-After a stable task result, perform one bounded improvement pass:
-- Each relevant Agent proposes at most two evidence-based improvements to its own guidance or a neighboring Agent's guidance.
-- The Process Improver consolidates proposals and removes duplicates or unsupported changes.
-- The Reviewer evaluates the consolidated proposals.
-- The Agent Config Maintainer applies only accepted changes to AI configuration files.
-- Do not modify application source code during this phase.
-- Improvements take effect on the next task and do not trigger another improvement cycle.
+## タスク後の自己改善
+タスク結果が安定した後、1回だけ範囲付きの改善パスを行う。
+- 各関連Agentは、自分または隣接Agentのガイダンスについて、根拠のある改善案を最大2件まで提示する。
+- Process Improverが提案を統合し、重複や根拠のない変更を除外する。
+- Reviewerが統合された提案を評価する。
+- Agent Config Maintainerが承認された変更だけをAI設定ファイルへ反映する。
+- このフェーズではアプリケーションのソースコードを変更しない。
+- 改善は次のタスクから有効になり、別の改善サイクルを起動しない。
 
-## Customization layers
-- `AGENTS.md`: standing rules shared across agent-oriented workflows.
-- `.github/instructions/*.instructions.md`: path-specific C#, XAML, tests, and GIS/Mapsui rules.
-- `.github/skills/`: reusable task-specific workflows.
-- `.github/prompts/`: reusable user-invoked workflows for implementation and review.
-- `.github/agents/`: specialist agent definitions.
+## カスタマイズの階層
+- \`AGENTS.md\`: Agent系ワークフロー共通の常設ルール。
+- \`.github/instructions/*.instructions.md\`: C#、XAML、テスト、GIS/Mapsuiのパス固有ルール。
+- \`.github/skills/\`: 再利用可能なタスク固有ワークフロー。
+- \`.github/prompts/\`: 再利用可能なユーザー起動型ワークフロー。
+- \`.github/agents/\`: 専門Agentの定義。
 
-Do not duplicate long task procedures in always-on instructions when a skill or prompt is sufficient.
+常時読み込まれる指示へ長いタスク手順を重複して記載せず、SkillやPromptで十分な場合はそちらを利用する。
 
-## Git safety
-AI agents may edit and verify the working tree, but must not publish work automatically. `git commit`, `git push`, `git merge`, PR creation, PR merge, and other irreversible Git publication actions are human-controlled unless explicitly changed by the project owner.
+## Gitの安全性
+AI Agentは作業ツリーを編集・検証してよいが、自動で公開してはならない。commit、push、merge、Pull Requestの作成/mergeなど、不可逆なGit公開操作は人間が管理する。ただし、プロジェクト所有者がルールを明示的に変更した場合を除く。

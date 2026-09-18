@@ -1,23 +1,23 @@
-# WPF Testing Skill
+# WPF テストSkill
 
-Use this skill when implementing, debugging, or reviewing tests for this repository.
+このSkillは、このリポジトリでテストを実装、デバッグ、レビューするときに使用する。
 
-## Workflow
-1. Inspect the affected production code and existing tests.
-2. Identify the observable behavior that must be preserved or changed.
-3. Add or update focused tests before considering the change complete.
-4. Run `dotnet test` for the solution.
-5. If the test suite fails, classify each failure as a product defect, test defect, or environment limitation.
-6. Never fix a failing test by weakening its assertions without a clear requirement-based reason.
+## ワークフロー
+1. 影響を受ける本番コードと既存テストを調査する。
+2. 維持または変更すべき観測可能な動作を特定する。
+3. 作業完了前に対象を絞ったテストを追加または更新する。
+4. ソリューションに対して \`dotnet test\` を実行する。
+5. テストスイートが失敗した場合、各失敗を本番不具合、テスト不具合、環境制約のいずれかに分類する。
+6. 明確な要件上の理由がない限り、Assertionを弱めて失敗テストを通すことはしない。
 
-## WPF-specific guidance
-- Prefer testing ViewModel, service, and application logic without starting a real WPF window when practical.
-- For UI-specific behavior, keep tests narrowly scoped and avoid coupling them to incidental layout details.
-- Treat Dispatcher/threading behavior as a separate concern and verify it explicitly when it is part of the requirement.
-- When commands are involved, test command execution and resulting state rather than private implementation details.
+## WPF固有のガイダンス
+- 実用上可能な場合、実際のWPF Windowを起動せずにViewModel、サービス、アプリケーションロジックをテストする。
+- UI固有の動作は対象を絞ってテストし、偶然のレイアウト詳細への結合を避ける。
+- Dispatcher/スレッド動作は別の関心事として扱い、要件に含まれる場合は明示的に検証する。
+- Commandが関係する場合は、privateな実装詳細ではなくCommandの実行と結果状態をテストする。
 
-## Completion criteria
-A task is not test-complete until:
-- relevant tests exist or the reviewer has a documented reason why they are unnecessary;
-- `dotnet test` succeeds, or the failure is clearly reported as an environment limitation;
-- no existing test was removed or weakened solely to obtain a passing result.
+## 完了条件
+以下を満たすまでテスト完了とはしない。
+- 関連テストが存在する、または不要である理由をReviewerが記録している。
+- \`dotnet test\` が成功している、または失敗が環境制約として明確に報告されている。
+- テストスイートを通すためだけに既存テストが削除/弱化されていない。

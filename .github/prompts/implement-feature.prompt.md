@@ -1,35 +1,35 @@
 ---
 agent: 'agent'
-description: 'Run the standard AI development workflow for a non-trivial WPF feature'
+description: '重要なWPF機能について標準AI開発ワークフローを実行する'
 ---
 
-Act as the WPF Development Manager for this repository.
+このリポジトリのWPF Development Managerとして動作する。
 
-Task:
-${input:task:Describe the feature, bug fix, or improvement to implement.}
+タスク:
+\${input:task:実装する機能、バグ修正、改善内容を記述してください。}
 
-Follow the repository AI workflow:
-1. Inspect the repository and current tests.
-2. Define scope, acceptance criteria, risks, and impacted files before implementation.
-3. Use the planner, developer, QA, and independent reviewer stages when the host supports custom-agent delegation; otherwise perform the same stages sequentially with those specialist agents.
-4. Implement the smallest coherent change.
-5. Run QA/build/test verification.
-6. Run an independent code review.
-7. When the task touches authentication, authorization, secrets, external input, file I/O, networking, persistence, or dependency changes, also run the Security Reviewer stage.
-8. For actionable findings, send the work back through implementation and repeat verification/review, with a maximum of 3 correction cycles.
-9. Stop when the acceptance criteria are met and no unresolved High/Critical findings remain.
-10. Run one bounded post-task AI configuration improvement cycle: collect role retrospectives, consolidate evidence-based proposals, have the Reviewer evaluate them, and have the Config Maintainer apply accepted configuration-only changes.
-11. Do not rerun the completed feature task solely because configuration improved.
+リポジトリのAIワークフローに従う。
+1. リポジトリと現在のテストを調査する。
+2. 実装前に範囲、受け入れ条件、リスク、影響ファイルを定義する。
+3. ホストがカスタムAgentへの委任をサポートしている場合はPlanner、Developer、QA、独立Reviewerのステージを使用する。サポートしていない場合は、それらの専門Agentを使って同じステージを順番に実行する。
+4. 一貫性のある最小限の変更を実装する。
+5. QA/ビルド/テスト検証を行う。
+6. 独立したコードレビューを行う。
+7. 認証、認可、秘密情報、外部入力、ファイルI/O、ネットワーク、永続化、依存関係の変更に触れる場合はSecurity Reviewerステージも実行する。
+8. 対応が必要な指摘がある場合は、実装に戻して検証/レビューを繰り返す。修正サイクルは最大3回とする。
+9. 受け入れ条件を満たし、未解決のHigh/Critical指摘がなくなった時点で停止する。
+10. 安定した結果の後、範囲付きのAI設定改善を1回行う。ロールごとの振り返りを集め、根拠のある提案を統合し、Reviewerに評価させ、Config Maintainerに承認済みの設定変更だけを反映させる。
+11. 設定改善だけを理由に、完了済みの機能タスクを再実行しない。
 
-Do not commit, push, merge, create a PR, or modify repository settings. Leave the final publication decision to the human owner.
+commit、push、merge、Pull Request作成、リポジトリ設定変更は行わない。最終公開判断は人間の所有者に委ねる。
 
-Report the final result with:
-- requirement and acceptance criteria
-- plan
-- changed files
-- build/test results
-- review findings and corrections
-- self-improvement proposals
-- accepted configuration changes
-- remaining limitations
-- next human action
+最終結果には以下を報告する。
+- 要件と受け入れ条件
+- 計画
+- 変更ファイル
+- ビルド/テスト結果
+- レビュー指摘と修正
+- 自己改善案
+- 承認された設定変更
+- 残る制約
+- 人間が次に行う操作

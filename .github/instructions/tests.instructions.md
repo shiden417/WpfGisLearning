@@ -1,15 +1,15 @@
 ---
 applyTo: "**/*Tests.cs,**/*.Tests/**/*.cs,**/WpfGisLearning.Tests/**/*.cs"
 ---
-# Test instructions
+# テスト指示
 
-- Use the existing test framework and project conventions.
-- Prefer focused unit tests with clear Arrange / Act / Assert structure.
-- Test observable behavior, not implementation details, unless implementation constraints are part of the requirement.
-- Add regression tests when fixing a defect.
-- Cover both successful and relevant failure/edge cases.
-- Keep tests deterministic and independent from network access or machine-specific state whenever practical.
-- Do not weaken assertions, delete tests, or skip tests merely to make the suite pass.
-- When production code changes, inspect whether existing tests remain meaningful and add coverage where behavior changed.
-- For bound filtered/count properties, cover initial state, filter changes, empty results, clearing/resetting, and `PropertyChanged` notifications when those transitions are relevant.
-- Run `dotnet test` after substantive changes and report any environment-related limitation.
+- 既存のテストフレームワークとプロジェクトの規約を使用する。
+- 明確なArrange / Act / Assert構造を持つ、対象を絞ったユニットテストを優先する。
+- 実装詳細ではなく観測可能な動作をテストする。ただし実装上の制約が要件の一部である場合を除く。
+- 不具合を修正した場合は回帰テストを追加する。
+- 成功ケースと関連する失敗/エッジケースの両方を確認する。
+- 実用上可能な場合、テストは決定的にし、ネットワークアクセスやマシン固有の状態に依存させない。
+- テストを通すためだけにAssertionを弱めたり、テストを削除したり、スキップしたりしない。
+- 本番コードが変更された場合、既存テストの意味が維持されているか確認し、動作が変わった箇所にカバレッジを追加する。
+- BindingされたFilter/Countプロパティでは、必要に応じて初期状態、フィルター変更、0件、解除/リセット、\`PropertyChanged\` 通知を確認する。
+- 実質的な変更後は \`dotnet test\` を実行し、環境上の制約があれば報告する。
