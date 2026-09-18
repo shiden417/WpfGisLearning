@@ -87,6 +87,49 @@ public class NewsItemParserTests
         Assert.AreEqual("https://example.com/image.jpg", result);
     }
 
+
+    [TestMethod]
+    public void FindArticleImageUrl_UsesTwitterAndJsonLdFallbacks()
+    {
+        const string html = """
+            <meta name="twitter:image" content="/images/twitter.jpg">
+            """;
+
+        var result = NewsItemParser.FindArticleImageUrl(
+            html,
+            new Uri("https://example.com/articles/1"));
+
+        Assert.AreEqual("https://example.com/images/twitter.jpg", result);
+    }
+
+    [TestMethod]
+    public void FindArticleImageUrl_UsesJsonLdWhenMetaImageIsMissing()
+    {
+        const string html = """
+            <script type="application/ld+json">
+            {"@type":"NewsArticle","image":{"url":"https://example.com/images/article.jpg"}}
+            </script>
+            """;
+
+        var result = NewsItemParser.FindArticleImageUrl(html);
+
+        Assert.AreEqual("https://example.com/images/article.jpg", result);
+    }
+
+    [TestMethod]
+    public void FindCanonicalUrl_ReturnsCanonicalArticleUrl()
+    {
+        const string html = """
+            <link rel="canonical" href="/articles/1">
+            """;
+
+        var result = NewsItemParser.FindCanonicalUrl(
+            html,
+            new Uri("https://example.com/news"));
+
+        Assert.AreEqual("https://example.com/articles/1", result);
+    }
+
     [TestMethod]
     public void FindArticleImageUrl_RejectsGoogleAndLogoImages()
     {
