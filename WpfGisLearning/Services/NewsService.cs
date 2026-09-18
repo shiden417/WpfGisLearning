@@ -90,12 +90,40 @@ public class NewsService : INewsService
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.UserAgent.ParseAdd(ArticleUserAgent);
+            request.Headers.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+            request.Headers.AcceptLanguage.ParseAdd("ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7");
+
             using var response = await _httpClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 return string.Empty;
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
-            return NewsItemParser.FindArticleImageUrl(html) ?? string.Empty;
+            var finalUri = response.RequestMessage?.RequestUri;
+            var imageUrl = NewsItemParser.FindArticleImageUrl(html, finalUri);
+            if (!string.IsNullOrWhiteSpace(imageUrl))
+                return imageUrl;
+
+            // Googleニュースの中継ページが返った場合はcanonical URLを再取得する。
+            var canonicalUrl = NewsItemParser.FindCanonicalUrl(html, finalUri);
+            if (!string.IsNullOrWhiteSpace(canonicalUrl)
+                && !string.Equals(canonicalUrl, finalUri?.AbsoluteUri, StringComparison.OrdinalIgnoreCase))
+            {
+                using var canonicalRequest = new HttpRequestMessage(HttpMethod.Get, canonicalUrl);
+                canonicalRequest.Headers.UserAgent.ParseAdd(ArticleUserAgent);
+                canonicalRequest.Headers.Accept.ParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+                canonicalRequest.Headers.AcceptLanguage.ParseAdd("ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7");
+
+                using var canonicalResponse = await _httpClient.SendAsync(canonicalRequest, cancellationToken);
+                if (!canonicalResponse.IsSuccessStatusCode)
+                    return string.Empty;
+
+                var canonicalHtml = await canonicalResponse.Content.ReadAsStringAsync(cancellationToken);
+                return NewsItemParser.FindArticleImageUrl(
+                    canonicalHtml,
+                    canonicalResponse.RequestMessage?.RequestUri) ?? string.Empty;
+            }
+
+            return string.Empty;
         }
         catch (OperationCanceledException)
         {
