@@ -1,53 +1,44 @@
 # AI Agent 自己改善ポリシー
 
-WpfGisLearningでは、タスク完了後の範囲付きフィードバックループを使ってAI開発設定を改善します。
-
-## 改善サイクル
-
-\`\`\`
-開発タスク
-  ↓
-Planner → Developer → QA → Reviewer
-  ↓
-安定した結果
-  ↓
-各関連Agentの振り返り
-  ↓
-Agent間比較
-  ↓
-AI Process Improver
-  ↓
-Agent Config Maintainer
-  ↓
-設定変更
-  ↓
-次の開発タスクで更新されたルールを使用
-\`\`\`
-
 ## 目的
 
-目的は、Agentが自由に自分の指示を書き換えるのではなく、実際の根拠に基づいて開発プロセスを改善することです。
+AI設定を増やすことではなく、実際の開発結果から品質または効率を改善する。
 
-有用なフィードバックの例:
-- 繰り返し見落とされるエッジケースは、レビューに必要なルール不足を示す。
-- 繰り返し発生する引き継ぎ問題は、Manager/Planner/Developer間の契約不足を示す。
-- テスト漏れが繰り返される場合は、QA指示の不足を示す。
-- Reviewerが繰り返し見つける問題は、実装ルールとして有用な可能性がある。
-- 重複または矛盾する指示は、設定整理が必要であることを示す。
+## 発動
 
-## ルール
+毎回は実行しない。
 
-1. 各関連Agentは、完了したタスク後に設定改善を提案できる。
-2. 提案は根拠に基づき、範囲を限定する。
-3. Agentは自分の役割と、関連する隣接役割を確認する。
-4. Process ImproverがAgent間の提案を統合する。
-5. Agent Config Maintainerは承認済みの変更だけを適用する。
-6. 開発タスクごとに改善パスは最大1回。
-7. 改善によって別の改善パスを再帰的に起動しない。
-8. 設定変更は次のタスクから適用する。
-9. アプリケーションのソースコードとテストは改善フェーズの対象外。
-10. Gitのcommit、push、merge、Pull Request公開、リリースは人間が管理する。
+発動候補:
+- Large/Risky
+- 新規重要欠陥
+- correction loop
+- 再発
+- handoff問題
+- 新しい設計知見
+- 無駄なAgent呼び出し/検証
+- manual verificationの不足の再発
 
-## 人間の役割
+## フロー
 
-人間の所有者が最終的な権限を持つ。設定改善は繰り返し発生するミスを減らすことを目的とし、アーキテクチャ、要件、セキュリティ、プロジェクト方針に関する人間の判断を置き換えるものではありません。
+Development
+  ↓
+Stable result
+  ↓
+Managerが学習価値判定
+  ↓
+Process Improver
+  ↓
+Reviewer
+  ↓
+Config Maintainer
+  ↓
+次回タスク
+
+## 制約
+
+1. 1タスク1回
+2. recursive improvement禁止
+3. application source/test変更禁止
+4. security/verification/Git human controlsを弱めない
+5. 根拠のない改善案は却下
+6. 次回タスクから適用

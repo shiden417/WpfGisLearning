@@ -1,15 +1,15 @@
 ---
 applyTo: "**/*Tests.cs,**/*.Tests/**/*.cs,**/WpfGisLearning.Tests/**/*.cs"
 ---
+
 # テスト指示
 
-- 既存のテストフレームワークとプロジェクトの規約を使用する。
-- 明確なArrange / Act / Assert構造を持つ、対象を絞ったユニットテストを優先する。
-- 実装詳細ではなく観測可能な動作をテストする。ただし実装上の制約が要件の一部である場合を除く。
-- 不具合を修正した場合は回帰テストを追加する。
-- 成功ケースと関連する失敗/エッジケースの両方を確認する。
-- 実用上可能な場合、テストは決定的にし、ネットワークアクセスやマシン固有の状態に依存させない。
-- テストを通すためだけにAssertionを弱めたり、テストを削除したり、スキップしたりしない。
-- 本番コードが変更された場合、既存テストの意味が維持されているか確認し、動作が変わった箇所にカバレッジを追加する。
-- BindingされたFilter/Countプロパティでは、必要に応じて初期状態、フィルター変更、0件、解除/リセット、\`PropertyChanged\` 通知を確認する。
-- 実質的な変更後は \`dotnet test\` を実行し、環境上の制約があれば報告する。
+- 既存test frameworkとconventionsを使用する。
+- Arrange / Act / Assertを基本とする。
+- implementation detailではなくobservable behaviorを確認する。
+- bug fixにはregression testを追加する。
+- success/failure/edge caseを必要な範囲で確認する。
+- networkやmachine-specific stateへの依存を避ける。
+- assertionを弱めたりtestを削除/skipして成功扱いにしない。
+- production behaviorが変わったら既存testの妥当性を再確認する。
+- bound filtered/count stateでは、該当する場合にinitial、change、empty、clear/reset、PropertyChangedを確認する。
