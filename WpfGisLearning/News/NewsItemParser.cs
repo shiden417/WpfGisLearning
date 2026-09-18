@@ -128,7 +128,7 @@ public static class NewsItemParser
     {
         foreach (Match match in Regex.Matches(
                      html,
-                     @"<script[^>]+type=[""']application/ld+json[""'][^>]*>(?<json>.*?)</script>",
+                     @"<script[^>]*>(?<json>\s*\{.*?\}\s*)</script>",
                      RegexOptions.IgnoreCase | RegexOptions.Singleline))
         {
             try
