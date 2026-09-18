@@ -12,7 +12,7 @@ namespace WpfGisLearning.Services;
 public class NewsService : INewsService
 {
     /// <summary>GoogleニュースRSS検索APIのエンドポイントです。</summary>
-    private const string FeedBaseUrl = "https://news.google.com/rss/search";
+    private const string FeedBaseUrl = "https://www.bing.com/news/search";
 
     /// <summary>1回の取得で画面に返す最大ニュース件数です。</summary>
     private const int MaxNewsItems = 20;
@@ -54,7 +54,7 @@ public class NewsService : INewsService
         // before条件は基準日の翌日を指定し、基準日当日分まで含める。
         var end = date.Date.AddDays(1);
         var query = $"ラーメン before:{end:yyyy-MM-dd}";
-        var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&hl=ja&gl=JP&ceid=JP:ja";
+        var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&format=RSS&mkt=ja-JP";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
         request.Headers.UserAgent.ParseAdd(FeedUserAgent);
