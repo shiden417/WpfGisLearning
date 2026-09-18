@@ -29,6 +29,15 @@ Use the Security Reviewer when changes involve authentication, authorization, se
 
 The reviewer(s) must remain independent from the implementation agent. The manager should stop after a bounded number of correction cycles rather than looping indefinitely.
 
+## Post-task self-improvement
+After a stable task result, perform one bounded improvement pass:
+- Each relevant Agent proposes at most two evidence-based improvements to its own guidance or a neighboring Agent's guidance.
+- The Process Improver consolidates proposals and removes duplicates or unsupported changes.
+- The Reviewer evaluates the consolidated proposals.
+- The Agent Config Maintainer applies only accepted changes to AI configuration files.
+- Do not modify application source code during this phase.
+- Improvements take effect on the next task and do not trigger another improvement cycle.
+
 ## Customization layers
 - `AGENTS.md`: standing rules shared across agent-oriented workflows.
 - `.github/instructions/*.instructions.md`: path-specific C#, XAML, tests, and GIS/Mapsui rules.
@@ -39,4 +48,4 @@ The reviewer(s) must remain independent from the implementation agent. The manag
 Do not duplicate long task procedures in always-on instructions when a skill or prompt is sufficient.
 
 ## Git safety
-AI agents may edit and verify the working tree, but must not publish work automatically. `git commit`, `git push`, `git merge`, PR creation, PR merge, and other irreversible Git publication actions are human-controlled unless explicitly changed by a future project rule.
+AI agents may edit and verify the working tree, but must not publish work automatically. `git commit`, `git push`, `git merge`, PR creation, PR merge, and other irreversible Git publication actions are human-controlled unless explicitly changed by the project owner.

@@ -4,7 +4,7 @@
 
 ## Agent構成
 
-```text
+```
 User
   |
   v
@@ -23,17 +23,37 @@ WPF Development Manager
   |      +--> 独立レビュー
   |
   +--> security-reviewer (条件付き)
-         +--> Security-sensitive change review
+  |      +--> Security-sensitive change review
   |
-  +--> 問題あり
-         +--> Developer → QA → Review に戻る
+  +--> process-improvement
+  |      +--> 完了タスクのAI設定ギャップ分析
+  |
+  +--> agent-config-maintainer
+         +--> 承認済みAI設定の反映
 
-問題なし
+問題あり
+  +--> Developer → QA → Review に戻る
+
+安定完了
   |
-v
+  v
+各AgentのRetrospective
+  |
+  v
+Process Improver
+  |
+  v
+Reviewer
+  |
+  v
+Config Maintainer
+  |
+  v
+次回タスクから改善設定を使用
+
 Human final review
   |
-v
+  v
 Human decides commit / push / PR / merge
 ```
 
@@ -43,30 +63,31 @@ Human decides commit / push / PR / merge
 - `.github/copilot-instructions.md`: Copilot向けのリポジトリ共通ルール。
 - `.github/instructions/`: C#、XAML、テスト、GIS/Mapsuiのパス固有ルール。
 - `.github/agents/`: 専門Agentの定義。
-- `.github/skills/`: 必要なときだけ読み込むWPFテスト・コードレビューの定型手順。
+- `.github/skills/`: 必要なときだけ読み込むWPFテスト・コードレビュー・AI自己改善の定型手順。
 - `.github/prompts/`: `/implement-feature` や `/review-change` として再利用する作業テンプレート。
 
 ## 目的
 
-AIに単発でコードを書かせるのではなく、Plan → Do → Check → Act のサイクルをAI側で回し、最後の公開判断だけを人間が行う構成を検証する。
+AIに単発でコードを書かせるのではなく、Plan → Do → Check → Act → Improve のサイクルをAI側で回し、最後の公開判断だけを人間が行う構成を検証する。
 
-## 基本ルール
+## AI self-improvement policy
 
-1. Managerがタスク全体を管理する。
-2. Plannerは計画のみを担当する。
-3. Developerが実装する。
-4. QAがBuild/Testを確認する。
-5. ReviewerがDeveloperとは独立した視点でレビューする。
-6. セキュリティに関係する変更ではSecurity Reviewerも実行する。
-7. 問題があればDeveloper → QA → Reviewを繰り返す。
-8. 無限ループを防ぐため、通常は最大3回の修正サイクルとする。
-9. AIはcommit / push / merge / PR公開を行わず、人間が最終確認してGit操作する。
+1. 各関連Agentは安定完了後に、自分の設定と隣接Agentとの受け渡しを短く振り返る。
+2. 各Agentは最大2件まで、実際のタスク結果に根拠がある改善案を出す。
+3. Process Improverが重複・矛盾・根拠不足の案を整理する。
+4. Reviewerが改善案を独立評価する。
+5. Config Maintainerが承認済みのAI設定だけを反映する。
+6. 1タスクにつき改善パスは1回だけ。
+7. 改善パスから別の改善パスを再帰的に起動しない。
+8. 設定改善は現在のタスクには遡及せず、次のタスクから適用する。
+9. アプリ本体コード・テストは自己改善フェーズの対象外。
+10. commit / push / merge / PR公開は人間が管理する。
 
 ## 開発開始時の例
 
 CopilotのAgentモードで Manager を選ぶか、`/implement-feature` プロンプトを呼び出し、次のような依頼を行う。
 
-> Shop一覧に検索機能を追加してください。既存のMVVM/DI構成を維持し、テストも追加してください。要件分析から実装、テスト、レビュー、必要な修正までチームとして進め、最後に変更内容と検証結果を報告してください。
+> Shop一覧に検索機能を追加してください。既存のMVVM/DI構成を維持し、テストも追加してください。要件分析から実装、テスト、レビュー、必要な修正、最後にAI設定の振り返りまでチームとして進め、変更内容と検証結果を報告してください。
 
 ## レビューだけ行う場合
 
@@ -76,7 +97,7 @@ CopilotのAgentモードで Manager を選ぶか、`/implement-feature` プロ�
 
 - Agent-to-agentの完全自動オーケストレーションは、利用するCopilotホスト・プラン・設定によって対応範囲が異なる。
 - Prompt filesは現在public previewのため、将来仕様が変更される可能性がある。
-- Skillsは対応するCopilot環境でのみ自動利用される。Visual Studioで利用できない場合でも、AgentやPromptから手順を実行する構成を維持する。
+- Skillsは対応するCopilot環境でのみ自動利用される。利用できない場合でも、同じ手順をAgentやPromptから実行する構成を維持する。
 - MCPやHooksは有用だが、会社の利用規約や環境依存が大きいため、この実験ではまだ導入しない。
 
 このファイルは実験用です。実プロジェクトへ移行する際は、会社のCopilot利用ルール、MCP利用可否、PR/ブランチ運用、レビュー基準に合わせて見直してください。

@@ -18,6 +18,8 @@ Follow the repository AI workflow:
 7. When the task touches authentication, authorization, secrets, external input, file I/O, networking, persistence, or dependency changes, also run the Security Reviewer stage.
 8. For actionable findings, send the work back through implementation and repeat verification/review, with a maximum of 3 correction cycles.
 9. Stop when the acceptance criteria are met and no unresolved High/Critical findings remain.
+10. Run one bounded post-task AI configuration improvement cycle: collect role retrospectives, consolidate evidence-based proposals, have the Reviewer evaluate them, and have the Config Maintainer apply accepted configuration-only changes.
+11. Do not rerun the completed feature task solely because configuration improved.
 
 Do not commit, push, merge, create a PR, or modify repository settings. Leave the final publication decision to the human owner.
 
@@ -27,5 +29,7 @@ Report the final result with:
 - changed files
 - build/test results
 - review findings and corrections
+- self-improvement proposals
+- accepted configuration changes
 - remaining limitations
 - next human action
