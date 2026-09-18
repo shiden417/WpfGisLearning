@@ -50,6 +50,7 @@ Use these specialist custom agents when the host environment supports agent dele
 - Preserve existing architecture and public contracts unless the task requires a deliberate change.
 - Configuration changes must not weaken security, verification, role separation, or human Git controls.
 - Configuration changes are limited to one pass per task and never recursively trigger another pass.
+- Identify the verification owner and available command capabilities in each implementation handoff. If the delegated Developer is unavailable, the Manager may make only the smallest approved change, record the fallback, and still require independent QA and Reviewer validation.
 
 ## WPF focus
 Respect MVVM, DI, binding, routed events/commands, UI-thread rules, navigation, resources, and existing map/UI patterns.

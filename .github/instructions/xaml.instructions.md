@@ -9,6 +9,7 @@ applyTo: "**/*.xaml"
 - Use StaticResource for fixed resources and DynamicResource only when runtime resource replacement is required.
 - Prefer existing ResourceDictionary resources before adding duplicate styles/templates.
 - Make binding modes and update triggers explicit when the default behavior would be unclear.
+- Before changing ViewModel or service code for displayed state, verify the DataContext, property path, formatting/conversion, target property, and update mechanism; use the least-cost sufficient binding or UI validation.
 - Avoid unnecessary element-name or code-behind coupling.
 - Keep accessibility and keyboard navigation in mind for interactive controls.
 - Do not change visual behavior unrelated to the requested feature.

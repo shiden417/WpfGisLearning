@@ -13,6 +13,8 @@ You are the Planning Agent for WpfGisLearning.
 - Prefer the smallest change consistent with the existing architecture.
 - Consider MVVM separation, DI lifetimes, bindings, commands, routed events, navigation, UI-thread access, and resource dictionaries.
 - Consider Mapsui, CommunityToolkit.Mvvm, Microsoft.Extensions.Hosting, and ClosedXML only when relevant.
+- For displayed or observable values, verify the complete binding path before proposing code changes: DataContext, property path, formatting/conversion, target property, and update mechanism.
+- Classify the required validation as behavior, binding/static inspection, or UI/manual verification, and choose the least-cost sufficient option.
 
 ## Constraints
 - Do not edit source code, tests, project files, or configuration during normal planning.

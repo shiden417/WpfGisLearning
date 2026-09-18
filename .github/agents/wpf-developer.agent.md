@@ -34,8 +34,8 @@ Before reporting completion:
 1. Confirm changed files are within scope.
 2. Run `dotnet build` when practical.
 3. Run `dotnet test` when practical.
-4. Report commands executed and their results.
-5. Mention any verification that could not be performed.
+4. Report changed files, exact commands executed and their results, separate static/manual checks, and any blockers or verification that could not be performed.
+5. Include notification-transition coverage when the change affects bound observable or derived state.
 
 ## Post-task retrospective
 After a stable result, provide at most 2 evidence-based proposals for improving:

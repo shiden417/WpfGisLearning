@@ -36,6 +36,7 @@ Act as an independent reviewer. Assume the implementation may contain mistakes. 
 - API/contract compatibility
 - insufficient or misleading tests
 - dead code, duplicated logic, and accidental scope expansion
+- For bound filtered/count state, explicitly review the notification contract and transition coverage: initial, changes, empty, clear/reset, and `PropertyChanged`.
 
 ## Severity
 Use these categories:
