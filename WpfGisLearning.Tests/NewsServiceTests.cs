@@ -13,7 +13,7 @@ public class NewsServiceTests
         var handler = new QueueHandler(
         [
             CreateResponse("<rss><channel><item><title>東京の新店 - Example</title><link>https://example.com/news/1</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate><description>&lt;p&gt;新しいラーメン店がオープン&lt;/p&gt;</description><source>Example</source></item></channel></rss>"),
-            CreateResponse("<html><head><meta property=\"og:image\" content=\"https://example.com/images/1.jpg\" /></head></html>")
+            CreateResponse("<html><head><meta property="og:image" content="https://example.com/images/1.jpg" /></head></html>")
         ]);
         using var client = new HttpClient(handler);
         var service = new NewsService(client);
@@ -29,15 +29,14 @@ public class NewsServiceTests
         Assert.HasCount(2, handler.Requests);
     }
 
-
     [TestMethod]
     public async Task GetNewsAsync_UsesCanonicalArticlePageWhenRedirectPageHasNoImage()
     {
         var handler = new QueueHandler(
         [
             CreateResponse("<rss><channel><item><title>ニュース</title><link>https://news.google.com/rss/articles/test</link><pubDate>Wed, 16 Sep 2026 00:00:00 GMT</pubDate></item></channel></rss>"),
-            CreateResponse("<html><head><link rel=\"canonical\" href=\"https://example.com/news/1\"></head></html>"),
-            CreateResponse("<html><head><meta property=\"og:image\" content=\"https://example.com/images/1.jpg\"></head></html>")
+            CreateResponse("<html><head><link rel="canonical" href="https://example.com/news/1"></head></html>"),
+            CreateResponse("<html><head><meta property="og:image" content="https://example.com/images/1.jpg"></head></html>")
         ]);
         using var client = new HttpClient(handler);
         var service = new NewsService(client);
@@ -75,6 +74,35 @@ public class NewsServiceTests
         Assert.HasCount(3, handler.Requests);
         Assert.Contains("first=1", handler.Requests[0].RequestUri!.Query);
         Assert.Contains("first=11", handler.Requests[1].RequestUri!.Query);
+    }
+
+    [TestMethod]
+    public async Task GetNewsAsync_ContinuesPagingWhenPageContainsOnlyDuplicates()
+    {
+        var firstFeed = "<rss><channel>" +
+            "<item><title>新しいラーメン</title><link>https://example.com/new</link><pubDate>Wed, 16 Sep 2026 12:00:00 GMT</pubDate></item>" +
+            "</channel></rss>";
+
+        var historicalFeed = "<rss><channel>" +
+            "<item><title>過去のラーメン</title><link>https://example.com/old</link><pubDate>Tue, 1 Sep 2026 12:00:00 GMT</pubDate></item>" +
+            "</channel></rss>";
+
+        var handler = new QueueHandler(
+        [
+            CreateResponse(firstFeed),
+            CreateResponse(firstFeed),
+            CreateResponse(historicalFeed),
+            CreateResponse("<html><head></head></html>")
+        ]);
+        using var client = new HttpClient(handler);
+        var service = new NewsService(client);
+
+        var items = await service.GetNewsAsync(new DateTime(2026, 9, 1));
+
+        Assert.HasCount(1, items);
+        Assert.AreEqual("過去のラーメン", items[0].Title);
+        Assert.HasCount(4, handler.Requests);
+        Assert.Contains("first=21", handler.Requests[2].RequestUri!.Query);
     }
 
     [TestMethod]
