@@ -29,6 +29,7 @@ public static class NewsItemParser
         var publishedText = item.Element("pubDate")?.Value?.Trim();
         var description = item.Element("description")?.Value ?? string.Empty;
         var source = item.Element("source")?.Value?.Trim();
+        var imageUrl = FindRssImageUrl(item);
 
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(link))
             return null;
@@ -48,7 +49,8 @@ public static class NewsItemParser
             Region = DetectRegion(cleanTitle),
             PublishedAt = localPublishedAt.DateTime,
             SourceName = string.IsNullOrWhiteSpace(source) ? "Google ニュース" : source,
-            SourceUrl = link
+            SourceUrl = link,
+            ImageUrl = imageUrl ?? string.Empty
         };
     }
 
@@ -87,6 +89,25 @@ public static class NewsItemParser
         return uri.IsAbsoluteUri && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
             ? uri.AbsoluteUri
             : null;
+    }
+
+    /// <summary>RSSのmedia:contentやenclosureから記事画像URLを取得します。</summary>
+    private static string? FindRssImageUrl(XElement item)
+    {
+        XNamespace media = "http://search.yahoo.com/mrss/";
+
+        var url = item.Elements(media + "content")
+            .Select(element => (string?)element.Attribute("url"))
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        url ??= item.Elements("enclosure")
+            .Where(element => string.Equals((string?)element.Attribute("type"), "image/jpeg", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((string?)element.Attribute("type"), "image/png", StringComparison.OrdinalIgnoreCase)
+                || string.Equals((string?)element.Attribute("type"), "image/webp", StringComparison.OrdinalIgnoreCase))
+            .Select(element => (string?)element.Attribute("url"))
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        return NormalizeImageUrl(url, null);
     }
 
     /// <summary>HTMLのlink要素から指定relのhrefを取得します。</summary>
