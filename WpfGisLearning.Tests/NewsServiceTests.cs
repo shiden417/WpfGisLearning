@@ -50,6 +50,34 @@ public class NewsServiceTests
     }
 
     [TestMethod]
+    public async Task GetNewsAsync_PagesFeedUntilRequestedDateIsReached()
+    {
+        var currentFeed = "<rss><channel>" +
+            "<item><title>新しいラーメン</title><link>https://example.com/new</link><pubDate>Wed, 16 Sep 2026 12:00:00 GMT</pubDate></item>" +
+            "</channel></rss>";
+        var historicalFeed = "<rss><channel>" +
+            "<item><title>過去のラーメン</title><link>https://example.com/old</link><pubDate>Mon, 1 Sep 2026 12:00:00 GMT</pubDate></item>" +
+            "</channel></rss>";
+
+        var handler = new QueueHandler(
+        [
+            CreateResponse(currentFeed),
+            CreateResponse(historicalFeed),
+            CreateResponse("<html><head></head></html>")
+        ]);
+        using var client = new HttpClient(handler);
+        var service = new NewsService(client);
+
+        var items = await service.GetNewsAsync(new DateTime(2026, 9, 1));
+
+        Assert.HasCount(1, items);
+        Assert.AreEqual("過去のラーメン", items[0].Title);
+        Assert.HasCount(3, handler.Requests);
+        Assert.Contains("first=1", handler.Requests[0].RequestUri!.Query);
+        Assert.Contains("first=11", handler.Requests[1].RequestUri!.Query);
+    }
+
+    [TestMethod]
     public async Task GetNewsAsync_ExcludesItemsAfterRequestedDate()
     {
         var feed = "<rss><channel>" +
