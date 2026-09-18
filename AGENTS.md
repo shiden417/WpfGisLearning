@@ -1,78 +1,55 @@
-# WpfGisLearning Agent 指示
+# WpfGisLearning Agent Instructions
 
-## プロジェクトの目的
-このリポジトリはWPF学習用プロジェクトであり、AI支援開発ワークフローを試すためのサンドボックスでもあります。
+## プロジェクト
+
+WPF learning project and AI-assisted development sandbox.
 
 ## 技術基盤
-- .NET 10 デスクトップアプリケーション。
-- WPF、\`net10.0-windows10.0.26100.0\`。
-- Nullable参照型とimplicit usingsを有効化。
-- CommunityToolkit.Mvvm。
-- Microsoft.Extensions.Hosting / 依存性注入。
-- Mapsui.Wpf。
-- ClosedXML。
-- xUnitベースのテストは \`WpfGisLearning.Tests\` に配置。
 
-## アーキテクチャ
-- アプリケーションの動作にはMVVMを優先する。
-- サービスとViewModelの依存関係には依存性注入を優先する。
-- UI固有のWPF動作は、合理的に別の場所へ置けない場合に限ってView/code-behindに置く。
-- 新しいフレームワークや依存関係を導入するより、既存の抽象化とパターンを優先する。
-- タスクで明示的に変更しない限り、既存の動作を維持する。
-- 機能開発中に無関係なリファクタリングを行わない。
+- .NET 10
+- WPF / net10.0-windows10.0.26100.0
+- CommunityToolkit.Mvvm
+- Microsoft.Extensions.Hosting / DI
+- Mapsui.Wpf
+- ClosedXML
+- xUnit / WpfGisLearning.Tests
 
-## 開発ワークフロー
-重要度の高いタスクでは以下を行う。
-1. コードを変更する前に既存実装とテストを調査する。
-2. 簡潔な実装計画を作る。
-3. 一貫性のある最小限の変更を実装する。
-4. 必要に応じて \`dotnet build\` と \`dotnet test\` を実行する。
-5. 意図しない変更がないか差分を確認する。
-6. タスク完了前に独立したレビューを行う。
-7. タスクが安定した後、範囲付きのAIプロセス改善を1回実施する。
+## 共通ルール
 
-## AIチームのワークフロー
-推奨する役割分担は以下のとおり。
-- Manager: ワークフローと修正ループを調整する。
-- Planner: リポジトリを調査して実装計画を作成する。
-- Developer: 本番コードとテストコードを変更する。
-- QA: 動作、テスト、ビルド、回帰リスクを検証する。
-- Reviewer: 変更を独立してレビューし、問題を報告する。
-- Security Reviewer: 認証、認可、ファイルI/O、外部入力、秘密情報、ネットワーク、永続化に関係する変更ではセキュリティレビューを行う。
-- Process Improver: 完了した作業を分析し、AI設定への根拠ベースの改善案を提示する。
-- Agent Config Maintainer: 承認された設定改善だけを適用し、アプリケーションコードは変更しない。
+- 既存MVVM/DI/Binding/Navigation/Map abstractionを優先する。
+- 変更は要求された範囲に限定する。
+- 無関係なリファクタリングをしない。
+- テストを削除/弱化して成功扱いにしない。
+- 警告やエラーを隠さない。
+- Developerの自己確認だけを独立検証とみなさない。
+- セキュリティ上重要な変更は独立Security Reviewを行う。
+- AI設定改善はアプリ実装と分離する。
 
-Developer自身による「コードは正しい」という結論だけを十分な根拠として扱わない。QAとReviewerは独立して結果を確認する。
+## AI開発
 
-自動修正サイクルは少数に制限する。繰り返し試しても収束しない場合は、無限ループせず残っている問題を報告して停止する。
+通常の入口は WPF Development Manager です。
 
-## AI設定の自己改善
-タスクが安定した結果に到達した後、以下を行う。
-1. 各関連Agentが、自分の指示と隣接ロールへの引き継ぎを短く振り返る。
-2. Process Improverが根拠のある改善案を統合する。
-3. Reviewerが重複、矛盾、安全でない変更、過度な複雑さを確認する。
-4. Agent Config Maintainerが承認された設定変更だけを反映する。
-5. 改善パスは1回までとし、再帰的な自己改善を起こさない。
-6. 設定変更は次の開発タスクから適用し、現在のタスクには適用しない。
+Managerはタスク規模に応じて必要なAgentだけを起動します。
 
-設定改善によって検証、セキュリティ管理、役割分担、範囲付きループ、人間によるGit公開管理を弱めてはならない。
+- Trivial: 最小対応
+- Small: Developer → QA
+- Medium: Planner → Developer → QA → Reviewer
+- Large/Risky: Planner → Developer → QA → Reviewer → 必要時Security Reviewer
 
-## 検証ルール
-- テストを通すためだけにテストを削除したり弱めたりしない。
-- 欠陥を隠す目的でコンパイラ警告や診断を抑制しない。抑制が必要な場合は、明確な理由を記録する。
-- ビルドが成功しただけでは要件を満たした証拠にならない。
-- 環境上の制約でテストを実行できない場合は、その制約を明確に報告する。
-- AI設定の変更はアプリケーションの動作変更と分離する。
+問題がある場合の修正ループは最大3回です。
 
-## Gitの安全性
-AI Agentは作業ツリーの確認、編集、ビルド、テストを行ってよい。
+## AI自己改善
 
-自動で以下を行わない。
-- リモートへpush
-- ブランチのmerge
-- Pull Requestのmerge
-- ブランチ削除
-- リリース公開
-- リポジトリ設定変更
+自己改善は常に実行するわけではありません。
 
-最終レビューを行い、commit/pushまたはPull Requestの作成/mergeを判断するのは人間の所有者とする。
+再発・新規重要欠陥・引き継ぎ問題・新しい設計知見・無駄なAgent呼び出しなど、次回に効く学習がある場合だけManagerが起動します。
+
+実行時は、
+Process Improver → Reviewer → Config Maintainer
+の1回だけです。
+
+## Git安全性
+
+AIは確認、編集、build、testを行ってよいが、自動公開しない。
+
+人間が最終的に commit / push / PR / merge を判断します。

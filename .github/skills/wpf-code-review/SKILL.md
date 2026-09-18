@@ -1,25 +1,29 @@
-# WPF コードレビュースキル
+# WPF Code Review Skill
 
-このSkillは、変更を人間レビューに回せる状態と判断する前に、独立レビューを行うときに使用する。
+変更を人間レビューに回せる状態か独立して確認するときに使用します。
 
-## レビュー順序
-1. 実装が記載された要件と一致していることを確認する。
-2. 意図しない変更がないか差分を確認する。
-3. アーキテクチャとWPF/MVVM規約を確認する。
-4. 関連する場合は、エラー処理、nullability、ライフタイム/DI、スレッドアフィニティを確認する。
-5. テストと回帰カバレッジを確認する。
-6. 保守性と不要な複雑さを確認する。
-7. 重大度ごとに指摘を報告し、対象ファイルと具体的な推奨事項を含める。
+## レビュー順
+
+1. 要件
+2. diff
+3. architecture
+4. WPF/MVVM/Binding/DI
+5. errors/nullability/threading
+6. tests/regression
+7. complexity/scope
 
 ## 重大度
-- Critical: セキュリティ、データ損失、破損、重大な機能障害。
-- High: 大きな要件不達、クラッシュ、発生する可能性が高い回帰。
-- Medium: 意味のある正確性、保守性、テストカバレッジ上の問題。
-- Low: 影響の小さい軽微なスタイル/可読性上の問題。
+
+- Critical: security/data loss/corruption/severe failure
+- High: major requirement failure/crash/likely regression
+- Medium: meaningful correctness/maintainability/test issue
+- Low: minor style/readability issue
 
 ## 独立性
-実装Agentの説明が正しいと仮定しない。リポジトリと実際の差分に対して主張を検証する。
 
-## 完了条件
-CriticalまたはHighの指摘が残っておらず、利用可能な検証根拠が変更を支持する場合だけ \`READY_FOR_HUMAN_REVIEW\` を返す。
-それ以外の場合は、最優先で対応すべき指摘とともに \`CHANGES_REQUESTED\` を返す。
+Developerの説明を証拠にしません。
+actual diffとrepositoryを確認します。
+
+## 完了
+
+Critical/Highがなく、利用可能なverification evidenceが要件を支持する場合だけREADY_FOR_HUMAN_REVIEWを返します。
