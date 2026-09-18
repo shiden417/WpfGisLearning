@@ -31,6 +31,26 @@ public class NewsItemParserTests
         Assert.AreEqual("https://example.com/news/1", result.SourceUrl);
     }
 
+
+    [TestMethod]
+    public void Parse_UsesImageFromRssMediaContent()
+    {
+        var item = XElement.Parse("""
+            <item xmlns:media="http://search.yahoo.com/mrss/">
+              <title>ラーメンニュース</title>
+              <link>https://example.com/news/1</link>
+              <pubDate>Wed, 16 Sep 2026 09:00:00 GMT</pubDate>
+              <media:content url="https://example.com/images/1.jpg" type="image/jpeg" />
+            </item>
+            """);
+
+        var result = NewsItemParser.Parse(item);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("https://example.com/images/1.jpg", result!.ImageUrl);
+        Assert.IsTrue(result.HasImage);
+    }
+
     [TestMethod]
     public void Parse_ReturnsNullWhenRequiredFieldsAreMissing()
     {
