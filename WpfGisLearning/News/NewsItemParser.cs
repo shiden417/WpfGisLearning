@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using WpfGisLearning.Models;
@@ -55,13 +56,130 @@ public static class NewsItemParser
     /// 記事HTMLからog:image、twitter:imageなどの代表画像URLを探します。
     /// 無効なURLやGoogle内部画像は除外します。
     /// </summary>
-    public static string? FindArticleImageUrl(string html)
+    public static string? FindArticleImageUrl(string html, Uri? baseUri = null)
     {
         var imageUrl = FindMetaContent(html, "property", "og:image")
             ?? FindMetaContent(html, "name", "twitter:image")
-            ?? FindMetaContent(html, "property", "og:image:url");
+            ?? FindMetaContent(html, "name", "twitter:image:src")
+            ?? FindMetaContent(html, "property", "og:image:url")
+            ?? FindMetaContent(html, "itemprop", "image")
+            ?? FindLinkHref(html, "image_src")
+            ?? FindJsonLdImageUrl(html);
 
-        return IsArticleImageUrl(imageUrl) ? imageUrl : null;
+        return NormalizeImageUrl(imageUrl, baseUri);
+    }
+
+    /// <summary>
+    /// HTMLのcanonical URLを取得します。
+    /// Googleニュースのリダイレクト先が中継ページだった場合に元記事URLを再取得するために使用します。
+    /// </summary>
+    public static string? FindCanonicalUrl(string html, Uri? baseUri = null)
+    {
+        var url = FindMetaContent(html, "property", "og:url")
+            ?? FindLinkHref(html, "canonical");
+
+        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var uri))
+            return null;
+
+        if (!uri.IsAbsoluteUri && baseUri is not null)
+            uri = new Uri(baseUri, uri);
+
+        return uri.IsAbsoluteUri && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            ? uri.AbsoluteUri
+            : null;
+    }
+
+    /// <summary>HTMLのlink要素から指定relのhrefを取得します。</summary>
+    private static string? FindLinkHref(string html, string rel)
+    {
+        var pattern = $@"<link[^>]+rel=[""']{Regex.Escape(rel)}[""'][^>]+href=[""'](?<href>[^""']+)[""']";
+        var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+        if (match.Success)
+            return WebUtility.HtmlDecode(match.Groups["href"].Value.Trim());
+
+        pattern = $@"<link[^>]+href=[""'](?<href>[^""']+)[""'][^>]+rel=[""']{Regex.Escape(rel)}[""']";
+        match = Regex.Match(html, pattern, RegexOptions.IgnoreCase);
+        return match.Success ? WebUtility.HtmlDecode(match.Groups["href"].Value.Trim()) : null;
+    }
+
+    /// <summary>JSON-LDから記事画像URLを取得します。</summary>
+    private static string? FindJsonLdImageUrl(string html)
+    {
+        foreach (Match match in Regex.Matches(
+                     html,
+                     @"<script[^>]+type=[""']application/ld+json[""'][^>]*>(?<json>.*?)</script>",
+                     RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(WebUtility.HtmlDecode(match.Groups["json"].Value));
+                var result = FindImageInJson(document.RootElement);
+                if (!string.IsNullOrWhiteSpace(result))
+                    return result;
+            }
+            catch (JsonException)
+            {
+                // 一部サイトの不正なJSON-LDは無視して次の候補を探します。
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>JSON-LDのオブジェクトを再帰的に探索してimage値を取得します。</summary>
+    private static string? FindImageInJson(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            if (element.TryGetProperty("image", out var image))
+            {
+                var value = image.ValueKind switch
+                {
+                    JsonValueKind.String => image.GetString(),
+                    JsonValueKind.Array => image.EnumerateArray()
+                        .Select(item => item.ValueKind == JsonValueKind.String ? item.GetString() : null)
+                        .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)),
+                    JsonValueKind.Object when image.TryGetProperty("url", out var url)
+                        && url.ValueKind == JsonValueKind.String => url.GetString(),
+                    _ => null
+                };
+
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
+            }
+
+            foreach (var property in element.EnumerateObject())
+            {
+                var result = FindImageInJson(property.Value);
+                if (!string.IsNullOrWhiteSpace(result))
+                    return result;
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+            {
+                var result = FindImageInJson(item);
+                if (!string.IsNullOrWhiteSpace(result))
+                    return result;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>相対URLを絶対URLへ変換し、記事画像として利用可能か検証します。</summary>
+    private static string? NormalizeImageUrl(string? url, Uri? baseUri)
+    {
+        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var uri))
+            return null;
+
+        if (!uri.IsAbsoluteUri && baseUri is not null)
+            uri = new Uri(baseUri, uri);
+
+        return uri.IsAbsoluteUri && IsArticleImageUrl(uri.AbsoluteUri)
+            ? uri.AbsoluteUri
+            : null;
     }
 
     /// <summary>Googleニュースがタイトル末尾へ付ける「 - 情報元」を取り除きます。</summary>
