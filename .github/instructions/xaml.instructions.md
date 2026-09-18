@@ -1,16 +1,16 @@
 ---
 applyTo: "**/*.xaml"
 ---
-# WPF XAML instructions
+# WPF XAML 指示
 
-- Use Binding and commands rather than embedding application logic in XAML/code-behind.
-- Follow the existing MVVM structure and DataContext conventions.
-- Keep layout readable and prefer clear Grid/StackPanel/ContentControl structure over unnecessary nesting.
-- Use StaticResource for fixed resources and DynamicResource only when runtime resource replacement is required.
-- Prefer existing ResourceDictionary resources before adding duplicate styles/templates.
-- Make binding modes and update triggers explicit when the default behavior would be unclear.
-- Before changing ViewModel or service code for displayed state, verify the DataContext, property path, formatting/conversion, target property, and update mechanism; use the least-cost sufficient binding or UI validation.
-- Avoid unnecessary element-name or code-behind coupling.
-- Keep accessibility and keyboard navigation in mind for interactive controls.
-- Do not change visual behavior unrelated to the requested feature.
-- When modifying a ControlTemplate, DataTemplate, navigation surface, or resource dictionary, check for impact on all consumers.
+- XAML/code-behindにアプリケーションロジックを埋め込むのではなく、BindingとCommandを使用する。
+- 既存のMVVM構成とDataContextの慣例に従う。
+- レイアウトを読みやすく保ち、不要なネストよりも明確なGrid/StackPanel/ContentControl構造を優先する。
+- 固定リソースにはStaticResourceを使用し、実行時にリソースを差し替える必要がある場合だけDynamicResourceを使用する。
+- 重複したStyle/Templateを追加する前に、既存のResourceDictionaryリソースを優先する。
+- デフォルト動作が不明確になる場合は、Bindingモードと更新トリガーを明示する。
+- 表示状態のためにViewModelやサービスコードを変更する前に、DataContext、プロパティパス、書式/変換、Target Property、更新機構を確認し、十分なBindingまたはUI検証を最小コストで選択する。
+- 不要なElementName参照やcode-behindへの結合を避ける。
+- インタラクティブなコントロールではアクセシビリティとキーボードナビゲーションを考慮する。
+- 要求された機能と無関係な表示動作を変更しない。
+- ControlTemplate、DataTemplate、ナビゲーション領域、ResourceDictionaryを変更する場合は、すべての利用箇所への影響を確認する。

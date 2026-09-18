@@ -1,13 +1,13 @@
 ---
 applyTo: "**/Map/**/*.cs,**/*Map*.cs,**/*Map*.xaml,**/*Map*.xaml.cs"
 ---
-# GIS / Mapsui instructions
+# GIS / Mapsui 指示
 
-- Keep Mapsui-specific UI/control dependencies isolated behind existing adapters or controllers where the repository already provides them.
-- Prefer the existing `IMapControlAdapter`, `MapControlAdapter`, and map controller abstractions before introducing direct `MapControl` dependencies.
-- Keep coordinate conversion, viewport calculations, layer/feature logic, and UI event wiring separated when practical.
-- Be explicit about coordinate systems and conversions; do not assume screen pixels, geographic coordinates, and projected coordinates are interchangeable.
-- Preserve map interaction behavior such as pan, zoom, selection, and viewport updates unless the requirement changes it.
-- Avoid putting non-UI map business logic directly into a WPF window when an existing map service/controller abstraction can own it.
-- Add focused tests for coordinate calculations, map-state decisions, and adapter/controller behavior when practical.
-- Avoid network-dependent map tests unless the requirement explicitly concerns network behavior.
+- リポジトリに既存のアダプターやコントローラーがある場合、Mapsui固有のUI/コントロール依存をその背後に隔離する。
+- 直接 \`MapControl\` に依存するより、既存の \`IMapControlAdapter\`、\`MapControlAdapter\`、Map Controller抽象化を優先する。
+- 座標変換、ビューポート計算、レイヤー/Featureロジック、UIイベント接続は、実用上可能な場合に分離する。
+- 座標系と変換を明示し、画面ピクセル、地理座標、投影座標を互換であると仮定しない。
+- 要件で変更しない限り、パン、ズーム、選択、ビューポート更新などの地図操作を維持する。
+- 既存のMap Service/Controller抽象化で扱える場合、非UIの地図ビジネスロジックをWPF Windowへ直接配置しない。
+- 実用上可能な場合、座標計算、地図状態の判断、Adapter/Controllerの動作に対象を絞ったテストを追加する。
+- 要件がネットワーク動作を明示的に扱う場合を除き、ネットワーク依存の地図テストを避ける。

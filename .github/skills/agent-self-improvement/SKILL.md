@@ -1,44 +1,44 @@
 ---
 name: agent-self-improvement
-description: Run a bounded post-task retrospective to improve AI agent configuration based on evidence from the completed task.
+description: 完了したタスクの根拠に基づいてAI Agent設定を改善するため、範囲付きのタスク後振り返りを実行する。
 ---
 
-# Agent Self-Improvement
+# Agent 自己改善
 
-Use this skill only after a development task has reached a stable stopping point.
+開発タスクが安定して停止できる状態になった後だけ、このSkillを使用する。
 
-## Procedure
+## 手順
 
-1. Collect the final task result:
-   - acceptance criteria
-   - changed files
-   - build/test evidence
-   - review findings
-   - corrections
-   - remaining limitations
-2. Ask each relevant role to identify at most 2 configuration gaps:
-   - Manager reviews orchestration.
-   - Planner reviews planning guidance.
-   - Developer reviews implementation guidance.
-   - QA reviews verification guidance.
-   - Reviewer reviews review guidance.
-   - Security Reviewer reviews security guidance when applicable.
-3. Compare proposals across roles.
-4. Remove duplicates and proposals unsupported by evidence.
-5. Send the consolidated proposals to the Agent Config Maintainer.
-6. The Config Maintainer changes only approved AI configuration files.
-7. Do not rerun the completed feature task because of configuration improvements.
-8. Record accepted changes in the final report.
+1. 最終タスク結果を収集する。
+   - 受け入れ条件
+   - 変更ファイル
+   - ビルド/テストの根拠
+   - レビュー指摘
+   - 修正
+   - 残っている制約
+2. 各関連ロールに設定上の不足を最大2件まで特定させる。
+   - Managerはオーケストレーションを確認する。
+   - Plannerは計画ガイダンスを確認する。
+   - Developerは実装ガイダンスを確認する。
+   - QAは検証ガイダンスを確認する。
+   - Reviewerはレビューガイダンスを確認する。
+   - Security Reviewerは該当する場合にセキュリティガイダンスを確認する。
+3. Agent間で提案を比較する。
+4. 重複や根拠のない提案を除外する。
+5. 統合した提案をAgent Config Maintainerへ渡す。
+6. Config Maintainerは承認されたAI設定ファイルだけを変更する。
+7. 設定改善を理由に完了済みの機能タスクを再実行しない。
+8. 最終報告に採用された変更を記録する。
 
-## Required guardrails
+## 必須ガードレール
 
-- One improvement pass per development task.
-- No recursive improvement pass.
-- No source-code changes during configuration improvement.
-- No weakening of tests or security rules.
-- No automatic Git commit, push, merge, PR publication, or release.
-- New rules must state their purpose and avoid duplicating existing rules.
+- 開発タスクごとに改善パスは1回だけ。
+- 再帰的な改善パスを起動しない。
+- 設定改善中はソースコードを変更しない。
+- テストやセキュリティルールを弱めない。
+- Gitのcommit、push、merge、Pull Request公開、リリースを自動で行わない。
+- 新しいルールには目的を明記し、既存ルールとの重複を避ける。
 
-## Success condition
+## 成功条件
 
-The next task should benefit from the accepted configuration changes while the current task's code outcome remains unchanged.
+次のタスクが承認された設定改善の恩恵を受け、現在のタスクのコード結果は変わらないこと。

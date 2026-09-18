@@ -1,18 +1,18 @@
 ---
 applyTo: "**/*.cs"
 ---
-# C# instructions
+# C# 指示
 
-- Keep nullable reference types enabled and address nullable warnings rather than suppressing them without justification.
-- Follow the existing MVVM and dependency-injection architecture.
-- Prefer small, focused classes and methods.
-- Keep ViewModels independent from concrete WPF controls.
-- Prefer constructor injection for dependencies.
-- Do not introduce a new framework or package when an existing project abstraction is sufficient.
-- Preserve existing public contracts unless the task requires a breaking change.
-- Handle exceptions at an appropriate boundary; do not catch and ignore failures.
-- Avoid `async void` except for inherently event-based WPF event handlers.
-- Do not use service locators or global mutable state to bypass DI.
-- Keep business/application behavior testable without requiring a running WPF UI when practical.
-- When changing behavior, update or add focused tests.
-- Run `dotnet build` and `dotnet test` after substantive changes when the environment permits.
+- Nullable参照型を有効なまま維持し、正当な理由なく警告を抑制するのではなくnullability警告を解消する。
+- 既存のMVVMおよび依存性注入アーキテクチャに従う。
+- 小さく、責務を絞ったクラスとメソッドを優先する。
+- ViewModelを具体的なWPFコントロールから独立させる。
+- 依存関係にはコンストラクタインジェクションを優先する。
+- 既存のプロジェクト抽象化で十分な場合、新しいフレームワークやパッケージを導入しない。
+- タスクで必要な場合を除き既存の公開契約を維持する。
+- 例外は適切な境界で処理し、catchして無視しない。
+- 本質的にイベントベースのWPFイベントハンドラを除き、\`async void\` を使用しない。
+- DIを回避するためにサービスロケーターやグローバルな可変状態を使用しない。
+- 実用上可能な場合、実行中のWPF UIを必要とせずにビジネス/アプリケーション動作をテスト可能にする。
+- 動作を変更する場合は、対象を絞ったテストを追加または更新する。
+- 実質的な変更後は、環境が許す限り \`dotnet build\` と \`dotnet test\` を実行する。

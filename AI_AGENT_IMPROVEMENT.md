@@ -1,53 +1,53 @@
-# AI Agent Self-Improvement Policy
+# AI Agent 自己改善ポリシー
 
-WpfGisLearning uses a bounded post-task feedback loop to improve its AI development configuration.
+WpfGisLearningでは、タスク完了後の範囲付きフィードバックループを使ってAI開発設定を改善します。
 
-## Improvement cycle
+## 改善サイクル
 
-```
-Development task
+\`\`\`
+開発タスク
   ↓
 Planner → Developer → QA → Reviewer
   ↓
-Stable result
+安定した結果
   ↓
-Each relevant Agent retrospective
+各関連Agentの振り返り
   ↓
-Cross-agent comparison
+Agent間比較
   ↓
 AI Process Improver
   ↓
 Agent Config Maintainer
   ↓
-Configuration changes
+設定変更
   ↓
-Next development task uses the updated rules
-```
+次の開発タスクで更新されたルールを使用
+\`\`\`
 
-## Purpose
+## 目的
 
-The goal is to improve the development process from actual evidence rather than allowing Agents to rewrite their own instructions arbitrarily.
+目的は、Agentが自由に自分の指示を書き換えるのではなく、実際の根拠に基づいて開発プロセスを改善することです。
 
-Examples of useful feedback:
-- A recurring missed edge case indicates a missing review rule.
-- A repeated handoff problem indicates a missing Manager/Planner/Developer contract.
-- Repeated test omissions indicate a QA instruction gap.
-- A reviewer finding repeatedly missed by Developer indicates a useful new implementation rule.
-- Duplicate or contradictory instructions indicate configuration cleanup is needed.
+有用なフィードバックの例:
+- 繰り返し見落とされるエッジケースは、レビューに必要なルール不足を示す。
+- 繰り返し発生する引き継ぎ問題は、Manager/Planner/Developer間の契約不足を示す。
+- テスト漏れが繰り返される場合は、QA指示の不足を示す。
+- Reviewerが繰り返し見つける問題は、実装ルールとして有用な可能性がある。
+- 重複または矛盾する指示は、設定整理が必要であることを示す。
 
-## Rules
+## ルール
 
-1. Each relevant Agent may propose configuration improvements after a completed task.
-2. Proposals must be evidence-based and limited in scope.
-3. The Agents review both their own role and relevant neighboring roles.
-4. The Process Improver consolidates cross-agent proposals.
-5. The Agent Config Maintainer applies only approved changes.
-6. There is at most one improvement pass per development task.
-7. Improvement does not recursively trigger another improvement pass.
-8. Configuration changes affect subsequent tasks only.
-9. Application source code and tests are out of scope for this improvement phase.
-10. Git commit, push, merge, PR publication, and release remain human-controlled.
+1. 各関連Agentは、完了したタスク後に設定改善を提案できる。
+2. 提案は根拠に基づき、範囲を限定する。
+3. Agentは自分の役割と、関連する隣接役割を確認する。
+4. Process ImproverがAgent間の提案を統合する。
+5. Agent Config Maintainerは承認済みの変更だけを適用する。
+6. 開発タスクごとに改善パスは最大1回。
+7. 改善によって別の改善パスを再帰的に起動しない。
+8. 設定変更は次のタスクから適用する。
+9. アプリケーションのソースコードとテストは改善フェーズの対象外。
+10. Gitのcommit、push、merge、Pull Request公開、リリースは人間が管理する。
 
-## Human role
+## 人間の役割
 
-The human owner remains the final authority. Configuration improvements are intended to reduce repeated mistakes, not to replace human judgment about architecture, requirements, security, or project policy.
+人間の所有者が最終的な権限を持つ。設定改善は繰り返し発生するミスを減らすことを目的とし、アーキテクチャ、要件、セキュリティ、プロジェクト方針に関する人間の判断を置き換えるものではありません。
