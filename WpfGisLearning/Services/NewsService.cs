@@ -6,16 +6,22 @@ using WpfGisLearning.Services.Interfaces;
 namespace WpfGisLearning.Services;
 
 /// <summary>
-/// GoogleニュースのRSSからラーメン関連ニュースを取得するサービスです。
+/// BingニュースのRSSからラーメン関連ニュースを取得するサービスです。
 /// RSS取得と元記事のOG画像取得をまとめて行い、画面側にはNewsItemとして返します。
 /// </summary>
 public class NewsService : INewsService
 {
-    /// <summary>GoogleニュースRSS検索APIのエンドポイントです。</summary>
+    /// <summary>BingニュースRSS検索のエンドポイントです。</summary>
     private const string FeedBaseUrl = "https://www.bing.com/news/search";
 
     /// <summary>1回の取得で画面に返す最大ニュース件数です。</summary>
     private const int MaxNewsItems = 20;
+
+    /// <summary>RSS 1ページあたりの取得件数です。</summary>
+    private const int FeedPageSize = 10;
+
+    /// <summary>指定日まで遡るために取得するRSSページの最大数です。</summary>
+    private const int MaxFeedPages = 10;
 
     /// <summary>RSS取得時に送るUser-Agentです。</summary>
     private const string FeedUserAgent = "Ramenia/1.0";
@@ -51,33 +57,73 @@ public class NewsService : INewsService
         DateTime date,
         CancellationToken cancellationToken = default)
     {
-        // before条件は基準日の翌日を指定し、基準日当日分まで含める。
-        var end = date.Date.AddDays(1);
-        var query = "ラーメン";
-        var feedUrl = $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}&format=RSS&mkt=ja-JP";
+        var allItems = new List<NewsItem>();
+        var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
-        request.Headers.UserAgent.ParseAdd(FeedUserAgent);
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+        // Bing News RSSは検索結果をページングできるため、指定日まで遡って取得する。
+        for (var page = 0; page < MaxFeedPages; page++)
+        {
+            var offset = page * FeedPageSize + 1;
+            var pageItems = await GetFeedPageAsync(offset, cancellationToken);
 
-        // XMLのitemをNewsItemへ変換し、公開日で絞り込み・並び替え・件数制限を行う。
-        var items = document.Descendants("item")
-            .Select(NewsItemParser.Parse)
-            .Where(item => item is not null)
-            .Select(item => item!)
+            if (pageItems.Count == 0)
+                break;
+
+            var newItems = pageItems
+                .Where(item => seenUrls.Add(item.SourceUrl))
+                .ToList();
+
+            if (newItems.Count == 0)
+                break;
+
+            allItems.AddRange(newItems);
+
+            // このページの最古記事が指定日以前なら、必要な範囲まで到達している。
+            var oldestDate = newItems.Min(item => item.PublishedAt);
+            if (oldestDate.Date <= date.Date)
+                break;
+        }
+
+        var items = allItems
             .Where(item => item.PublishedAt.Date <= date.Date)
             .OrderByDescending(item => item.PublishedAt)
             .Take(MaxNewsItems)
             .ToList();
 
-        // RSSには元記事画像が含まれない場合があるため、各記事のHTMLからOG画像を探す。
-        foreach (var item in items)
+        // RSSに画像が含まれない記事だけ、元記事HTMLから画像を補完する。
+        foreach (var item in items.Where(item => !item.HasImage))
             item.ImageUrl = await TryGetArticleImageUrlAsync(item.SourceUrl, cancellationToken);
 
         return items;
+    }
+
+    /// <summary>
+    /// Bing News RSSを1ページ取得します。
+    /// </summary>
+    private async Task<IReadOnlyList<NewsItem>> GetFeedPageAsync(
+        int offset,
+        CancellationToken cancellationToken)
+    {
+        var query = "ラーメン";
+        var feedUrl =
+            $"{FeedBaseUrl}?q={Uri.EscapeDataString(query)}" +
+            $"&first={offset}" +
+            "&qft=sortbydate%3d%221%22" +
+            "&format=RSS&mkt=ja-JP";
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, feedUrl);
+        request.Headers.UserAgent.ParseAdd(FeedUserAgent);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var document = await XDocument.LoadAsync(stream, LoadOptions.None, cancellationToken);
+
+        return document.Descendants("item")
+            .Select(NewsItemParser.Parse)
+            .Where(item => item is not null)
+            .Select(item => item!)
+            .ToList();
     }
 
     /// <summary>
